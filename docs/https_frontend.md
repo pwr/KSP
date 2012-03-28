@@ -23,11 +23,14 @@ HTTPS frontend and KSP is still a problem, though a much smaller one; I'm workin
 connection should be inside your servers setup -- *ideally* on the same machine.
 
 
-HTTP frontend configuration
----------------------------
+HTTPS frontend configuration
+----------------------------
 
 You can use any standard http server for the frontend: Apache, nginx, etc, as long as it forwards connections to your
-KSP daemon. The configuration for Apache looks like this:
+KSP daemon. The configuration of its standard HTTPS service is beyond the point of this document, you should find plenty
+of documentation on the net.
+
+Configuring the server to forward KSP calls to your KSP daemon looks somewhat like this on Apache:
 
     LoadModule proxy_module modules/mod_proxy.so
     LoadModule proxy_http_module modules/mod_proxy_http.so

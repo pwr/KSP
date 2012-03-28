@@ -43,9 +43,10 @@ Kindle registration and de-registration.
 Using HTTP with WiFi access points other than ones controlled by you (i.e. your home WiFi) exposes this information not
 only to the owner of that WiFi access point, but also whoever else may be listening on route to the machine running KSP.
 
-In conclusion, unless you live in the middle of nowhere, with no-one else in range of your WiFi access point (hi C! :)),
-**use a HTTPS frontend server**. Configuring a HTTPS server and updating the device to connect to it may be complicated
-and troublesome, but it's certainly preferable to the alternative.
+In conclusion, unless you live in the middle of nowhere, with no-one else in range of your WiFi access point (*hi C!*
+:)), and you only plan to use the Kindle's WiFi at home, **use a HTTPS frontend server**. Configuring a HTTPS server and
+updating the device to connect to it may be complicated and troublesome, but it's certainly preferable to the
+alternative.
 
 Even with the HTTPS server set-up, and your Kindle talking to it securely, the HTTPS server still uses plain HTTP when
 forwarding the calls to the KSP daemon (I plan to fix this in the future).  So ideally they should be on the same
