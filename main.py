@@ -6,7 +6,14 @@ import sys, os, os.path
 
 
 def abspath(p, mkdir = False):
-	if not os.path.isabs(p):
+	if p[0] == '~':
+		if os.environ['HOME']:
+			p = os.environ['HOME'] + p[1:]
+		elif os.environ['USERPROFILE']:
+			p = os.environ['USERPROFILE'] + p[1:]
+		else
+			raise Exception("don't know how to translate ~ to $HOME")
+	elif not os.path.isabs(p):
 		p = os.path.join(os.path.dirname(__file__), p)
 	p = os.path.abspath(p)
 	if mkdir and not os.path.exists(p):

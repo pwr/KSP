@@ -46,8 +46,7 @@ There are two entries you **need** to modify in `etc/config.py`:
 
 * `calibre_library`
 
-    Path to your Calibre library, where its `metadata.db` file is, e.g. `/home/_user_/calibre`, or
-    `C:\\Users\\_user_\\Documents\\Calibre`.
+    Path to your Calibre library, where its `metadata.db` file is, e.g. `~/calibre`, or `C:\\Calibre`.
 
 Everything else is optional, though you might find some interesting options in `etc/features.py`.
 
