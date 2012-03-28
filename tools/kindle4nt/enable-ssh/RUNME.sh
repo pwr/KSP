@@ -13,19 +13,11 @@ mount_ro() {
   fi
 }
 
-Y=18
-/usr/sbin/eips -c
-log() {
-	echo "$@"
-	/usr/sbin/eips 11 $Y "$@"
-	Y=$((Y+1))
-}
-
 
 if test -x /usr/local/bin/dropbearmulti; then
-	log SSH binaries already available
+	echo SSH binaries already available
 else
-	log Copying SSH binaries to the main partition
+	echo Copying SSH binaries to the main partition
 	mount_rw
 	mkdir /mnt/JB-diags
 	# blk0p2 is the partition that gets mounted in Diagnostics mode
@@ -36,9 +28,9 @@ else
 fi
 
 if grep -q 'A INPUT -i wlan0 -p tcp -m tcp --dport 22 -j ACCEPT' /etc/sysconfig/iptables; then
-	log Firewall already allowing SSH over WiFi
+	echo Firewall already allowing SSH over WiFi
 else
-	log Adding firewall rule for SSH over WiFi
+	echo Adding firewall rule for SSH over WiFi
 	mount_rw
 	sed -i '/^-A INPUT -i wlan0 -p tcp -m state --state RELATED,ESTABLISHED -j ACCEPT/a-A INPUT -i wlan0 -p tcp -m tcp --dport 22 -j ACCEPT' /etc/sysconfig/iptables
 fi
