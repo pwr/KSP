@@ -2,9 +2,10 @@
 KSP
 ===
 
-KSP is a Kindle Store proxy that enhances the results returned by KS with books from a Calibre database. It integrates
-(as seamlessly as it can) the list of books present in your Calibre library with the list of books the Amazon returns,
-allowing you to download books to your device as if they were on your Amazon account.
+KSP is a Kindle Store proxy that enhances the results returned by KS with books from a
+[Calibre](http://calibre-ebook.com/) database. It integrates (as seamlessly as it can) the list of books present in
+your Calibre library with the list of books the Amazon returns, allowing you to download books, from the Calibre
+library to your device, as if they were on your Amazon account.
 
 Additionally, it can do some automatic collections generation based on book series and tags, as configured in Calibre.
 
@@ -14,6 +15,10 @@ your Calibre library.
 **NOTE**: To use KSP, the Kindle device(s) **must be registered to your Amazon account**. KSP does not replace Amazon's
 services, it only piggybacks on them, so if you do not have the device registered with your Amazon account, KSP cannot
 help you.
+
+**NOTE**: KSP has only been tested with the software it comes with (the standard Java GUI). I know there are possible
+replacements for it (kite, coolreader3, other?), but it will most likely not work with them -- KSP relies on the
+standard API calls the Kindle does to Amazon's services.
 
 
 Security considerations
@@ -53,9 +58,8 @@ To use a Kindle device with KSP, you have to change some of its internal configu
 for SSH access is not strictly necessary, it may help you troubleshoot if something goes wrong.
 
 **WARNING**: KSP has only been tested with a Kindle 4 Non-Touch. It *may* work on other devices, but the configuration
-can be tricky and you have to be careful.
-
-If you *do* make it work with other devices, please let me know.
+can be tricky, you have to know what you are doing, and be careful. If you *do* make it work with other devices, please
+let me know :).
 
 See `docs/devices.md` for extended details.
 
@@ -64,9 +68,8 @@ Calibre library management
 --------------------------
 
 To have KSP use your Calibre books, you may have to work a bit on them. Specifically, the books need to have the proper
-ASIN (book id) records, matching their Calibre uuid.
-
-It will certainly **not** work by just dropping MOBI files into Calibre!
+ASIN (book id) records, matching their Calibre uuid. It will certainly **not** work by just dropping MOBI files into
+Calibre!
 
 See `docs/library.md` for details.
 

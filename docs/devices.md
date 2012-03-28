@@ -41,8 +41,8 @@ check the results. You should see something like this:
     Adding firewall rule for SSH over WiFi
 
 This means you can eject the volume, and should be able to connect with SSH to the Kindle's WiFi IP. The username is
-`root`, and the password should be either `mario` (if you have software version 4.0) or `fionaXXXX`, where the XXXX part
-depends on your device serial. Use the `tools/gen_pw.py` script to compute it.
+`root`, and the password should be either `mario` (if you have software version 4.0) or `fionaXXXX`, where the `XXXX`
+part depends on your device serial. Use the `tools/gen_pw.py` script to compute it.
 
 NOTE: Some users report sometimes the device does not restart properly -- i.e. does not run the whole boot sequence. If
 you do not see the `RUNME.log` file, restart it again -- it should show up this time.
@@ -102,9 +102,9 @@ Configuration changes
 
 The Kindle internal software uses a few API urls to talk to Amazon. These are configured in the file
 `/opt/amazon/ebook/config/ServerConfig.conf` (on the device, obviously). To have the Kindle talk to KSP instead of
-directly to Amazon, you need to change some urls in that file.
+directly to Amazon, you need to change some URLs in that file.
 
-**NOTE: if you're changing the file directly on the device, through SSH, **make a backup first!** You never know.
+**NOTE**: if you're changing the file directly on the device, through SSH, **make a backup first!** You never know.
 
 **NOTE**: if you're changing the file directly on the device, through SSH, you'll have to make the root partition
 writable first (by default, it is mounted as read-only -- no need to write to it during Kindle's normal functioning).

@@ -18,8 +18,9 @@ solution is to add an HTTPS frontend to KSP, as such:
 
     Kindle <--HTTPS-over-WiFi--> HTTPS frontend <--HTTP--> KSP <--HTTPS--> Amazon
 
-Now, the sensitive connection over WiFi between the Kindle and the frontend is secure as well. (The `HTTP` between the
-HTTPS frontend and KSP is still a problem, though a much smaller one; I'm working on fixing it).
+Now, the sensitive connection over WiFi between the Kindle and the frontend is secure as well. The `HTTP` between the
+HTTPS frontend and KSP is still a problem, though a much smaller one; I'm working on fixing it. In any case, that
+connection should be inside your servers setup -- *ideally* on the same machine.
 
 
 HTTP frontend configuration
@@ -37,7 +38,7 @@ KSP daemon. The configuration for Apache looks like this:
         ProxyPassReverse http://_ksp_server_:45350/KSP/
     </Location>
 
-where _ksp_server_ is the machine where your KSP daemon is running. *Ideally*, it should be the same machine as the one
+where `_ksp_server_` is the machine where your KSP daemon is running. *Ideally*, it should be the same machine as the one
 your frontend runs on:
 
     LoadModule proxy_module modules/mod_proxy.so
@@ -50,6 +51,9 @@ your frontend runs on:
     </Location>
 
 The `SSLRequireSSL` is important -- you only want to accept HTTPS connections on your `/KSP/` path.
+
+The frontend's URL (`https://_my_server_/KSP/`) is the one you need to use in `etc/config.py` (see `docs/install.md`)
+and when changing the device's `ServerConfig.conf` file (see `docs/devices.md`).
 
 
 Self-signed SSL certificates
@@ -91,8 +95,8 @@ You will need to:
 And then you should be good to go.
 
 
-(Semi-)Scripted configuration
------------------------------
+(semi-)Scripted configuration for self-signed SSL certificate
+-------------------------------------------------------------
 
 You can use the `tools/kindle4nt/ksp-config/RUNME.sh` script to automate this process somewhat:
 
