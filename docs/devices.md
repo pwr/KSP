@@ -37,10 +37,8 @@ Eject the Kindle volume, and restart the device: [MENU] -> _Settings_ -> [MENU] 
 When the device finishes restarting and shows up again as a disk, you should see a `RUNME.log` file. Look into it to
 check the results. You should see something like this:
 
-``````````````````````````````````````````
-Copying SSH binaries to the main partition
-Adding firewall rule for SSH over WiFi
-``````````````````````````````````````````
+    Copying SSH binaries to the main partition
+    Adding firewall rule for SSH over WiFi
 
 This means you can eject the volume, and should be able to connect with SSH to the Kindle's WiFi IP. The username is
 `root`, and the password should be either `mario` (if you have software version 4.0) or `fionaXXXX`, where the XXXX part
@@ -136,15 +134,13 @@ These three are used to upload device logs to Amazon. If you point these to KSP,
 setting in `etc/features.py`, these logs *should* no longer reach Amazon. Entirely optional, functionality-wise.
 
 The changes involve replacing `https://_service_.amazon.com/` with the url of your frontend HTTPS server,
-`https://_my_server_/KSP/`.
+`https://_my_server_/KSP/`. See `docs/https_frontend.md` for details.
 
 For example, you will have:
 
-```````````````````````````````````````````````````````````````````````````````
-cmd.any_amazon.domains=.amazon.com,.images-amazon.com,.amazon.co.uk,_my_server_
-url.todo=https://_my_server_/KSP/FionaTodoListProxy
-url.cde=https://_my_server_/KSP/FionaCDEServiceEngine
-```````````````````````````````````````````````````````````````````````````````
+    cmd.any_amazon.domains=.amazon.com,.images-amazon.com,.amazon.co.uk,_my_server_
+    url.todo=https://_my_server_/KSP/FionaTodoListProxy
+    url.cde=https://_my_server_/KSP/FionaCDEServiceEngine
 
 etc. The `/KSP/` part is optional, but makes it easier to filter and forward requests from the HTTPS frontend to the
 KSP daemon.
