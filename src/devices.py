@@ -12,8 +12,6 @@ def _update(device, ip_address = None, cookie = None):
 	device.last_ip = ip_address
 	if cookie:
 		device.last_cookie = cookie[:64]
-	if p12:
-		device.p12 = p12
 	devices_db.update(device)
 	return device
 

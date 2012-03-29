@@ -55,7 +55,7 @@ machine, with KSP only bound to `127.0.0.1`.
 There's no point in securing your devices database if anyone within 100m can just snoop your Kindle traffic. And you
 only have to do it once.
 
-See docs/https_frontend.md for details.
+See `docs/https_frontend.md` for details.
 
 
 KSP log files

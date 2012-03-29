@@ -11,7 +11,7 @@ def abspath(p, mkdir = False):
 			p = os.environ['HOME'] + p[1:]
 		elif os.environ['USERPROFILE']:
 			p = os.environ['USERPROFILE'] + p[1:]
-		else
+		else:
 			raise Exception("don't know how to translate ~ to $HOME")
 	elif not os.path.isabs(p):
 		p = os.path.join(os.path.dirname(__file__), p)

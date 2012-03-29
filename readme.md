@@ -88,7 +88,8 @@ KSP and its additional tools have been made possible by the generous amounts of 
 how Kindles work.
 
 In particular, the stuff on [MobileRead wiki](http://wiki.mobileread.com/wiki/Kindle4NTHacking) and various hacks found
-by intreprid [MobileRead forums](http://www.mobileread.com/forums/forumdisplay.php?f=140) members, too many of them to
-list here.
+by intreprid [MobileRead forums](http://www.mobileread.com/forums/forumdisplay.php?f=140) members, especially
+[yifanlu](http://yifan.lu/p/kindle-touch-jailbreak/) and
+[IxTab](http://www.mobileread.com/forums/showthread.php?p=1902438).
 
 Thanks!
