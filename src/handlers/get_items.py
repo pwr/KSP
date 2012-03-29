@@ -117,7 +117,7 @@ class TODO_GetItems (Upstream):
 		if action == 'DOWNLOAD':
 			item_key = x_item.getAttribute('key')
 			item_url = x_item.getAttribute('url')
-			if item_url and is_uuid(item_key):
+			if item_url and (item_type == 'CRED' or is_uuid(item_key)):
 				new_url = self.rewrite_url(item_url)
 				if new_url != item_url:
 					logging.warn("rewrote url for %s: %s => %s", item_key, item_url, new_url)

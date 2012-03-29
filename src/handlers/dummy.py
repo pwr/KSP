@@ -41,6 +41,14 @@ class ExceptionResponse (Exception):
 		self.response = DummyResponse(*args, **kwargs)
 
 
+def _matches(path, expected_path):
+	if path == expected_path:
+		return True
+	if expected_path[-1] in ('?', '/'):
+		return path.startswith(expected_path)
+	return False
+
+
 class Dummy (object):
 	"""
 	dummy response, ignores the call
@@ -55,8 +63,12 @@ class Dummy (object):
 
 	def accept(self, request):
 		"""returns True if this handler can process the given request"""
-		if not request.path.startswith(self.expected_path):
-			return False
+		if type(self.expected_path) == str:
+			if not _matches(request.path, self.expected_path):
+				return False
+		else:
+			if not [ p for p in self.expected_path if _matches(request.path, p) ]:
+				return False
 		if self.expected_command:
 			if request.command != self.expected_command:
 				return False

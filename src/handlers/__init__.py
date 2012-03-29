@@ -11,7 +11,7 @@ DET = 'det-g7g'
 DET_PATH = '/DeviceEventProxy/'
 DET_TA = 'det-ta-g7g'
 DM = 'device-messaging-na'
-DM_PATH = '/PostDeviceMessages'
+DM_PATH = '/PostDeviceMessages?'
 WWW = 'www'
 #EMBER_PATH = '/gp/ember/xyml/'
 #STORE_PATH = '/gp/g7g/xyml1/'
@@ -33,4 +33,5 @@ from .download_content import *
 from .upload_snapshot import *
 from .sidecar import *
 from .collections import *
+from .registration import *
 #from .store import *

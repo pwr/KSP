@@ -25,10 +25,11 @@ def _response_readinto(self, buffer):
 
 def _response__str__(self):
 	txt = "%d %s (%d) %s" % (self.status, self.reason, self.length, str_headers(self.headers._headers))
-	if self.content_type.startswith('text/') or self.content_type.startswith('application/xml+'):
-		txt += '\n' + str_(decompress(self.body, self.content_encoding))
-	else:
-		txt += '\nbytes hex: ' + str(binascii.hexlify(self.body), 'ascii')
+	if self.body:
+		if not self.content_type or self.content_type.startswith('text/') or self.content_type.startswith('application/xml+'):
+			txt += '\n' + str_(decompress(self.body, self.content_encoding))
+		else:
+			txt += '\nbytes hex: ' + str(binascii.hexlify(self.body), 'ascii')
 	return txt
 
 def wrap_response(r):

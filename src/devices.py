@@ -7,7 +7,7 @@ from devices_db import DeviceInfo
 def _update(device, ip_address = None, cookie = None):
 	if ip_address == device.last_ip \
 			and (not cookie or cookie == device.last_cookie or cookie.startswith(device.last_cookie)):
-			# only update of any of them changed
+			# only bother writing to the db if any of them changed
 		return device
 	device.last_ip = ip_address
 	if cookie:
@@ -16,6 +16,10 @@ def _update(device, ip_address = None, cookie = None):
 	return device
 
 def _make_context(device):
+	"""
+	Ensures creation of a SSL context for the device.
+	If the device has no current PKCS12 certificate, loads it from the file 'db/<device_serial>.p12'
+	"""
 	if not device.p12:
 		device.p12 = certificate.load_p12(device.serial)
 	device.context = certificate.make_context(device.serial, device.p12)
@@ -29,11 +33,21 @@ def get(serial):
 	global _devices
 	return _devices.get(serial)
 
-def update(device, fiona_id = None, pkcs12_bytes = None):
+def update(device, cookie = None, fiona_id = None, pkcs12_bytes = None):
+	if cookie:
+		device.last_cookie = cookie[:64]
 	if fiona_id:
 		device.fiona_id = fiona_id
 	if pkcs12_bytes:
-		device.p12 = pkcs12_bytes
+		test_context = certificate.make_context(device.serial, pkcs12_bytes)
+		if not test_context:
+			logging.error("%s tried to update PKCS12 key with invalid data -- ignored")
+		else:
+			logging.warn("%s updated its PKCS12 client key", device)
+			device.p12 = pkcs12_bytes
+			# Even though we're updating the client certificate, active connections will still work with the old one.
+			# Actually, the old certificate will still be able to open new connections for an unknown amount of time.
+			# So there's no point in destroying the current SSL context and creating a new one.
 	devices_db.update(device)
 
 def detect(ip_address, cookie = None):

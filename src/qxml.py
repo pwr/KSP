@@ -59,6 +59,20 @@ def set_text(tag_node, text_value = None):
 	logging.warn("can't handle %s child node %s", tag_node, tnode)
 	return False
 
+
+def get_text(tag_node):
+	if not tag_node:
+		logging.warn("get_text: no tag_node")
+		return None
+	tnode = tag_node.firstChild
+	if tnode is None:
+		return None
+	if tnode.nodeType == Node.TEXT_NODE:
+		return tnode.data
+	logging.warn("get_node found no text node in %s", tag_node)
+	return None
+
+
 def remove_whitespace(tag_node):
 	"""removes irrelevant whitespace children"""
 	if not tag_node:
