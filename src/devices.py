@@ -21,7 +21,7 @@ def _make_context(device):
 	If the device has no current PKCS12 certificate, loads it from the file 'db/<device_serial>.p12'
 	"""
 	if not device.p12:
-		device.p12 = certificate.load_p12(device.serial)
+		device.p12 = certificate.load_p12bytes(device.serial)
 	device.context = certificate.make_context(device.serial, device.p12)
 	if not device.context:
 		device.mark_context_failed()
