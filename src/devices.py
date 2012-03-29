@@ -10,8 +10,6 @@ def _update(device, ip_address = None, cookie = None):
 			# only update of any of them changed
 		return device
 	device.last_ip = ip_address
-	if fiona_id:
-		device.fiona_id = fiona_id
 	if cookie:
 		device.last_cookie = cookie[:64]
 	if p12:
