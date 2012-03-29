@@ -9,6 +9,9 @@ server_port = 45350
 # IP to bind to, leave empty to bind to all network interfaces.
 server_host = ''
 
+# if you set this option, and point it to a SSL PEM file, the server will only accept HTTPS connections
+server_certificate = None
+
 # Under what url is the device calling the server.
 # WARNING: MUST be matched by the changes in ServerConfig.conf on the device!
 # NOTE: This is the url of the front-facing https server, not KSP's url!

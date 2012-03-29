@@ -4,8 +4,7 @@
 
 SECURITY
 
-- handle device certificate/key updates when the device is (de)registered
-	the getDeviceCredentials call returns a pkcs12 keystore, that is then saved on the device (client.p12)
+- support SSL directly in KSP
 
 
 BOOK FORMATS

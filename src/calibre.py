@@ -50,7 +50,7 @@ else:
 logging.debug("supported formats: %s", features.supported_formats)
 
 # we need to have features.supported_formats processed before importing calibre_db
-import calibre_db, format_mobi
+import calibre_db, formats.mobi
 
 
 class _Book:
@@ -108,7 +108,7 @@ class _Book:
 				return
 
 			if content_type == _CONTENT_TYPE_MOBIPOCKET:
-				cde_type = format_mobi.read_cde_type(self.asin, path)
+				cde_type = formats.mobi.read_cde_type(self.asin, path)
 				if not cde_type:
 					continue;
 				self.cde_content_type = cde_type

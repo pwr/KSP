@@ -6,6 +6,8 @@ import sys, os, os.path
 
 
 def abspath(p, mkdir = False):
+	if not p:
+		return None
 	if p[0] == '~':
 		if os.environ['HOME']:
 			p = os.environ['HOME'] + p[1:]
@@ -72,6 +74,7 @@ def main():
 	_make_root_logger(_stdstream(config.logs_path), args.log_level)
 
 	config.database_path = abspath(config.database_path, True)
+	config.server_certificate = abspath(config.server_certificate)
 
 	# add the src/ folder to the import path
 	sys.path.append(abspath('src'))

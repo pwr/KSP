@@ -1,7 +1,7 @@
-import sys, logging, re
+import sys, os.path, logging, re
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer
-import socket
+import socket, ssl
 
 import config, features
 
@@ -23,6 +23,12 @@ logging.debug("server url [%s://%s%s]", protocol, hostname, path )
 rewrite_rules = { "https://([-a-z7]*).amazon.com/" : config.server_url }
 logging.debug("rewrite rules: %s", rewrite_rules)
 config.rewrite_rules = { re.compile(k) : v for k, v in rewrite_rules.items()  }
+
+if config.server_certificate:
+	if not os.path.isfile(config.server_certificate):
+		raise Exception("server certificate not found at", config.server_certificate)
+else:
+	config.server_certificate = None
 
 import handlers
 
@@ -96,6 +102,8 @@ class Server (ThreadingMixIn, HTTPServer):
 
 	def run(self):
 		self.server_bind()
+		if config.server_certificate:
+			self.socket = ssl.wrap_socket(self.socket, certfile = config.server_certificate, server_side = True)
 		logging.info("started on %s:%s (%s)", self.server_name, self.server_port, self.stop_code)
 		self.server_activate()
 		try:

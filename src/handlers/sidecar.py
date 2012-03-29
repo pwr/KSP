@@ -4,7 +4,7 @@ import xml.dom.minidom as minidom
 from handlers import Upstream, ExceptionResponse, is_uuid
 from handlers import CDE, CDE_PATH
 from content import decompress, compress
-import postprocess, format_mbp
+import postprocess, formats.mbp
 import calibre, qxml
 
 
@@ -16,7 +16,7 @@ def process_sidecar_upload(device, book_ids, book_nodes):
 			book.mark_on_device(device)
 
 	for x_book in book_nodes:
-		format_mbp.process_xbook(x_book)
+		formats.mbp.process_xbook(x_book)
 
 
 class CDE_Sidecar (Upstream):
@@ -32,7 +32,7 @@ class CDE_Sidecar (Upstream):
 			key = q.get('key')
 			if q.get('type') == 'EBOK' and is_uuid(key):
 				# MBP download
-				return format_mbp.response(key)
+				return formats.mbp.response(key)
 		elif request.command == 'POST':
 			body = decompress(request.body, request.content_encoding)
 
