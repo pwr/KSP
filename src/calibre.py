@@ -44,7 +44,7 @@ _FORMATS_CDE_TYPE = {
 
 _FORMAT_PRIORITIES = [ 'MOBI', 'AZW', 'PRC', 'PDF', 'EPUB' ]
 if hasattr(features, 'supported_formats'):
-	features.supported_formats = [ k.upper for k in features.supported_formats if k.upper in _FORMATS_CONTENT_TYPE ]
+	features.supported_formats = [ k.upper() for k in features.supported_formats if k.upper() in _FORMATS_CONTENT_TYPE ]
 else:
 	features.supported_formats = [ k for k in _FORMAT_PRIORITIES if k in _FORMATS_CONTENT_TYPE ]
 logging.debug("supported formats: %s", features.supported_formats)
