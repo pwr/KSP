@@ -27,10 +27,12 @@ def _args():
 	p = argparse.ArgumentParser(description = "Kindle Store proxy", prog = 'ksp')
 	p.add_argument('--config', dest = 'etc_path', default = 'etc',
 								help = "Path to the configration folder")
-	p.add_argument('--stop', dest = 'stop_code',
-								help = "Calling 'http://127.0.0.1/?STOP_CODE' will instruct the server to stop")
 	p.add_argument('--loglevel', dest = 'log_level', choices = ('debug', 'info', 'warn'), default = 'debug',
 								help = "Set the minimum logging level in the server")
+	p.add_argument('--console', dest = 'console', action = 'store_const', const = True, default = False,
+								help = "Log to the console instead of a log file")
+	p.add_argument('--control-pipe', dest = 'control_pipe',
+								help = "Use the give file to read server control commands")
 	return p.parse_args()
 
 import logging
@@ -51,12 +53,13 @@ def _make_access_log(filename):
 	log.addHandler(logging.FileHandler(filename, 'a'))
 	return log
 
-def _stdstream(path):
+def _stdstream(path, console):
 	from codecs import open as codecs_open
 
-	server_log = os.path.join(path, 'server.log')
-	sys.stdout = codecs_open(server_log, mode = 'a', encoding = 'latin1', errors = 'backslashreplace')
-	sys.stderr = sys.stdout # open(os.path.join(config.logs_path, 'stderr.log'), 'w', 1)
+	if not console:
+		server_log = os.path.join(path, 'server.log')
+		sys.stdout = codecs_open(server_log, mode = 'a', encoding = 'latin1', errors = 'backslashreplace')
+		sys.stderr = sys.stdout # open(os.path.join(config.logs_path, 'stderr.log'), 'w', 1)
 
 	if sys.__stdout__ is None:
 		sys.__stdout__ = sys.stdout
@@ -71,10 +74,15 @@ def main():
 
 	import config
 	config.logs_path = abspath(config.logs_path, True)
-	_make_root_logger(_stdstream(config.logs_path), args.log_level)
+	_make_root_logger(_stdstream(config.logs_path, args.console), args.log_level)
 
 	config.database_path = abspath(config.database_path, True)
 	config.server_certificate = abspath(config.server_certificate)
+
+	# doing this here because if the pipe does not exit, we want to fail fast,
+	# before we load the devices and calibre databases
+	import ctrl
+	pipe_file = None if not args.control_pipe else open(args.control_pipe, 'rb')
 
 	# add the src/ folder to the import path
 	sys.path.append(abspath('src'))
@@ -87,7 +95,9 @@ def main():
 		access_log = _make_access_log(os.path.join(config.logs_path, 'access.log'))
 
 		from http_server import Server
-		server = Server(access_log, args.stop_code)
+		server = Server(access_log)
+		if pipe_file:
+			ctrl.start_server_controller(server, pipe_file, args.control_pipe)
 		server.run()
 	except:
 		logging.exception("")

@@ -84,13 +84,6 @@ class Handler (BaseHTTPRequestHandler):
 	def _do_any(self):
 		self.started_at = time.time() # almost
 
-		if self.server.stop_code and self.command == 'GET' and self.client_address[0] == '127.0.0.1' and self.path == '/?' + self.server.stop_code:
-			logging.warn("received stop code %s", self.server.stop_code)
-			self.wfile.write(b'HTTP/1.1 204 No Content\r\nConnection: close\r\n\r\n')
-			self.close_connection = 1
-			self.server.shutdown()
-			return
-
 		if self.ignore_request():
 			logging.warn("ignoring request (%s) %s", self.headers.get("Host"), self.requestline)
 			# now for most requests, a 404 might be enough, or just closing the connection (impolite, but cheap)

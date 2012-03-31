@@ -15,7 +15,6 @@ SetBatchLines 10ms
 EnvGet PYTHONHOME, PYTHONHOME
 PYTHON := PYTHONHOME . "\pythonw.exe"
 PYOPTIONS := "-b -OO -W all"
-global STOP_CODE := ""
 
 Menu Tray, NoStandard
 Menu Tray, Icon, %PYTHON%
@@ -28,10 +27,17 @@ Menu Tray, Add, Stop Daemon and Exit Monitor,  _exit_ahk
 
 SetTimer _watch, 500
 
+PIPE_NAME := "\\.\pipe\ksp.ctrl"
+
 _start: ; auto-executed
-	Random STOP_CODE
-	Run %PYTHON% %PYOPTIONS% ..\main.py --stop %STOP_CODE%, , , python_pid
-	OutputDebug started %PYTHON% => %python_pid% (%ErrorLevel%) stop code %STOP_CODE%
+	PIPE := DllCall("CreateNamedPipe","str",PIPE_NAME,"UInt",2,"UInt",0,"UInt",1,"UInt",0,"UInt",0,"UInt",0,"Ptr",0,"Ptr")
+	if (PIPE) {
+		Run %PYTHON% %PYOPTIONS% ..\main.py --control-pipe %PIPE_NAME%, , , python_pid
+		OutputDebug started %PYTHON% => %python_pid% (%ErrorLevel%)
+	} else {
+		OutputDebug Failed to create control pipe %PIPE_NAME% (%ErrorLevel%/%A_LastError%)
+		ExitApp
+	}
 	return
 
 _stop:
@@ -80,11 +86,13 @@ _documentation:
 
 stop_python(ByRef pid) {
 	if (pid) {
+		global PIPE
 		ppid := pid
 		pid := 0
-		; OutputDebug Closing process %ppid%
-		; stupid Windows does not have signals, so we have to tell it some other way to stop gracefully
-		http_ping("http://127.0.0.1:45350/?" . STOP_CODE)
+		DllCall("ConnectNamedPipe", ptr, PIPE, ptr, 0)
+		if !DllCall("WriteFile", ptr, PIPE, "Str", "C", "UInt", 1, "UInt*", 0, ptr, 0)
+		    OutputDebug WriteFile failed: %ErrorLevel%/%A_LastError%
+		DllCall("CloseHandle", ptr, PIPE)
 		stop_process(ppid, SHUTDOWN_GRACE_TIME)
 	}
 }
@@ -109,26 +117,3 @@ stop_process(pid, grace = 5) {
 	}
 }
 
-http_ping(url) {
-	io := DLLCall("wininet\InternetOpen", Ptr, 0, UInt, 0, Ptr, 0, Ptr, 0, UInt, 0, Ptr)
-	if (io) {
-		ok := DllCall("wininet\InternetSetOptionW", Ptr, io, UInt, 2, UIntP, 500, UInt, 4, UInt)	; INTERNET_OPTION_CONNECT_TIMEOUT
-		ok := DllCall("wininet\InternetSetOptionW", Ptr, io, UInt, 5, UIntP, 1000, UInt, 4, UInt)	; INTERNET_OPTION_CONTROL_SEND_TIMEOUT
-		ok := DllCall("wininet\InternetSetOptionW", Ptr, io, UInt, 6, UIntP, 1000, UInt, 4, UInt)	; INTERNET_OPTION_CONTROL_RECEIVE_TIMEOUT
-		;ok := DllCall("wininet\InternetQueryOptionW", Ptr, io, UInt, 31, Ptr, &security_flags, UIntP, 4, UInt)	; INTERNET_OPTION_SECURITY_FLAGS
-
-		headers := "Connection: close\r\n"
-		ourl := DLLCall("wininet\InternetOpenUrlW", Ptr, io, Str, url, Str, headers, UInt, StrLen(headers), UInt, 0, UIntP, 1, Ptr)
-		if (ourl) {
-			DllCall("wininet\InternetCloseHandle", Ptr, ourl, UInt)
-		}
-		DLLCall("wininet\InternetCloseHandle", Ptr, io, UInt)
-		if (!ourl) {
-			err := DllCall("GetLastError")
-			OutputDebug InternetOpenUrlW failed with error %err%
-			return 0
-		}
-		return 1
-	}
-	return 0
-}

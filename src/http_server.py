@@ -40,9 +40,8 @@ class Server (ThreadingMixIn, HTTPServer):
 
 	SERVICES = [ handlers.TODO, handlers.CDE, handlers.FIRS, handlers.FIRS_TA, handlers.DET, handlers.DET_TA, handlers.DM, handlers.WWW ]
 
-	def __init__(self, access_log = None, stop_code = None):
+	def __init__(self, access_log = None):
 		self.access_log = access_log
-		self.stop_code = stop_code
 
 		if hasattr(config, 'disconnected') and config.disconnected:
 			self._handlers = []
@@ -102,9 +101,11 @@ class Server (ThreadingMixIn, HTTPServer):
 
 	def run(self):
 		self.server_bind()
+		protocol = 'HTTP'
 		if config.server_certificate:
 			self.socket = ssl.wrap_socket(self.socket, certfile = config.server_certificate, server_side = True)
-		logging.info("started on %s:%s (%s)", self.server_name, self.server_port, self.stop_code)
+			protocol = 'HTTPS'
+		logging.info("started on %s:%s (%s)", self.server_name, self.server_port, protocol)
 		self.server_activate()
 		try:
 			self.serve_forever(1)
