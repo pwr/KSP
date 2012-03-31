@@ -36,13 +36,17 @@ KSP configuration
 
 The configuration files are `etc/config.py` and `etc/features.py`.
 
-There are two entries you **need** to modify in `etc/config.py`:
+There are three entries you **need** to modify in `etc/config.py`:
 
 * `server_url`
 
     This is the base URL under which your Kindle will make its API calls, instead of `https://_service_.amazon.com/`.
     Its value **must** be matched by the modifications you do on the device, in the `ServerConfig.conf` file
     (see `docs/devices.md`), and is the base URL the HTTPS frontend is called by (`https://_my_server_/KSP`).
+
+* `server_certificate`
+
+	Path to the SSL server certificate.  You have to set this for HTTPS to work in KSP.
 
 * `calibre_library`
 

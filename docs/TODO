@@ -2,11 +2,6 @@
 - !!! DOCUMENTATION !!!
 
 
-SECURITY
-
-- support SSL directly in KSP
-
-
 BOOK FORMATS
 
 - MOBI/AZW/PRC files imported directly into the library may have other ASIN set in their EXTH field, or no ASIN at all
