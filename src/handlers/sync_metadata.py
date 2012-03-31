@@ -82,7 +82,8 @@ class TODO_SyncMetadata (Upstream):
 			if not book.file_path:
 				continue
 			if book.last_modified > last_sync or not book.is_known_to(device) or book.needs_update_on(device):
-				logging.warn("book %s newer in library than on %s", book, device)
+				if last_sync != 0:
+					logging.warn("book %s newer in library than on %s", book, device)
 				book.mark_known_to(device)
 				x_add_update_list.appendChild(_book_node(doc, book))
 				was_updated = True

@@ -128,7 +128,8 @@ class _Book:
 		self.cde_content_type = None
 
 	def mark_on_device(self, device):
-		logging.debug("%s has book %s", device, self)
+		if self.asin not in device.books or device.books[self.asin] == 0:
+			logging.debug("%s has book %s", device, self)
 		last_downloaded = device.books.get(self.asin)
 		if not last_downloaded:
 			# we don't really know when it was downloaded, let's fudge it...
@@ -144,7 +145,8 @@ class _Book:
 		return self.asin in device.books
 
 	def mark_known_to(self, device):
-		logging.debug("%s knows about %s", device, self)
+		if self.asin not in device.books:
+			logging.debug("%s knows about %s", device, self)
 		device.books.setdefault(self.asin, 0)
 
 	def needs_update_on(self, device):
