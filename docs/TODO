@@ -27,10 +27,3 @@ EXTRA FEATURES
 	would also require writing in the calibre db, and if calibre is running, the results are unpredictable
 - (?) intercept the kindle store calls and provide info pages for books
 	there's a lot of work to do to implement the full kindle store pages
-
-
-TOOLING
-
-- (?) Script for updating the ServerConfig.conf file, so people don't have to edit it by hand and then deploy it.
-- (?) Would it be possible to make a kindlet to do the ServerConfig.conf editing on-the-device?  Would it be useful?
-- (?) cacerts importer (keytool equivalent) that would run on the Kindle.

@@ -34,7 +34,7 @@ be able to access the KSP database file.
 Kindle to KSP communication
 ---------------------------
 
-While, technically, you can use HTTP for the Kindle--KSP connection, doing so is **very unsafe**.
+While, technically, you can use HTTP for the Kindle to KSP connection, doing so is **very unsafe**.
 
 Even if you only use your Kindle in your home, the WiFi connection can be sniffed and highly sensitive information
 gathered from there -- including your device client certificate, which is sent by Amazon in API calls dealing with
@@ -42,20 +42,11 @@ Kindle registration and de-registration.
 
 Using HTTP with WiFi access points other than ones controlled by you (i.e. your home WiFi) exposes this information not
 only to the owner of that WiFi access point, but also whoever else may be listening on route to the machine running KSP.
-
-In conclusion, unless you live in the middle of nowhere, with no-one else in range of your WiFi access point (*hi C!*
-:)), and you only plan to use the Kindle's WiFi at home, **use a HTTPS frontend server**. Configuring a HTTPS server and
-updating the device to connect to it may be complicated and troublesome, but it's certainly preferable to the
-alternative.
-
-Even with the HTTPS server set-up, and your Kindle talking to it securely, the HTTPS server still uses plain HTTP when
-forwarding the calls to the KSP daemon (I plan to fix this in the future).  So ideally they should be on the same
-machine, with KSP only bound to `127.0.0.1`.
+So unless you live in the middle of nowhere, with no-one else in range of your WiFi access point (*hi C!* :)), and you
+only plan to use the Kindle's WiFi at home, **configure a SSL certificate for the KSP server**.
 
 There's no point in securing your devices database if anyone within 100m can just snoop your Kindle traffic. And you
 only have to do it once.
-
-See `docs/https_frontend.md` for details.
 
 
 KSP log files

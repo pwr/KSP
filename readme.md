@@ -37,7 +37,7 @@ It works on my machine
 ----------------------
 
 ... with my Kindle. Can't guarantee it will work on yours, with your Kindle. The configuration process may be a bit
-long, configuring the Kindle(s) is longer and more error-prone. Caveat emptor.
+long, configuring the Kindle(s) is longer and more error-prone. Caveat emptor, some assembly required, etc.
 
 
 Deployment
@@ -45,8 +45,7 @@ Deployment
 
 Deployment is rather simple; configuration needs a bit of care, though you only have to do it once.
 
-You should deploy, configure and start the KSP daemon first, along with the necessary HTTPS frontend. You can add new
-devices at any point after that.
+You should deploy, configure and start the KSP daemon first. You can add new devices at any point after that.
 
 See `docs/install.md` for software requirements and deployment steps.
 
@@ -54,14 +53,15 @@ See `docs/install.md` for software requirements and deployment steps.
 Using devices with KSP
 ----------------------
 
-To use a Kindle device with KSP, you have to change some of its internal configuration. While jailbreaking the Kindle
-for SSH access is not strictly necessary, it may help you troubleshoot if something goes wrong.
+To use a Kindle device with KSP, you have to change some of its internal configuration. There are a couple of scripts
+to do that, or you can do it by hand. It's all explained in `docs/devices.md`.
+
+While enabling SSH access on the Kindle is not strictly necessary, it may help you troubleshoot if something goes wrong.
+You can use the provided script (see `docs/kindle_ssh.md`), or use the standard USB networking hack. Your choice.
 
 **WARNING**: KSP has only been tested with a Kindle 4 Non-Touch. It *may* work on other devices, but the configuration
 can be tricky, you have to know what you are doing, and be careful. If you *do* make it work with other devices, please
 let me know :).
-
-See `docs/devices.md` for extended details.
 
 
 Calibre library management
