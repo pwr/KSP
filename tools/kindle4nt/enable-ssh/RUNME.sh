@@ -27,12 +27,15 @@ else
 	rmdir /mnt/JB-diags
 fi
 
-if grep -q 'A INPUT -i wlan0 -p tcp -m tcp --dport 22 -j ACCEPT' /etc/sysconfig/iptables; then
+IPT=/etc/sysconfig/iptables
+if grep -q 'A INPUT -i wlan0 -p tcp -m tcp --dport 22 -j ACCEPT' $IPT; then
 	echo Firewall already allowing SSH over WiFi
 else
 	echo Adding firewall rule for SSH over WiFi
 	mount_rw
-	sed -i '/^-A INPUT -i wlan0 -p tcp -m state --state RELATED,ESTABLISHED -j ACCEPT/a-A INPUT -i wlan0 -p tcp -m tcp --dport 22 -j ACCEPT' /etc/sysconfig/iptables
+	# make a backup, just in case
+	echo n | cp -ai $IPT $IPT.original 2>/dev/null
+	sed -i '/^-A INPUT -i wlan0 -p tcp -m state --state RELATED,ESTABLISHED -j ACCEPT/a-A INPUT -i wlan0 -p tcp -m tcp --dport 22 -j ACCEPT' $IPT
 fi
 
 mount_ro

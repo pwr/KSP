@@ -1,0 +1,5 @@
+#!/bin/sh
+J=/tmp/keytool.jar.$$
+tail -n+6 "$0" > $J
+exec /usr/java/bin/cvm -jar "$J" "$@"
+# Jar file follows
