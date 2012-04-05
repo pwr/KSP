@@ -5,26 +5,28 @@ import config, features
 
 _CONTENT_TYPE_MOBIPOCKET = 'application/x-mobipocket-ebook'
 _FORMATS_CONTENT_TYPE = {
-	'MOBI' : _CONTENT_TYPE_MOBIPOCKET,
-	'AZW'  : _CONTENT_TYPE_MOBIPOCKET,
-	# 'AZW1' : 'application/x-topaz-ebook',
-	# 'AZW3' : 'application/x-mobi8-ebook',
-	'PRC'  : _CONTENT_TYPE_MOBIPOCKET,
-	# 'PDF'  : 'application/pdf',
-	# 'HTML' : 'text/html',
-	# 'TXT'  : 'text/plain',
-	# 'EPUB' : 'application/epub+zip',
+	'EPUB'	: 'application/epub+zip',
+	'MOBI'	: _CONTENT_TYPE_MOBIPOCKET,
+	'AZW'	: _CONTENT_TYPE_MOBIPOCKET,
+	# 'AZW1'	: 'application/x-topaz-ebook',
+	# 'AZW3'	: 'application/x-mobi8-ebook',
+	'PRC'	: _CONTENT_TYPE_MOBIPOCKET,
+	'PDF'	: 'application/pdf',
+	'HTML'	: 'text/html',
+	'TXT'	: 'text/plain',
+	'CBZ'	: 'application/zip',
 }
 _FORMATS_CDE_TYPE = {
-	'MOBI' : 'EBOK',
-	'AZW'  : 'EBOK',
-	# 'AZW1' : 'EBOK',
-	# 'AZW3' : 'EBOK',
-	'PRC'  : 'EBOK',
-	# 'PDF'  : 'PDOC',
-	# 'HTML' : 'PDOC',
-	# 'TXT'  : 'PDOC',
-	# 'EPUB' : 'EBOK',
+	'EPUB'	: 'EBOK',
+	'MOBI'	: 'EBOK',
+	'AZW'	: 'EBOK',
+	# 'AZW1'	: 'EBOK',
+	# 'AZW3'	: 'EBOK',
+	'PRC'	: 'EBOK',
+	'PDF'	: 'PDOC',
+	'HTML'	: 'PDOC',
+	'TXT'	: 'PDOC',
+	'CBZ'	: 'PDOC',
 }
 
 #	'MBP'  : ( '????', 'application/x-mobipocket-sidecar' ),
@@ -42,11 +44,12 @@ _FORMATS_CDE_TYPE = {
 # 	'HAN'  : ( '????', 'application/json' ),
 # 	'APG'  : ( '????', 'application/x-apg-zip' ),
 
-_FORMAT_PRIORITIES = [ 'MOBI', 'AZW', 'PRC', 'PDF', 'EPUB' ]
 if hasattr(features, 'supported_formats'):
 	features.supported_formats = [ k.upper() for k in features.supported_formats if k.upper() in _FORMATS_CONTENT_TYPE ]
 else:
-	features.supported_formats = [ k for k in _FORMAT_PRIORITIES if k in _FORMATS_CONTENT_TYPE ]
+	_SUPPORTED_FORMATS = [ 'MOBI', 'AZW', 'PRC', 'PDF', 'CBZ', 'HTML', 'TXT' ]
+	features.supported_formats = [ k for k in _SUPPORTED_FORMATS if k in _FORMATS_CONTENT_TYPE ]
+	del _SUPPORTED_FORMATS
 logging.debug("supported formats: %s", features.supported_formats)
 
 # we need to have features.supported_formats processed before importing calibre_db
