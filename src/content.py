@@ -26,11 +26,11 @@ def date_iso(timestamp = None):
 	return time.strftime('%Y-%m-%dT%H:%M:%S+0000', time.gmtime(timestamp))
 
 def read_chunked(stream):
-	'''
+	"""
 	reads a chunked body from the stream
 	does not support chunk extensions (;token=value)
 	does not support trailer headers
-	'''
+	"""
 	size = stream.readline(100) # the chunk size is on a single line
 	size = 0 if size == b'0\r\n' else int(size, 16)
 	if size == 0:
@@ -49,7 +49,7 @@ def decompress(data, encoding = None):
 		return gzip.decompress(data)
 	raise Exception("decompress: unknown encoding", encoding)
 
-def compress(data, encoding):
+def compress(data, encoding = None):
 	if not encoding:
 		return data
 	if 'gzip' == encoding.lower():
@@ -57,6 +57,7 @@ def compress(data, encoding):
 	raise Exception("compress: unknown encoding", encoding)
 
 def copy_streams(stream_in, stream_out, max_bytes, buffer_size = 32 * 1024):
+	# sendfile would be nice, but it's not cross-platform
 	if max_bytes < 0:
 		raise Exception("max_bytes must be positive")
 	if max_bytes == 0:

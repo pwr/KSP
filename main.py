@@ -32,7 +32,7 @@ def _args():
 	p.add_argument('--console', dest = 'console', action = 'store_const', const = True, default = False,
 								help = "Log to the console instead of a log file")
 	p.add_argument('--control-pipe', dest = 'control_pipe',
-								help = "Use the give file to read server control commands")
+								help = "Use the given pipe to read server control commands")
 	return p.parse_args()
 
 import logging

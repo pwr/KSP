@@ -11,7 +11,7 @@ class DummyResponse (object):
 		self.body = data
 		self.length = 0 if data is None else len(data)
 
-		self.headers = dict( {} if headers is None else headers )
+		self.headers = {} if headers is None else dict(headers)
 		self.headers['Server'] = 'Amazon Web Server'
 		self.headers['Date'] = date_header()
 		# if data is not None:
@@ -25,8 +25,7 @@ class DummyResponse (object):
 		return self.length
 
 	def __str__(self):
-		hstr = str_headers(self.headers.items())
-		t = "[DUMMY] %d %s (%d) %s" % (self.status, self.reason, self.length, hstr)
+		t = "[DUMMY] %d %s (%d) %s" % (self.status, self.reason, self.length, str_headers(self.headers.items()))
 		if self.body:
 			t += "\n" + str_(self.body)
 		return t
