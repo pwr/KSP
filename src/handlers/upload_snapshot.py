@@ -54,10 +54,18 @@ class CDE_UploadSnapshot (Upstream):
 		for line in request.body.splitlines(True):
 			if line.startswith(b'Type=EBOK,Key=') and len(line) == 50 + (line[-1] == ord('\n')):
 				asin = str(line[14:50], 'ascii') # SHOULD be uuid
-				books_on_device.add(asin)
-				if features.scrub_uploads:
-					was_updated = True
-					continue
+				if is_uuid(asin):
+					books_on_device.add(asin)
+					if features.scrub_uploads:
+						was_updated = True
+						continue
+			elif line.startswith(b'Type=PDOC,Key=') and len(line) == 46 + (line[-1] == ord('\n')):
+				asin = str(line[14:46], 'ascii')
+				if is_uuid(asin):
+					books_on_device.add(asin)
+					if features.scrub_uploads:
+						was_updated = True
+						continue
 			lines.append(line)
 
 		if books_on_device:

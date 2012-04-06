@@ -17,12 +17,20 @@ WWW = 'www'
 #STORE_PATH = '/gp/g7g/xyml1/'
 
 def is_uuid(text):
-	if not text or len(text) != 36:
+	def is_hex(text):
+		import string
+		if not text:
+			return True
+		return text[0] in string.hexdigits and is_hex(text[1:])
+
+	if not text:
 		return False
-	if text[8] != '-' or text[13] != '-' or text[18] != '-' or text[23] != '-':
-		return False
+	if len(text) == 36 and text[8] == '-' and text[13] == '-' and text[18] == '-' and text[23] == '-':
+		return True # very unlikely not to be # is_hex(text.replace('-', ''))
+	if len(text) == 32:
+		return is_hex(text)
 	# good enough
-	return True
+	return False
 
 from .dummy import *
 from .upstream import *

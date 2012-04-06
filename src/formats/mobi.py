@@ -2,7 +2,7 @@ import os.path, logging
 import struct
 
 
-def read_cde_type(asin, path):
+def read_cde_type(path, asin):
 	"""reads the CDE_TYPE record from the MOBI file"""
 	if not os.path.isfile(path):
 		return None
@@ -57,7 +57,7 @@ def read_cde_type(asin, path):
 		return None
 	if not cde_type:
 		logging.warn("%s: no CDE_TYPE record", path)
-		return 'EBOK'
+		return None
 	if cde_type not in [ 'EBOK', 'PDOC' ]:
 		logging.warn("%s: unexpected CDE_TYPE '%s'", cde_type)
 		return None

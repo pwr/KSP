@@ -102,6 +102,9 @@ def main():
 	except:
 		logging.exception("")
 	finally:
+		if pipe_file:
+			try: pipe_file.close()
+			except: pass
 		devices.save_all()
 
 	logging.info("%s shutdown", '*' * 20)

@@ -1,16 +1,15 @@
 import os.path, logging, time
 
-import config, features
+import config, features, formats
 
 
-_CONTENT_TYPE_MOBIPOCKET = 'application/x-mobipocket-ebook'
 _FORMATS_CONTENT_TYPE = {
 	'EPUB'	: 'application/epub+zip',
-	'MOBI'	: _CONTENT_TYPE_MOBIPOCKET,
-	'AZW'	: _CONTENT_TYPE_MOBIPOCKET,
+	'MOBI'	: 'application/x-mobipocket-ebook',
+	'AZW'	: 'application/x-mobipocket-ebook',
 	# 'AZW1'	: 'application/x-topaz-ebook',
 	# 'AZW3'	: 'application/x-mobi8-ebook',
-	'PRC'	: _CONTENT_TYPE_MOBIPOCKET,
+	'PRC'	: 'application/x-mobipocket-ebook',
 	'PDF'	: 'application/pdf',
 	'HTML'	: 'text/html',
 	'TXT'	: 'text/plain',
@@ -59,6 +58,7 @@ import calibre_db, formats.mobi
 class _Book:
 	def __init__(self, book_dict, timestamp):
 		self.asin = book_dict['uuid']
+		self.uuid = self.asin
 		self.added_to_library = book_dict['added_to_library']
 		self.last_modified = -1
 		self.file_path = None
@@ -82,6 +82,12 @@ class _Book:
 		self.mbp_path = None
 		self._ebook_file(book_dict['path'], book_dict["files"])
 
+		if self.cde_content_type == 'PDOC':
+			if len(self.asin) == 36:
+				self.asin = self.asin.replace('-', '')
+		elif self.cde_content_type == 'EBOK' and len(self.asin) == 32:
+			raise Exception("book %s had type PDOC, can't switch to EBOK")
+
 		# if self.file_path:
 		# mbp_path, ext = os.path.splitext(self.file_path)
 		# mbp_path += '.mbp'
@@ -93,7 +99,7 @@ class _Book:
 			logging.debug("book updated %s", self)
 
 	def _ebook_file(self, book_path, files_dict):
-		global _FORMATS_CONTENT_TYPE, _CONTENT_TYPE_MOBIPOCKET, _FORMATS_CDE_TYPE
+		global _FORMATS_CONTENT_TYPE, _FORMATS_CDE_TYPE
 
 		for format, content_type in _FORMATS_CONTENT_TYPE.items():
 			name = files_dict.get(format)
@@ -110,10 +116,10 @@ class _Book:
 				# we're doing an update of an already-loaded book, and the file did not change
 				return
 
-			if content_type == _CONTENT_TYPE_MOBIPOCKET:
-				cde_type = formats.mobi.read_cde_type(self.asin, path)
+			if formats.handles(content_type):
+				cde_type = formats.read_cde_type(path, content_type, self.asin)
 				if not cde_type:
-					continue;
+					continue
 				self.cde_content_type = cde_type
 			else:
 				self.cde_content_type = _FORMATS_CDE_TYPE[format]
@@ -159,7 +165,7 @@ class _Book:
 		return last_downloaded and self.last_modified > last_downloaded
 
 	def __str__(self):
-		return '{%s (%s) modified %d, %s %d}' % ( self.title, self.asin[:9], self.last_modified, self.file_path, self.file_size )
+		return '{%s (%s~%s) modified %d, %s %d}' % ( self.title, self.asin[:14], self.cde_content_type, self.last_modified, self.file_path, self.file_size )
 
 
 def missing_from_library(asin, device):
@@ -171,7 +177,10 @@ def missing_from_library(asin, device):
 def _book_refresh(asin, book, book_dict, timestamp):
 	global _books
 	if not book_dict:
-		book_dict = calibre_db.reload(asin)
+		uuid = asin
+		if len(uuid) == 32:
+			uuid = '%s-%s-%s-%s-%s' % (asin[:8], asin[8:12], asin[12:16], asin[16:20], asin[20:])
+		book_dict = calibre_db.reload(uuid)
 	if not book_dict:
 		logging.debug("book %s not in library", asin)
 		# no book_dict, means it's not even in the calibre database, so we can forget about it
@@ -181,7 +190,7 @@ def _book_refresh(asin, book, book_dict, timestamp):
 		book.update(book_dict, timestamp)
 	else:
 		book = _Book(book_dict, timestamp)
-		_books[asin] = book
+		_books[book.asin] = book
 	return book
 
 def books(refresh = False):
@@ -200,7 +209,10 @@ def books(refresh = False):
 			while book_dicts:
 				book_id, book_dict = book_dicts.popitem()
 				asin = book_dict['uuid']
-				_book_refresh(asin, _books.get(asin), book_dict, timestamp) # adds it to _books as well
+				book = _books.get(asin)
+				if not book:
+					book = _books.get(asin.replace('-', ''))
+				_book_refresh(asin, book, book_dict, timestamp) # adds it to _books as well
 
 			for book in list(_books.values()):
 				if book._timestamp != timestamp: # removed from the library

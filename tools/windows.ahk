@@ -66,6 +66,10 @@ _watch: ; watches for the python process and updates the menu when necessary
 		Menu Tray, Enable, Start Daemon
 		Menu Tray, Disable, Stop Daemon
 		Menu Tray, Disable, Restart Daemon
+		if (PIPE) {
+			DllCall("CloseHandle", ptr, PIPE)
+			PIPE := 0
+		}
 	}
 	return
 
