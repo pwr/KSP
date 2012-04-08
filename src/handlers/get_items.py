@@ -51,7 +51,7 @@ class TODO_GetItems (Upstream):
 
 		if features.download_updated_books:
 			for book in calibre.books().values():
-				if book.needs_update_on(device):
+				if book.needs_update_on(device) and book.cde_content_type == 'EBOK': # PDOC updates are not supported ATM
 					logging.warn("book %s updated in library, telling device %s to download it again", book, device)
 					# <item action="GET" is_incremental="false" key="asin" priority="600" sequence="0" type="EBOK">title</item>
 					self.add_item(x_items, 'GET', book.cde_content_type, book.asin, book.title, forced = True) # book.title)

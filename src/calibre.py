@@ -174,17 +174,15 @@ def missing_from_library(asin, device):
 		logging.debug("%s forgetting about %s", device, asin)
 		device.books.pop(asin, None)
 
-def _book_refresh(asin, book, book_dict, timestamp):
+def _book_refresh(uuid, asin, book, book_dict, timestamp):
 	global _books
 	if not book_dict:
-		uuid = asin
-		if len(uuid) == 32:
-			uuid = '%s-%s-%s-%s-%s' % (asin[:8], asin[8:12], asin[12:16], asin[16:20], asin[20:])
 		book_dict = calibre_db.reload(uuid)
 	if not book_dict:
-		logging.debug("book %s not in library", asin)
+		logging.debug("book %s not in library", uuid)
 		# no book_dict, means it's not even in the calibre database, so we can forget about it
-		_books.pop(asin, None) # this should be an exception-free 'del'
+		_books.pop(uuid, None) # this should be an exception-free 'del'
+		_books.pop(asin, None)
 		return None
 	if book:
 		book.update(book_dict, timestamp)
@@ -208,11 +206,15 @@ def books(refresh = False):
 
 			while book_dicts:
 				book_id, book_dict = book_dicts.popitem()
-				asin = book_dict['uuid']
+				uuid = book_dict['uuid']
+				asin = uuid
 				book = _books.get(asin)
 				if not book:
-					book = _books.get(asin.replace('-', ''))
-				_book_refresh(asin, book, book_dict, timestamp) # adds it to _books as well
+					asin2 = asin.replace('-', '')
+					book = _books.get(asin2)
+					if book:
+						asin = book.asin
+				_book_refresh(uuid, asin, book, book_dict, timestamp) # adds it to _books as well
 
 			for book in list(_books.values()):
 				if book._timestamp != timestamp: # removed from the library
@@ -230,9 +232,13 @@ def book(asin, refresh = False):
 	gets the Book for a given asin, optionally updating it from the calibre db first
 	"""
 	global _books
+	uuid = asin
 	book = _books.get(asin)
+	if book:
+		uuid = book.uuid
+		asin = book.asin
 	if refresh or not book:
-		book = _book_refresh(asin, book, None, 0)
+		book = _book_refresh(uuid, asin, book, None, 0)
 	return book
 
 def _collections(asin_mappings):
