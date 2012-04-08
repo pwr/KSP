@@ -11,9 +11,9 @@ _FORMATS_CONTENT_TYPE = {
 	# 'AZW3'	: 'application/x-mobi8-ebook',
 	'PRC'	: 'application/x-mobipocket-ebook',
 	'PDF'	: 'application/pdf',
-	'HTML'	: 'text/html',
-	'TXT'	: 'text/plain',
-	'CBZ'	: 'application/zip',
+	# 'HTML'	: 'text/html',
+	# 'TXT'	: 'text/plain',
+	# 'CBZ'	: 'application/zip',
 }
 _FORMATS_CDE_TYPE = {
 	'EPUB'	: 'EBOK',
@@ -23,9 +23,9 @@ _FORMATS_CDE_TYPE = {
 	# 'AZW3'	: 'EBOK',
 	'PRC'	: 'EBOK',
 	'PDF'	: 'PDOC',
-	'HTML'	: 'PDOC',
-	'TXT'	: 'PDOC',
-	'CBZ'	: 'PDOC',
+	# 'HTML'	: 'PDOC',
+	# 'TXT'	: 'PDOC',
+	# 'CBZ'	: 'PDOC',
 }
 
 #	'MBP'  : ( '????', 'application/x-mobipocket-sidecar' ),
@@ -46,7 +46,7 @@ _FORMATS_CDE_TYPE = {
 if hasattr(features, 'supported_formats'):
 	features.supported_formats = [ k.upper() for k in features.supported_formats if k.upper() in _FORMATS_CONTENT_TYPE ]
 else:
-	_SUPPORTED_FORMATS = [ 'MOBI', 'AZW', 'PRC', 'PDF', 'CBZ', 'HTML', 'TXT' ]
+	_SUPPORTED_FORMATS = [ 'MOBI', 'AZW', 'PRC', 'PDF' ]
 	features.supported_formats = [ k for k in _SUPPORTED_FORMATS if k in _FORMATS_CONTENT_TYPE ]
 	del _SUPPORTED_FORMATS
 logging.debug("supported formats: %s", features.supported_formats)
