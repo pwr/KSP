@@ -118,6 +118,6 @@ class Server (ThreadingMixIn, HTTPServer):
 	def handle_error(self, request, client_address):
 		etype, evalue = sys.exc_info()[:2]
 		logging.warn("exception %s %s", etype, evalue)
-		if etype == socket.error and evalue == 10054:
+		if etype == socket.error and evalue.errno == 10054:
 			return
 		logging.exception("request from %s : %s", client_address, request)
