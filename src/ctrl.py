@@ -15,3 +15,19 @@ def start_server_controller(server, pipe_file, pipe_path):
 	ctrl_thread.daemon = True
 	ctrl_thread.start()
 	logging.info("started control thread %s listening on control pipe %s", ctrl_thread, pipe_path)
+
+
+from signal import signal, getsignal, SIGINT, SIGTERM, SIG_DFL
+
+#def check_signals():
+#	logging.debug("SIGINT = %s", getsignal(SIGINT))
+#	logging.debug("SIGTERM = %s", getsignal(SIGTERM))
+
+def signal_handler(sig, frame):
+	logging.debug("signal %s frame %s", sig, frame)
+	if sig == 15:
+		signal(SIGTERM, SIG_DFL)
+
+#signal(SIGINT, signal_handler)
+signal(SIGTERM, signal_handler)
+

@@ -53,7 +53,7 @@ class DeviceInfo:
 # devices_db module functions
 
 def _execute(query, parameters = ()):
-	logging.debug("execute %s %s", query, parameters)
+	# logging.debug("execute %s %s", query, parameters)
 	with sqlite3(config.db_path_devices) as db:
 		if type(parameters) == tuple: # one query, simple parameters
 			db.execute(query, parameters)

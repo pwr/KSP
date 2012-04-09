@@ -105,10 +105,13 @@ class Server (ThreadingMixIn, HTTPServer):
 		if config.server_certificate:
 			self.socket = ssl.wrap_socket(self.socket, certfile = config.server_certificate, server_side = True)
 			protocol = 'HTTPS'
-		logging.info("started on %s:%s (%s)", self.server_name, self.server_port, protocol)
 		self.server_activate()
+		logging.info("started on %s:%s (%s)", self.server_name, self.server_port, protocol)
+		import select
 		try:
 			self.serve_forever(1)
+		except select.error as err:
+			logging.critical("select.error %s", err)
 		except KeyboardInterrupt: # ^C
 			logging.warn("received ^C")
 			pass
@@ -118,6 +121,6 @@ class Server (ThreadingMixIn, HTTPServer):
 	def handle_error(self, request, client_address):
 		etype, evalue = sys.exc_info()[:2]
 		logging.warn("exception %s %s", etype, evalue)
-		if etype == socket.error and evalue.errno == 10054:
+		if etype == socket.error and evalue.errno in (104, 10054):
 			return
 		logging.exception("request from %s : %s", client_address, request)

@@ -79,13 +79,13 @@ def main():
 	config.database_path = abspath(config.database_path, True)
 	config.server_certificate = abspath(config.server_certificate)
 
+	# add the src/ folder to the import path
+	sys.path.append(abspath('src'))
+
 	# doing this here because if the pipe does not exit, we want to fail fast,
 	# before we load the devices and calibre databases
 	import ctrl
 	pipe_file = None if not args.control_pipe else open(args.control_pipe, 'rb')
-
-	# add the src/ folder to the import path
-	sys.path.append(abspath('src'))
 
 	try:
 		logging.info("%s start-up", '*' * 20)
@@ -113,4 +113,4 @@ def main():
 
 if __name__ == '__main__':
 	main()
-	sys.exit()
+	os._exit(0)
