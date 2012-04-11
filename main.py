@@ -43,7 +43,7 @@ def _make_root_logger(stream, log_level = 'NOTSET'):
 	handler.setFormatter(fmt)
 	# handler.addFilter(lambda logrecord: logrecord.name != 'access')
 	log = logging.getLogger()
-	log.setLevel(logging.__getattribute__(log_level.upper()))
+	log.setLevel(getattr(logging, log_level.upper()))
 	log.addHandler(handler)
 	logging.captureWarnings(True)
 	return log

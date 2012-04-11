@@ -1,8 +1,9 @@
-import logging, time, re
+import logging
 import xml.dom.minidom as minidom
 
-from handlers import Upstream, DummyResponse, is_uuid
-from handlers import TODO, TODO_PATH
+from handlers.upstream import Upstream
+from handlers.dummy import DummyResponse
+from handlers import is_uuid, TODO, TODO_PATH
 import calibre, qxml
 import config, features
 
@@ -46,12 +47,12 @@ class TODO_GetItems (Upstream):
 
 		# rewrite urls
 		was_updated = False
-		for x_item in qxml.list_children(x_items, 'item'):
+		for x_item in qxml.iter_children(x_items, 'item'):
 			was_updated |= self.filter_item(x_items, x_item)
 
 		if features.download_updated_books:
 			for book in calibre.books().values():
-				if book.needs_update_on(device) and book.cde_content_type == 'EBOK': # PDOC updates are not supported ATM
+				if book.needs_update_on(device) and book.cde_content_type in ('EBOK', ): # PDOC updates are not supported ATM
 					logging.warn("book %s updated in library, telling device %s to download it again", book, device)
 					# <item action="GET" is_incremental="false" key="asin" priority="600" sequence="0" type="EBOK">title</item>
 					self.add_item(x_items, 'GET', book.cde_content_type, book.asin, book.title, forced = True) # book.title)
@@ -82,25 +83,26 @@ class TODO_GetItems (Upstream):
 	def filter_item(self, x_items, x_item):
 		action = x_item.getAttribute('action')
 		item_type = x_item.getAttribute('type')
-		if action == 'SET':
-			if item_type == 'SCFG':
-				item_key = x_item.getAttribute('key')
-				if item_key.startswith('WhiteList - ') or item_key.startswith('whitelist-'):
-					value = x_item.firstChild.data
-					if value.startswith('wan.proxy.non_proxy_hosts.'):
-						x_item.firstChild.data = value + "|" + config.server_hostname
-						return True
-				# elif item_key.startswith('MP-migration-store-config-'):
-				# 	value = x_item.firstChild.data
-				# 	if value.startswith('url.store='):
-				# 		x_item.firstChild.data = self.rewrite_url(value)
-				# 		return True
-				# elif item_key.startswith('MP-migration-website-config-'):
-				# 	value = x_item.firstChild.data
-				# 	if value.startswith('url.website='):
-				# 		x_item.firstChild.data = 'url.website=' + config.server_url
-				# 		return True
-			return False
+
+		# if action == 'SET':
+		# 	if item_type == 'SCFG':
+		# 		item_key = x_item.getAttribute('key')
+		# 		if item_key.startswith('WhiteList - ') or item_key.startswith('whitelist-'):
+		# 			value = x_item.firstChild.data
+		# 			if value.startswith('wan.proxy.non_proxy_hosts.'):
+		# 				x_item.firstChild.data = value + "|" + config.server_hostname
+		# 				return True
+		# 		# elif item_key.startswith('MP-migration-store-config-'):
+		# 		# 	value = x_item.firstChild.data
+		# 		# 	if value.startswith('url.store='):
+		# 		# 		x_item.firstChild.data = self.rewrite_url(value)
+		# 		# 		return True
+		# 		# elif item_key.startswith('MP-migration-website-config-'):
+		# 		# 	value = x_item.firstChild.data
+		# 		# 	if value.startswith('url.website='):
+		# 		# 		x_item.firstChild.data = 'url.website=' + config.server_url
+		# 		# 		return True
+		# 	return False
 
 		if action == 'UPLOAD':
 			if item_type in ['MESG', 'LOGS'] and not features.allow_logs_upload:

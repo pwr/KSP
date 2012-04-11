@@ -1,10 +1,11 @@
 import logging
 import xml.dom.minidom as minidom
 
-from handlers import Upstream, ExceptionResponse, is_uuid
-from handlers import CDE, CDE_PATH
+from handlers.upstream import Upstream
+from handlers.dummy import DummyResponse, ExceptionResponse
+from handlers import is_uuid, CDE, CDE_PATH
 from content import decompress, compress
-import postprocess, formats.mbp
+import postprocess, formats, sidecar_db
 import calibre, qxml
 
 
@@ -16,7 +17,33 @@ def process_sidecar_upload(device, book_ids, book_nodes):
 			book.mark_on_device(device)
 
 	for x_book in book_nodes:
-		formats.mbp.process_xbook(x_book)
+		asin = x_book.getAttribute('key')
+		book = calibre.book(asin)
+		if not book:
+			logging.warn("sidecar upload for unknown book %s", asin)
+			continue
+
+		for kind in ('last_read', 'bookmark', 'highlight', 'note'):
+			for x_item in qxml.iter_children(x_book, kind):
+				timestamp = x_item.getAttribute('timestamp') or None
+				begin = x_item.getAttribute('begin') or None
+				end = x_item.getAttribute('end') or begin
+				pos = x_item.getAttribute('pos') or None
+				state = x_item.getAttribute('state') or None
+				text = qxml.get_text(x_item) if kind == 'note' else None
+
+				if kind == 'last_read':
+					sidecar_db.last_read(asin, timestamp, begin, pos, state)
+				else:
+					action = x_item.getAttribute('action')
+					if action == 'create':
+						sidecar_db.create(asin, kind, timestamp, begin, end, pos, state, text)
+					elif action == 'delete':
+						sidecar_db.delete(asin, kind, timestamp, begin, end)
+					elif action == 'modify':
+						sidecar_db.modify(asin, kind, timestamp, begin, end, text)
+					else:
+						logging.error("unknown sidecar action %s: %s", action, x_item)
 
 
 class CDE_Sidecar (Upstream):
@@ -29,13 +56,19 @@ class CDE_Sidecar (Upstream):
 
 		if request.command == 'GET':
 			q = request.get_query_params()
-			key = q.get('key')
-			if q.get('type') == 'EBOK' and is_uuid(key):
-				# MBP download
-				return formats.mbp.response(key)
+			asin = q.get('key')
+			if is_uuid(asin, q.get('type')):
+				book = calibre.book(asin)
+				if not book:
+					logging.warn("tried to download sidecar for unknown book %s", asin)
+					return None
+				sidecar_data = formats.sidecar(book)
+				if sidecar_data:
+					content_type, data = sidecar_data
+					return DummyResponse(200, { 'Content-Type': content_type }, data)
+				return None
 		elif request.command == 'POST':
 			body = decompress(request.body, request.content_encoding)
-
 			with minidom.parseString(body) as doc:
 				if self.process_xml(request, doc, device):
 					xml = doc.toxml('UTF-8')
@@ -49,17 +82,17 @@ class CDE_Sidecar (Upstream):
 		was_modified = False
 
 		x_annotations = qxml.get_child(doc, 'annotations')
-		for x_book in qxml.list_children(x_annotations, 'book'):
+		for x_book in qxml.iter_children(x_annotations, 'book'):
 			asin = x_book.getAttribute('key')
-			if is_uuid(asin):
+			if is_uuid(asin, x_book.getAttribute('type')):
 				books_on_device.add(asin)
 				x_annotations.removeChild(x_book)
 				book_nodes.append(x_book)
 				was_modified = True
-		for x_collection in qxml.list_children(x_annotations, 'collection'):
-			for x_book in qxml.list_children(x_collection, 'book'):
+		for x_collection in qxml.iter_children(x_annotations, 'collection'):
+			for x_book in qxml.iter_children(x_collection, 'book'):
 				asin = x_book.getAttribute('id')
-				if is_uuid(asin) and 'add' == x_book.getAttribute('action'):
+				if is_uuid(asin, x_book.getAttribute('type')) and 'add' == x_book.getAttribute('action'):
 					books_on_device.add(asin)
 
 		if books_on_device or book_nodes:

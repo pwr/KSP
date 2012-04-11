@@ -1,8 +1,8 @@
-import logging, socket, time
+import logging, socket
 from http.client import HTTPSConnection, HTTPException, _CS_IDLE
 from threading import RLock
 
-from .dummy import Dummy
+from handlers.dummy import Dummy
 from wrappers import wrap_response
 
 

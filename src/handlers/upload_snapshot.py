@@ -1,7 +1,8 @@
 import logging
 
-from handlers import Upstream, DummyResponse, is_uuid
-from handlers import CDE, CDE_PATH
+from handlers.upstream import Upstream
+from handlers.dummy import DummyResponse
+from handlers import is_uuid, CDE, CDE_PATH
 import calibre, devices, postprocess
 import features
 
@@ -54,14 +55,14 @@ class CDE_UploadSnapshot (Upstream):
 		for line in request.body.splitlines(True):
 			if line.startswith(b'Type=EBOK,Key=') and len(line) == 50 + (line[-1] == ord('\n')):
 				asin = str(line[14:50], 'ascii') # SHOULD be uuid
-				if is_uuid(asin):
+				if is_uuid(asin, 'EBOK'):
 					books_on_device.add(asin)
 					if features.scrub_uploads:
 						was_updated = True
 						continue
 			elif line.startswith(b'Type=PDOC,Key=') and len(line) == 46 + (line[-1] == ord('\n')):
 				asin = str(line[14:46], 'ascii')
-				if is_uuid(asin):
+				if is_uuid(asin, 'PDOC'):
 					books_on_device.add(asin)
 					if features.scrub_uploads:
 						was_updated = True

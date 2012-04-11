@@ -66,11 +66,10 @@ class Dummy (object):
 			if not _matches(request.path, self.expected_path):
 				return False
 		else:
-			if not [ p for p in self.expected_path if _matches(request.path, p) ]:
+			if not any(( _matches(request.path, p) for p in self.expected_path )):
 				return False
-		if self.expected_command:
-			if request.command != self.expected_command:
-				return False
+		if self.expected_command and request.command != self.expected_command:
+			return False
 		return True
 
 	def call(self, request, device):

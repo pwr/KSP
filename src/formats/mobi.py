@@ -58,7 +58,7 @@ def read_cde_type(path, asin):
 	if not cde_type:
 		logging.warn("%s: no CDE_TYPE record", path)
 		return None
-	if cde_type not in [ 'EBOK', 'PDOC' ]:
+	if cde_type not in ( 'EBOK', 'PDOC' ):
 		logging.warn("%s: unexpected CDE_TYPE '%s'", cde_type)
 		return None
 	# logging.debug("%s: confirmed ASIN %s with CDE TYPE %s", path, asin, cde_type)

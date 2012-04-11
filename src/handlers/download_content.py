@@ -1,7 +1,9 @@
-import os, os.path, logging, time, re
+import os.path, logging
+from re import compile as re_compile
 
-from handlers import Upstream, DummyResponse, is_uuid
-from handlers import CDE, CDE_PATH
+from handlers.upstream import Upstream
+from handlers.dummy import DummyResponse
+from handlers import is_uuid, CDE, CDE_PATH
 from content import copy_streams, str_headers
 import calibre
 
@@ -35,9 +37,8 @@ class _BookResponse (DummyResponse):
 
 		self.headers['Content-Disposition'] = 'attachment; filename="%s"' % os.path.basename(book.file_path)
 		self.headers['Content-Type'] = book.content_type
-		# TODO no point in enabling this until I figure out MBP uploads
-		# if book.mbp_path:
-		# 	self.headers['Hint-Sidecar-Download'] = '1'
+		if book.has_sidecar():
+			self.headers['Hint-Sidecar-Download'] = '1'
 
 	def write_to(self, stream_out):
 		bytes_count = 0
@@ -51,7 +52,7 @@ class _BookResponse (DummyResponse):
 		return "200 OK %s\n%s [%s] %d-%d/%d" % ( str_headers(self.headers.items()), self.book, self.book.file_path, self.range_begin, self.range_end, self.length )
 
 
-_RANGE_FORMAT = re.compile('^bytes=([0-9]*)-([0-9]*)$')
+_RANGE_FORMAT = re_compile('^bytes=([0-9]*)-([0-9]*)$')
 
 def _range(range_header, max_size):
 	if range_header is None:
@@ -60,7 +61,7 @@ def _range(range_header, max_size):
 	if not range_header.startswith('bytes='):
 		raise ExceptionResponse(416) # 'Requested Range Not Satisfiable'
 
-	global _RANGE_FORMAT
+	# global _RANGE_FORMAT
 	m = _RANGE_FORMAT.match(range_header)
 	if m is None:
 		raise ExceptionResponse(416) # 'Requested Range Not Satisfiable'
@@ -96,9 +97,10 @@ class CDE_DownloadContent (Upstream):
 
 	def call(self, request, device):
 		q = request.get_query_params()
-		if 'key' in q and q.get('type') in ['EBOK', 'PDOC']:
+		t = q.get('type')
+		if 'key' in q and t in ['EBOK', 'PDOC']:
 			key = q['key']
-			if is_uuid(key): # very likely comes from our library
+			if is_uuid(key, t): # very likely comes from our library
 				return self.book_response(key, device, request.headers.get('Range'))
 
 		redirect_header = { 'Location': 'https://cde-g7g.amazon.com/' + request.path }

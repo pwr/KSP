@@ -9,6 +9,10 @@ if test -z "$PYBIN"; then
 	exit 1
 fi
 
+export TMPDIR=$HOME/.tmp
+mkdir -p $TMPDIR
+
+
 PIDFILE=~/.ksp.pid
 MAIN=~/ksp/main.py
 if ! test -r "$MAIN"; then

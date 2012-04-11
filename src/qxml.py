@@ -4,33 +4,32 @@ import logging
 
 def get_child(parent_node, tag_name):
 	if parent_node is None:
-		logging.warn("get_child: no parent_node")
+		# logging.warn("get_child: no parent_node")
 		return None
-	for n in parent_node.childNodes:
-		if n.nodeType != Node.ELEMENT_NODE:
-			continue
-		if n.tagName == tag_name:
-			return n
-	logging.warn("get_child: no %s node in %s", tag_name, parent_node)
-	return None
+	node = ( n for n in parent_node.childNodes if n.nodeType == Node.ELEMENT_NODE and n.tagName == tag_name )
+	# if not node:
+	# 	logging.warn("get_child: no %s node in %s", tag_name, parent_node)
+	return next(node, None)
 
 
 def list_children(parent_node, tag_name):
-	result = []
 	if parent_node is None:
-		logging.warn("list_children: no parent_node")
-		return result
-	for n in parent_node.childNodes:
-		if n.nodeType != Node.ELEMENT_NODE:
-			continue
-		if n.tagName == tag_name:
-			result.append(n)
-	return result
+		# logging.warn("list_children: no parent_node")
+		return []
+	return [ n for n in parent_node.childNodes if n.nodeType == Node.ELEMENT_NODE and n.tagName == tag_name ]
 
+def iter_children(parent_node, tag_name):
+	if parent_node is None:
+		# logging.warn("iter_children: no parent_node")
+		pass
+	else:
+		for n in parent_node.childNodes:
+			if n.nodeType == Node.ELEMENT_NODE and n.tagName == tag_name:
+				yield n
 
 def add_child(parent_node, tag_name, text_value = None):
 	if parent_node is None:
-		logging.warn("add_child: no parent_node")
+		# logging.warn("add_child: no parent_node")
 		return None
 	node = parent_node.ownerDocument.createElement(tag_name)
 	parent_node.appendChild(node)

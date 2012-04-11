@@ -1,7 +1,8 @@
-import logging, time
+import logging
 import xml.dom.minidom as minidom
 
-from handlers import Upstream, DummyResponse
+from handlers.upstream import Upstream
+from handlers.dummy import DummyResponse
 from handlers import TODO, TODO_PATH
 from content import date_iso
 import calibre, qxml

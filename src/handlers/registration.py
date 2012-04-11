@@ -2,7 +2,7 @@ import logging
 from base64 import b64decode
 import xml.dom.minidom as minidom
 
-from handlers import Upstream
+from handlers.upstream import Upstream
 from handlers import FIRS, FIRS_TA, FIRS_PATH
 import qxml, devices
 

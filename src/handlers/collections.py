@@ -1,6 +1,7 @@
 import logging
 
-from handlers import Upstream, DummyResponse
+from handlers.upstream import Upstream
+from handlers.dummy import DummyResponse
 from handlers import CDE, CDE_PATH
 import calibre
 

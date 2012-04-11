@@ -16,7 +16,7 @@ WWW = 'www'
 #EMBER_PATH = '/gp/ember/xyml/'
 #STORE_PATH = '/gp/g7g/xyml1/'
 
-def is_uuid(text):
+def is_uuid(text, cde_type = None):
 	def is_hex(text):
 		import string
 		if not text:
@@ -25,10 +25,11 @@ def is_uuid(text):
 
 	if not text:
 		return False
-	if len(text) == 36 and text[8] == '-' and text[13] == '-' and text[18] == '-' and text[23] == '-':
-		return True # very unlikely not to be # is_hex(text.replace('-', ''))
+	if len(text) == 36:
+		# very unlikely not to be # is_hex(text.replace('-', ''))
+		return cde_type in ('EBOK', None) and text[8] == '-' and text[13] == '-' and text[18] == '-' and text[23] == '-'
 	if len(text) == 32:
-		return is_hex(text)
+		return cde_type in ('PDOC', None) and is_hex(text)
 	# good enough
 	return False
 

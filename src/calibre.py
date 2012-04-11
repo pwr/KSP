@@ -1,58 +1,9 @@
 import os.path, logging, time
 
-import config, features, formats
-
-
-_FORMATS_CONTENT_TYPE = {
-	'EPUB'	: 'application/epub+zip',
-	'MOBI'	: 'application/x-mobipocket-ebook',
-	'AZW'	: 'application/x-mobipocket-ebook',
-	# 'AZW1'	: 'application/x-topaz-ebook',
-	# 'AZW3'	: 'application/x-mobi8-ebook',
-	'PRC'	: 'application/x-mobipocket-ebook',
-	'PDF'	: 'application/pdf',
-	# 'HTML'	: 'text/html',
-	# 'TXT'	: 'text/plain',
-	# 'CBZ'	: 'application/zip',
-}
-_FORMATS_CDE_TYPE = {
-	'EPUB'	: 'EBOK',
-	'MOBI'	: 'EBOK',
-	'AZW'	: 'EBOK',
-	# 'AZW1'	: 'EBOK',
-	# 'AZW3'	: 'EBOK',
-	'PRC'	: 'EBOK',
-	'PDF'	: 'PDOC',
-	# 'HTML'	: 'PDOC',
-	# 'TXT'	: 'PDOC',
-	# 'CBZ'	: 'PDOC',
-}
-
-#	'MBP'  : ( '????', 'application/x-mobipocket-sidecar' ),
-#	'TAN'  : ( '????', 'application/x-topaz-sidecar' ),
-# 	'XYML' : ( '????', 'text/xyml' ),
-# 	'JPG'  : ( '????', 'image/jpeg' ),
-# 	'AZW2' : ( '????', 'application/x-kindle-application' ),
-# 	'KCRT' : ( '????', 'application/x-developer-certificate' ),
-# 	'PHL'  : ( 'PHL',  'application/xml+phl' ),
-# 	'APNX' : ( 'APNX', 'application/x-apnx-sidecar' ),
-# 	'EA'   : ( 'EA',   'application/xml+ea' ),
-# 	'SA'   : ( '????', 'application/xml+sa' ),
-# 	'AAX'  : ( '????', 'audio/vnd.audible.aax' ),
-# 	'MP3'  : ( '????', 'audio/mpeg' ),
-# 	'HAN'  : ( '????', 'application/json' ),
-# 	'APG'  : ( '????', 'application/x-apg-zip' ),
-
-if hasattr(features, 'supported_formats'):
-	features.supported_formats = [ k.upper() for k in features.supported_formats if k.upper() in _FORMATS_CONTENT_TYPE ]
-else:
-	_SUPPORTED_FORMATS = [ 'MOBI', 'AZW', 'PRC', 'PDF' ]
-	features.supported_formats = [ k for k in _SUPPORTED_FORMATS if k in _FORMATS_CONTENT_TYPE ]
-	del _SUPPORTED_FORMATS
-logging.debug("supported formats: %s", features.supported_formats)
-
-# we need to have features.supported_formats processed before importing calibre_db
-import calibre_db, formats.mobi
+import calibre_db
+LIBRARY_ID = calibre_db.get_library_id()
+import sidecar_db, formats
+import config, features
 
 
 class _Book:
@@ -79,7 +30,6 @@ class _Book:
 		self.publishers = book_dict["publishers"]
 		self.languages = [ v[:2] for v in book_dict["languages"] ]
 
-		self.mbp_path = None
 		self._ebook_file(book_dict['path'], book_dict["files"])
 
 		if self.cde_content_type == 'PDOC':
@@ -88,20 +38,11 @@ class _Book:
 		elif self.cde_content_type == 'EBOK' and len(self.asin) == 32:
 			raise Exception("book %s had type PDOC, can't switch to EBOK")
 
-		# if self.file_path:
-		# mbp_path, ext = os.path.splitext(self.file_path)
-		# mbp_path += '.mbp'
-		# if os.path.isfile(mbp_path):
-		# 	self.mbp_path = mbp_path
-		# 	logging.debug("mbp file for %s is %s", self.title, self.mbp_path)
-
 		if previously_modified > 0 and self.last_modified != previously_modified:
 			logging.debug("book updated %s", self)
 
 	def _ebook_file(self, book_path, files_dict):
-		global _FORMATS_CONTENT_TYPE, _FORMATS_CDE_TYPE
-
-		for format, content_type in _FORMATS_CONTENT_TYPE.items():
+		for format, content_type in formats.CONTENT_TYPES.items():
 			name = files_dict.get(format)
 			if not name:
 				continue
@@ -122,7 +63,7 @@ class _Book:
 					continue
 				self.cde_content_type = cde_type
 			else:
-				self.cde_content_type = _FORMATS_CDE_TYPE[format]
+				self.cde_content_type = formats.CDE_TYPES[format]
 
 			self.file_path = path
 			self.file_size = os.path.getsize(path)
@@ -163,6 +104,12 @@ class _Book:
 			return False
 		last_downloaded = device.books.get(self.asin)
 		return last_downloaded and self.last_modified > last_downloaded
+
+	def has_sidecar(self):
+		return sidecar_db.has(self.asin)
+
+	def sidecar(self):
+		return sidecar_db.list(self.asin)
 
 	def __str__(self):
 		return '{%s (%s~%s) modified %d, %s %d}' % ( self.title, self.asin[:14], self.cde_content_type, self.last_modified, self.file_path, self.file_size )
@@ -231,6 +178,9 @@ def book(asin, refresh = False):
 	"""
 	gets the Book for a given asin, optionally updating it from the calibre db first
 	"""
+	if not asin:
+		logging.warn("tried to find book with no asin")
+		return None
 	global _books
 	uuid = asin
 	book = _books.get(asin)
@@ -259,7 +209,5 @@ def tag_collections():
 
 
 # module initialization
-
 _books = {}
-LIBRARY_ID = calibre_db.get_library_id()
 books(True) # force load all the books

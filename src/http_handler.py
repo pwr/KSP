@@ -153,7 +153,7 @@ class Handler (BaseHTTPRequestHandler):
 
 	def update_body(self, new_body = None):
 		self.body = compress(new_body, self.content_encoding)
-		self.length = 0 if new_body is None else len(new_body)
+		self.length = 0 if new_body is None else len(self.body)
 		del self.headers['Content-Length']
 		self.headers['Content-Length'] = str(self.length)
 

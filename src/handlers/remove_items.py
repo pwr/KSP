@@ -1,8 +1,9 @@
 import logging
 import xml.dom.minidom as minidom
 
-from handlers import Upstream, DummyResponse, ExceptionResponse, is_uuid
-from handlers import TODO, TODO_PATH
+from handlers.upstream import Upstream
+from handlers.dummy import DummyResponse, ExceptionResponse
+from handlers import is_uuid, TODO, TODO_PATH
 import calibre, qxml
 
 
@@ -28,10 +29,11 @@ class TODO_RemoveItems (Upstream):
 		x_items = qxml.get_child(x_request, 'items')
 
 		was_updated = False
-		for x_item in qxml.list_children(x_items, 'item'):
-			if x_item.getAttribute('action') in ('GET', 'DOWNLOAD') and x_item.getAttribute('type') in ['EBOK', 'PDOC']:
+		for x_item in qxml.iter_children(x_items, 'item'):
+			t = x_item.getAttribute('type')
+			if x_item.getAttribute('action') in ('GET', 'DOWNLOAD') and t in ('EBOK', 'PDOC'):
 				key = x_item.getAttribute('key')
-				if is_uuid(key):
+				if is_uuid(key, t):
 					x_items.removeChild(x_item)
 					was_updated = True
 
