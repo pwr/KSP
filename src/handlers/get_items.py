@@ -61,15 +61,7 @@ class TODO_GetItems (Upstream):
 					was_updated = True
 
 		if not device.configuration_updated:
-			if not features.allow_logs_upload:
-				self.add_item(x_items, 'SET', 'SCFG', priority=100, text='url.messaging.post=' + config.server_url, key='KSP.url.messaging.post')
-				self.add_item(x_items, 'SET', 'SCFG', priority=100, text='url.det=' + config.server_url + DET_PATH, key='KSP.url.det')
-				self.add_item(x_items, 'SET', 'SCFG', priority=100, text='url.det.unauth=' + config.server_url + DET_PATH, key='KSP.url.det.unauth')
-			# the device is already talking to us, but let's just make sure it has the correct path
-			self.add_item(x_items, 'SET', 'SCFG', priority=100, text='url.todo=' + config.server_url + TODO_PATH, key='KSP.url.todo')
-			self.add_item(x_items, 'SET', 'SCFG', priority=100, text='url.cde=' + config.server_url + CDE_PATH, key='KSP.url.cde')
-			self.add_item(x_items, 'SET', 'SCFG', priority=100, text='url.firs=' + config.server_url + FIRS_PATH, key='KSP.url.firs')
-			self.add_item(x_items, 'SET', 'SCFG', priority=100, text='url.firs.unauth=' + config.server_url + FIRS_PATH, key='KSP.url.firs.unauth')
+			self.add_item(x_items, 'SET', 'SCFG', priority=100, text=self._servers_config(), key='KSP.servers.configuration')
 			device.configuration_updated = True
 			was_updated = True
 
@@ -100,26 +92,6 @@ class TODO_GetItems (Upstream):
 	def filter_item(self, x_items, x_item):
 		action = x_item.getAttribute('action')
 		item_type = x_item.getAttribute('type')
-
-		# if action == 'SET':
-		# 	if item_type == 'SCFG':
-		# 		item_key = x_item.getAttribute('key')
-		# 		if item_key.startswith('WhiteList - ') or item_key.startswith('whitelist-'):
-		# 			value = x_item.firstChild.data
-		# 			if value.startswith('wan.proxy.non_proxy_hosts.'):
-		# 				x_item.firstChild.data = value + "|" + config.server_hostname
-		# 				return True
-		# 		# elif item_key.startswith('MP-migration-store-config-'):
-		# 		# 	value = x_item.firstChild.data
-		# 		# 	if value.startswith('url.store='):
-		# 		# 		x_item.firstChild.data = self.rewrite_url(value)
-		# 		# 		return True
-		# 		# elif item_key.startswith('MP-migration-website-config-'):
-		# 		# 	value = x_item.firstChild.data
-		# 		# 	if value.startswith('url.website='):
-		# 		# 		x_item.firstChild.data = 'url.website=' + config.server_url
-		# 		# 		return True
-		# 	return False
 
 		if action == 'UPLOAD':
 			if item_type in ['MESG', 'LOGS'] and not features.allow_logs_upload:
@@ -157,6 +129,21 @@ class TODO_GetItems (Upstream):
 		# 		x_items.removeChild(x_item)
 		# 		return True
 		return False
+
+	def _servers_config(self):
+		servers_config = (
+				'url.todo=' + config.server_url + TODO_PATH,
+				'url.cde=' + config.server_url + CDE_PATH,
+				'url.firs=' + config.server_url + FIRS_PATH,
+				'url.firs.unauth=' + config.server_url + FIRS_PATH,
+			)
+		if not features.allow_logs_upload:
+			servers_config += (
+				'url.messaging.post=' + config.server_url,
+				'url.det=' + config.server_url + DET_PATH,
+				'url.det.unauth=' + config.server_url + DET_PATH
+			)
+		return '\n'.join(servers_config)
 
 	def rewrite_url(self, url):
 		"""

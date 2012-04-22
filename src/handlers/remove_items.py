@@ -27,12 +27,17 @@ class TODO_RemoveItems (Upstream):
 	def process_xml(self, doc, device):
 		x_request = qxml.get_child(doc, 'request')
 		x_items = qxml.get_child(x_request, 'items')
-
 		was_updated = False
+
 		for x_item in qxml.iter_children(x_items, 'item'):
 			typ = x_item.getAttribute('type')
 			action = x_item.getAttribute('action')
 			key = x_item.getAttribute('key')
+			if key.startswith('KSP.'):
+				# our updates, not relevant upstream
+				x_items.removeChild(x_item)
+				was_updated = True
+				continue
 			if action in ('GET', 'DOWNLOAD') and typ in ('EBOK', 'PDOC'):
 				if is_uuid(key, typ):
 					x_items.removeChild(x_item)
@@ -49,10 +54,6 @@ class TODO_RemoveItems (Upstream):
 						logging.warn("device failed to download book %s %s", key, book)
 					else:
 						logging.warn("%s: unknown downloaded status %s for book %s", device, complete, book)
-			elif action == 'SET' and typ == 'SCFG' and key.startswith('KSP.url.'):
-				# our url updates
-				x_items.removeChild(x_item)
-				was_updated = True
 
 		if was_updated and not len(x_items.childNodes):
 			raise ExceptionResponse(data = self._DUMMY_BODY)
