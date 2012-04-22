@@ -26,6 +26,7 @@ class DeviceInfo:
 		# won't be saving the last_sync time to the db
 		# so that each time the proxy is restarted, a full sync takes place for each device
 		self.last_sync = 0
+		self.configuration_updated = False
 
 		if self.p12:
 			logging.info("loaded device %s", self)

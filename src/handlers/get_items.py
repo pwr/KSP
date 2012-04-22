@@ -3,7 +3,7 @@ import xml.dom.minidom as minidom
 
 from handlers.upstream import Upstream
 from handlers.dummy import DummyResponse
-from handlers import is_uuid, TODO, TODO_PATH
+from handlers import is_uuid, TODO, TODO_PATH, CDE_PATH, FIRS_PATH, DET_PATH
 import calibre, qxml
 import config, features
 
@@ -46,8 +46,9 @@ class TODO_GetItems (Upstream):
 		if not x_items:
 			return False
 
-		# rewrite urls
 		was_updated = False
+
+		# rewrite urls
 		for x_item in qxml.iter_children(x_items, 'item'):
 			was_updated |= self.filter_item(x_items, x_item)
 
@@ -59,10 +60,17 @@ class TODO_GetItems (Upstream):
 					self.add_item(x_items, 'GET', book.cde_content_type, book.asin, book.title, forced = True) # book.title)
 					was_updated = True
 
-		if not features.allow_logs_upload and reason == 'NetworkStartup': # try to not do it too often
-			self.add_item(x_items, 'SET', 'SCFG', priority=300, text='url.messaging.post=' + config.server_url, key='MESG url')
-			self.add_item(x_items, 'SET', 'SCFG', priority=300, text='url.det=' + config.server_url + 'DeviceEventProxy', key='DET url')
-			self.add_item(x_items, 'SET', 'SCFG', priority=300, text='url.det.unauth=' + config.server_url + 'DeviceEventProxy', key='DETunauth url')
+		if not device.configuration_updated:
+			if not features.allow_logs_upload:
+				self.add_item(x_items, 'SET', 'SCFG', priority=100, text='url.messaging.post=' + config.server_url, key='KSP.url.messaging.post')
+				self.add_item(x_items, 'SET', 'SCFG', priority=100, text='url.det=' + config.server_url + DET_PATH, key='KSP.url.det')
+				self.add_item(x_items, 'SET', 'SCFG', priority=100, text='url.det.unauth=' + config.server_url + DET_PATH, key='KSP.url.det.unauth')
+			# the device is already talking to us, but let's just make sure it has the correct path
+			self.add_item(x_items, 'SET', 'SCFG', priority=100, text='url.todo=' + config.server_url + TODO_PATH, key='KSP.url.todo')
+			self.add_item(x_items, 'SET', 'SCFG', priority=100, text='url.cde=' + config.server_url + CDE_PATH, key='KSP.url.cde')
+			self.add_item(x_items, 'SET', 'SCFG', priority=100, text='url.firs=' + config.server_url + FIRS_PATH, key='KSP.url.firs')
+			self.add_item(x_items, 'SET', 'SCFG', priority=100, text='url.firs.unauth=' + config.server_url + FIRS_PATH, key='KSP.url.firs.unauth')
+			device.configuration_updated = True
 			was_updated = True
 
 		if was_updated:

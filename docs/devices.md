@@ -24,8 +24,7 @@ Scripted configuration
 ----------------------
 
 The scripts in `tools/kindle4nt/ksp-config/` can be used to update the Kindle's internal configuration without the need
-to SSH in. It *should* be safe, and if you break something, it *should* allow you to fix a broken configuration. But...
-it works on my device. I can make no other guarantees.
+to SSH in. It *should* be safe, but... it works on my device. I can make no other guarantees.
 
 In any case, if you _do_ have SSH enabled on your Kindle, and want to make the necessary changes yourself, you can just
 skip to the next section.
@@ -50,7 +49,7 @@ To use the scripts, follow these steps:
 
     * When the device boots, it will update the runtime java config
         (`/var/local/java/prefs/com.amazon.ebook.framework/ServerConfig`, contains overrides for the default values in
-        `/opt/amazon/ebook/config/ServerConfig.conf`), adding customized entries for a few API urls, based on the
+        `/opt/amazon/ebook/config/ServerConfig.conf`), adding a customized entry for the TODO API url, based on the
         value you've set in the `RUNME.sh` script for `SERVER_URL`.
 
     * Start a background task that waits for WiFi to come up (make sure you have WiFi enabled). It will then grab the
@@ -85,31 +84,27 @@ purposes only.
 The Kindle internal software uses a few API urls to talk to Amazon. These are configured in the master configuration
 file `/opt/amazon/ebook/config/ServerConfig.conf`, but its values are can be overriden by the properties file
 `/var/local/java/prefs/com.amazon.ebook.framework/ServerConfig`. To have the Kindle talk to KSP instead of directly to
-Amazon, you need to add a few lines in the second file (*don't change the master file*).
+Amazon, you need to add one line in the second file (*don't change the master file*).
 
 **NOTE**: Before changing the file on the device, **make a backup first!** You never know.
 
-These four URLs are necessary to make KSP work. You'll *have* to add them, and point them to the KSP daemon's
-`server_url`.
+This URL is necessary to make KSP work. You'll *have* to add it, and point it to the KSP daemon's `server_url`:
 
-* `url.todo` (metadata sync) -- default `https://todo-g7g.amazon.com/FionaTodoListProxy`
-* `url.cde` (content download) -- default `https://cde-g7g.amazon.com/FionaCDEServiceEngine`
-* `url.firs` -- default `https://firs-g7g.amazon.com/FirsProxy`
-* `url.firs.unauth` -- default `https://firs-ta-g7g.amazon.com/FirsProxy`
+* `url.todo` -- default `https://todo-g7g.amazon.com/FionaTodoListProxy`
 
-The changes involve replacing `https://_service_.amazon.com/` with the url of your KSP server, the one you've configured
-in `etc/config.py`. More exactly, you will add 4 lines, like this:
+The change involves replacing `https://todo-g7g.amazon.com/` with the url of your KSP server, the one you've configured
+in `etc/config.py`. More exactly, you will add 1 line, like this:
 
     url.todo=https://_my_server_:_port_/KSP/FionaTodoListProxy
-    url.cde=https://_my_server_:_port_/KSP/FionaCDEServiceEngine
-    url.firs=https://_my_server_:_port_/KSP/FirsProxy
-    url.firs.unauth=https://_my_server_:_port_/KSP/FirsProxy
 
 The `/KSP/` part is optional, but makes it easier to filter and forward requests if you use an HTTPS frontend to
 KSP. The port is also optional, if you use the default 443 port for HTTPS.
 
-To apply these changes, restart your device. Or, if you're SSH'ed in, you can just kill the `cvm` process
-(should be only one).
+*Note*: technically, there are a few more urls that need updating (url.cde, url.firs, etc), but you don't need to add
+them at this point. The KSP daemon will update the device's configuration as soon as the Kindle registers with it.
+
+To apply the change, restart your device. Or, if you're SSH'ed in, you can just kill the `cvm` process (should be only
+one).
 
 One more important thing: if your server's SSL certificate is not signed by a known CA authority, the Kindle will not be
 able to talk to the KSP daemon. You will have to:
@@ -125,6 +120,7 @@ Reverting the cofiguration
 --------------------------
 
 If something does not work, or if you just change your mind and want to go back to the original configuration, you just
-need to revert the device's `ServerConfig` properties file to its original contents by removing the 4 lines you've
-added. Technically you could also just remove the file, though it may contain additional configuration entries set-up by
+need to revert the device's `ServerConfig` properties file to its original contents -- you did make a backup, right?
+
+Technically you could also just remove the file, though it may contain additional configuration entries set-up by
 Amazon.

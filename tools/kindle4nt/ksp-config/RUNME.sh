@@ -4,8 +4,8 @@
 # YOU HAVE TO SET THIS TO THE SERVER URL #
 ##########################################
 # e.g.
-# SERVER_URL=https://_server_name_:_server_port_
-# where :_server_port_ is optional and defaults to 443
+# SERVER_URL=https://_server_name_:_server_port_/KSP
+# where _server_port_ is optional and defaults to 443
 # this is the value that you set in etc/config.py
 SERVER_URL=NOT_SET
 ##########################################
@@ -27,13 +27,7 @@ SC=/var/local/java/prefs/com.amazon.ebook.framework/ServerConfig
 
 if ! grep -q $SERVER_URL $SC; then
 	cp $SC $SC.$(date -u +%s).bak
-
-	cat >> $SC <<-SERVER_CONFIG
-		url.todo=$SERVER_URL/FionaTodoListProxy
-		url.cde=$SERVER_URL/FionaCDEServiceEngine
-		url.firs=$SERVER_URL/FirsProxy
-		url.firs.unauth=$SERVER_URL/FirsProxy
-	SERVER_CONFIG
+	echo -e "\nurl.todo=$SERVER_URL/FionaTodoListProxy" >> $SC
 fi
 
 GC=/mnt/us/get_certificates.sh
