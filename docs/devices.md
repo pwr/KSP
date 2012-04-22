@@ -10,7 +10,8 @@ to test it with. The scripts have been tested only on a Kindle4NT; on other devi
 not work.
 
 KSP _may_ work with Kindle 3 (aka Kindle Keyboard). The configuration steps detailed here are most likely wrong, so **do
-not** follow them.
+not** follow them. They also may be close enough, so if you know what you're doing the sections below might give you an
+idea of what you need to do.
 
 KSP _may_ also be made to work with Kindle Touch, but **do not** follow the instructions here -- they will almost
 guarantee briking it. You'll have to do the configuration by hand, if configuring a Touch is possible at all.
@@ -60,10 +61,10 @@ To use the scripts, follow these steps:
 
 5. Connect the USB cable and mount the device.
 
-5. In the device's root folder you should find a file named `_your_device_serial_.p12` -- it is your Kindle's SSL client
+6. In the device's root folder you should find a file named `_your_device_serial_.p12` -- it is your Kindle's SSL client
     certificate; copy it next to KSP's database file (in `db/`).
 
-6. Eject the Kindle volume.
+7. Eject the Kindle volume.
 
 Your Kindle should now be talking to your KSP daemon instead of Amazon's services.
 
@@ -76,6 +77,10 @@ from the device.
 
 Configuration changes
 ---------------------
+
+This section details the exact configuration changes needed on the Kindle device to make it talk to KSP. If you've
+already followed the steps in the section above, you don't need to do anything else -- this section is for documentation
+purposes only.
 
 The Kindle internal software uses a few API urls to talk to Amazon. These are configured in the master configuration
 file `/opt/amazon/ebook/config/ServerConfig.conf`, but its values are can be overriden by the properties file
@@ -120,6 +125,6 @@ Reverting the cofiguration
 --------------------------
 
 If something does not work, or if you just change your mind and want to go back to the original configuration, you just
-need to revert the device's `ServerConfig` properties file to its original contents -- remove the 4 lines you've added.
-Technically you could also just remove the file, though it may contain additional configuration entries set-up by
+need to revert the device's `ServerConfig` properties file to its original contents by removing the 4 lines you've
+added. Technically you could also just remove the file, though it may contain additional configuration entries set-up by
 Amazon.
