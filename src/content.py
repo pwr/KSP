@@ -1,4 +1,5 @@
 import logging, gzip, time
+from urllib.parse import parse_qs
 
 
 def str_(bytes_buffer):
@@ -14,6 +15,15 @@ def str_headers(headers):
 	return '{' + \
 			', '.join(l) + \
 			'}'
+
+def query_params(text):
+	if not text:
+		return {}
+	if type(text) == bytes:
+		text = str(text, 'UTF-8')
+	params = parse_qs(text)
+	params = { k : (v[0] if v else v) for k, v in params.items() }
+	return params
 
 def date_header(timestamp = None):
 	if timestamp is None:

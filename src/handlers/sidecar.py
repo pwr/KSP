@@ -4,7 +4,7 @@ import xml.dom.minidom as minidom
 from handlers.upstream import Upstream
 from handlers.dummy import DummyResponse, ExceptionResponse
 from handlers import is_uuid, CDE, CDE_PATH
-from content import decompress, compress
+from content import decompress, compress, query_params
 import postprocess, formats, sidecar_db
 import calibre, qxml
 
@@ -107,3 +107,16 @@ class CDE_Sidecar (Upstream):
 				raise ExceptionResponse()
 
 		return was_modified
+
+
+class CDE_ShareAnnotations (Upstream):
+	def __init__(self):
+		Upstream.__init__(self, CDE, CDE_PATH + 'shareHighlightAndNote', 'POST')
+
+	def call(self, request, device):
+		q = query_params(request.body)
+		if is_uuid(q.get('key'), q.get('type')):
+			logging.warn("sharing annotations for Calibre books is not supported")
+			return DummyResponse()
+
+		return self.call_upstream(request, device)

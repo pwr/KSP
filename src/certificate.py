@@ -14,7 +14,7 @@ def _load_pkcs12_crypto(name, pkcs12_bytes):
 		return None
 
 	pkcs_name = str(pkcs12.get_friendlyname(), 'utf-8')
-	p_number, p_foo1, p_serial, p_fiona, p_digest = pkcs_name.split(',')
+	p_number, _, p_serial, p_fiona, p_digest = pkcs_name.split(',')
 	if p_serial != name:
 		logging.warn("certificate is not for this device? mismatched friendly name %s", pkcs_name)
 		return None

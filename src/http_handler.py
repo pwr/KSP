@@ -1,9 +1,8 @@
 import logging, time
-from urllib.parse import parse_qs
 from http.server import BaseHTTPRequestHandler
 
 from handlers import ExceptionResponse
-from content import compress, decompress, read_chunked, str_headers, str_
+from content import compress, decompress, read_chunked, query_params, str_headers, str_
 import devices
 import config, features
 
@@ -147,12 +146,8 @@ class Handler (BaseHTTPRequestHandler):
 		return self.headers.get('X-Forwarded-For') or self.client_address[0]
 
 	def get_query_params(self):
-		path, qmark, query = self.path.partition('?')
-		params = {} if not query else parse_qs(query)
-		# logging.debug("query params %s", params)
-		params = { k : (v[0] if v else v) for k, v in params.items() }
-		# logging.debug("query params %s", params)
-		return params
+		path, _, query = self.path.partition('?')
+		return query_params(query)
 
 	def update_body(self, new_body = None):
 		self.body = compress(new_body, self.content_encoding)

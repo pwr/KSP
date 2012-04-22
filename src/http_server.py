@@ -59,6 +59,7 @@ class Server (ThreadingMixIn, HTTPServer):
 				handlers.CDE_DownloadContent(),
 				handlers.CDE_UploadSnapshot(),
 				handlers.CDE_Sidecar(),
+				handlers.CDE_ShareAnnotations(),
 				handlers.CDE_DevicesWithCollections(),
 				handlers.CDE_GetCollections(),
 
