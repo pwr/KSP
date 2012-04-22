@@ -18,6 +18,8 @@ Supported formats
 
 * PDF files are seen as personal documents by the Kindle device
 
+    You should make sure the PDFs have the proper metadata in them (title/author).
+
 The integration with Calibre *should* be seamless. If you connect the Kindle with an USB cable to the machine, and let
 Calibre see it, it should see the books -- downloaded through KSP -- from its library as being on the device. If you
 copy more (supported) books onto the device, the device will see them as having been downloaded through the normal
