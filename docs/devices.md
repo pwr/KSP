@@ -40,18 +40,17 @@ To use the scripts, follow these steps:
     `SERVER_URL`. This is the url you've configured in `etc/config.py`, option `server_url`. If you don't change the
     script, it won't do much.
 
-    NOTE: Windows users, please use a decent text editor (*not* Notepad) to edit the file. The script used Unix line
+    NOTE: Windows users, please use a decent text editor (*not* Notepad) to edit the file. The script uses Unix line
     endings which are usually mangled by most Windows text editors, making it unusable on your Kindle.
 
-4. Create a folder named `KSP` (mind the capitals) next to the `documents` folder. If this folder does not exist, the
-    script will not run.
-
-5. Eject he Kindle volume, remove the USB cable, and restart the device.
+4. Eject he Kindle volume, remove the USB cable, and restart the device.
 
     What the `RUNME.sh` script will do:
 
-    * When the device boots, it will change `/opt/amazon/ebook/conf/ServerConfig.conf`, replacing Amazon's API URLs
-        with the one you've put in the first lines of the script.
+    * When the device boots, it will update the runtime java config
+        (`/var/local/java/prefs/com.amazon.ebook.framework/ServerConfig`, contains overrides for the default values in
+        `/opt/amazon/ebook/config/ServerConfig.conf`), adding customized entries for a few API urls, based on the
+        value you've set in the `RUNME.sh` script for `SERVER_URL`.
 
     * Start a background task that waits for WiFi to come up (make sure you have WiFi enabled). It will then grab the
         HTTPS server's CA certificate and import it, if it is unknown to the Kindle. After the CA certificate is
@@ -59,70 +58,53 @@ To use the scripts, follow these steps:
 
     * Make backups of all changed files :).
 
-    After the Kindle restarts, you should have in the `KSP` folder a copy of your original `ServerConfig.conf` file,
-    named `ServerConfig.conf.original` (a copy of it was made on the device as well).
+5. Connect the USB cable and mount the device.
 
-6. Make a copy of `ServerConfig.conf.original` on your machine -- just in case.
-
-7. In the `KSP` folder should also be a file named `_your_device_serial_.p12` -- it is your Kindle's SSL client
+5. In the device's root folder you should find a file named `_your_device_serial_.p12` -- it is your Kindle's SSL client
     certificate; copy it next to KSP's database file (in `db/`).
 
-8. Eject he Kindle volume and restart the device.
+6. Eject the Kindle volume.
 
 Your Kindle should now be talking to your KSP daemon instead of Amazon's services.
 
 If it does not work, or if you just change your mind and want to go back to the original configuration, see the last
 section of this file.
 
-When you're done with the configuration on the Kindle, you should delete the `KSP` folder and the scripts from the
-device.
-
-NOTE: If the `KSP` folder exists on the device, the `RUNME.sh` script will *always* place there the files
-`ServerConfig.conf.original` and `your_device_serial.p12`. Any `ServerConfig.conf` file found there will replace the
-device's configuration.
+When you're done with the configuration on the Kindle, you should delete the `RUNME.sh` and `get_certificate.sh` scripts
+from the device.
 
 
 Configuration changes
 ---------------------
 
-The Kindle internal software uses a few API urls to talk to Amazon. These are configured in the file
-`/opt/amazon/ebook/config/ServerConfig.conf` (on the device, obviously). To have the Kindle talk to KSP instead of
-directly to Amazon, you need to change some URLs in that file.
+The Kindle internal software uses a few API urls to talk to Amazon. These are configured in the master configuration
+file `/opt/amazon/ebook/config/ServerConfig.conf`, but its values are can be overriden by the properties file
+`/var/local/java/prefs/com.amazon.ebook.framework/ServerConfig`. To have the Kindle talk to KSP instead of directly to
+Amazon, you need to add a few lines in the second file (*don't change the master file*).
 
-**NOTE**: if you're changing the file directly on the device, through SSH, **make a backup first!** You never know.
+**NOTE**: Before changing the file on the device, **make a backup first!** You never know.
 
-**NOTE**: if you're changing the file directly on the device, through SSH, you'll have to make the root partition
-writable first (by default, it is mounted as read-only -- no need to write to it during Kindle's normal functioning).
-The command is `mntroot rw`. When you're done, re-mount it as read-only with `mntroot ro`.
+These four URLs are necessary to make KSP work. You'll *have* to add them, and point them to the KSP daemon's
+`server_url`.
 
 * `url.todo` (metadata sync) -- default `https://todo-g7g.amazon.com/FionaTodoListProxy`
 * `url.cde` (content download) -- default `https://cde-g7g.amazon.com/FionaCDEServiceEngine`
 * `url.firs` -- default `https://firs-g7g.amazon.com/FirsProxy`
 * `url.firs.unauth` -- default `https://firs-ta-g7g.amazon.com/FirsProxy`
 
-These four URLs are the only ones strictly necessary to make KSP work. You'll *have* to change them, and point them to
-the KSP daemon's `server_url`.
-
-* `url.det` -- default `https://det-g7g.amazon.com/DeviceEventProxy`
-* `url.det.unauth` -- default `https://det-ta-g7g.amazon.com/DeviceEventProxy`
-* `url.messaging.post` -- default `https://device-messaging-na.amazon.com`
-
-These three are used to upload device logs to Amazon. If you point these to KSP, and disable the `allow_logs_upload`
-setting in `etc/features.py`, these logs *should* no longer reach Amazon. Entirely optional, functionality-wise.
-
 The changes involve replacing `https://_service_.amazon.com/` with the url of your KSP server, the one you've configured
-in `etc/config.py`.
-
-For example, you will have:
+in `etc/config.py`. More exactly, you will add 4 lines, like this:
 
     url.todo=https://_my_server_:_port_/KSP/FionaTodoListProxy
     url.cde=https://_my_server_:_port_/KSP/FionaCDEServiceEngine
+    url.firs=https://_my_server_:_port_/KSP/FirsProxy
+    url.firs.unauth=https://_my_server_:_port_/KSP/FirsProxy
 
-etc. The `/KSP/` part is optional, but makes it easier to filter and forward requests if you use an HTTPS frontend to
-KSP.
+The `/KSP/` part is optional, but makes it easier to filter and forward requests if you use an HTTPS frontend to
+KSP. The port is also optional, if you use the default 443 port for HTTPS.
 
-To apply the changes you've made to `ServerConfig.conf`, restart your device. Or, if you're SSH'ed in, you can just
-kill the java process (should be only one).
+To apply these changes, restart your device. Or, if you're SSH'ed in, you can just kill the `cvm` process
+(should be only one).
 
 One more important thing: if your server's SSL certificate is not signed by a known CA authority, the Kindle will not be
 able to talk to the KSP daemon. You will have to:
@@ -138,8 +120,6 @@ Reverting the cofiguration
 --------------------------
 
 If something does not work, or if you just change your mind and want to go back to the original configuration, you just
-need to replace the device's `ServerConfig.conf` file with the original version and restart (you did keep a backup,
-right?).
-
-You can use the configuration script from the Scripted configuration section. Just copy `ServerConfig.conf.original` to
-the `KSP` folder on the Kindle, rename it as `ServerConfig.conf`, and restart the device.
+need to revert the device's `ServerConfig` properties file to its original contents -- remove the 4 lines you've added.
+Technically you could also just remove the file, though it may contain additional configuration entries set-up by
+Amazon.

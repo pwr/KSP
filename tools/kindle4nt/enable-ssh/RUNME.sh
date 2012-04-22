@@ -1,3 +1,5 @@
+#!/bin/sh
+
 RW=
 mount_rw() {
   if [ -z "$RW" ]; then

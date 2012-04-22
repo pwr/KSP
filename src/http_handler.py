@@ -40,7 +40,7 @@ class Handler (BaseHTTPRequestHandler):
 		# logging.debug("## %s", self.requestline)
 
 		# look for a device record, will be automatically created if the features is enabled
-		device = devices.detect(self.client_address[0], self.xfsn())
+		device = devices.detect(self._client_ip(), self._xfsn())
 		if not device:
 			logging.error("failed to identify device for %s", self.requestline)
 			return 403
@@ -85,7 +85,7 @@ class Handler (BaseHTTPRequestHandler):
 		self.started_at = time.time() # almost
 
 		if self.ignore_request():
-			logging.warn("ignoring request (%s) %s", self.headers.get("Host"), self.requestline)
+			logging.warn("ignoring request (%s) %s", self.headers.get('Host'), self.requestline)
 			# now for most requests, a 404 might be enough, or just closing the connection (impolite, but cheap)
 			# but some idiots retry the request when receiving a 404, so we'll have to be mean to everybody -- redirect them into limbo
 			self.wfile.write(bytes(self.request_version, 'ascii'))
@@ -134,7 +134,7 @@ class Handler (BaseHTTPRequestHandler):
 		else:
 			self.body = None
 
-	def xfsn(self):
+	def _xfsn(self):
 		xfsn = self.headers.get('X-fsn')
 		if xfsn:
 			return xfsn
@@ -142,6 +142,9 @@ class Handler (BaseHTTPRequestHandler):
 		if cookie and cookie.startswith('x-fsn='):
 			return cookie[6:]
 		return None
+
+	def _client_ip(self):
+		return self.headers.get('X-Forwarded-For') or self.client_address[0]
 
 	def get_query_params(self):
 		path, qmark, query = self.path.partition('?')

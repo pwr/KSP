@@ -33,13 +33,14 @@ class TODO_GetItems (Upstream):
 		if response.status == 200:
 			# use default UTF-8 encoding
 			with minidom.parseString(response.body) as doc:
-				if self.process_xml(doc, device):
+				q = request.get_query_params()
+				if self.process_xml(doc, device, q.get('reason')):
 					xml = doc.toxml('UTF-8')
 					response.update_body(xml)
 
 		return response
 
-	def process_xml(self, doc, device):
+	def process_xml(self, doc, device, reason):
 		x_response = qxml.get_child(doc, 'response')
 		x_items = qxml.get_child(x_response, 'items')
 		if not x_items:
@@ -58,6 +59,12 @@ class TODO_GetItems (Upstream):
 					self.add_item(x_items, 'GET', book.cde_content_type, book.asin, book.title, forced = True) # book.title)
 					was_updated = True
 
+		if not features.allow_logs_upload and reason == 'NetworkStartup': # try to not do it too often
+			self.add_item(x_items, 'SET', 'SCFG', priority=300, text='url.messaging.post=' + config.server_url, key='MESG url')
+			self.add_item(x_items, 'SET', 'SCFG', priority=300, text='url.det=' + config.server_url + 'DeviceEventProxy', key='DET url')
+			self.add_item(x_items, 'SET', 'SCFG', priority=300, text='url.det.unauth=' + config.server_url + 'DeviceEventProxy', key='DETunauth url')
+			was_updated = True
+
 		if was_updated:
 			x_total_count = qxml.get_child(x_response, 'total_count')
 			qxml.set_text(x_total_count, len(x_items.childNodes))
@@ -75,9 +82,11 @@ class TODO_GetItems (Upstream):
 		if url:
 			item.setAttribute('url', url)
 		if text:
-			qxml.add_child(item, 'title', text)
-		if forced:
-			qxml.add_child(item, 'forced', 'true')
+			if forced:
+				qxml.add_child(item, 'title', text)
+				qxml.add_child(item, 'forced', 'true')
+			else:
+				qxml.set_text(item, text)
 		return item
 
 	def filter_item(self, x_items, x_item):

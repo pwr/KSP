@@ -37,7 +37,7 @@ Go to [MENU] -> _View Archived Items_ -> _Add Other Device Collections_. You wil
 
 After importing the collections from the _Calibre Library_ device:
 
-* for each book series, a new collection will be created on the device
+* for each book series, a new collection will be created on the device with the name of the series
 
 * for each configured tag, a new collection named '{*tag_name*}' will be created on the device; if no books (with valid
      files!) have a given tag, that collection will *not* be created on your device.
@@ -59,15 +59,16 @@ present on your Kindle, will cause the Kindle to download the new version.
 
 **WARNING**: A side-effect is that you will lose the last-read-position, and any notes and highlights on that book!
 Basically the Kindle will behave as if the book has just been downloaded for the first time. I don't think this can
-be worked around, because the positions are highly dependent on the internal layout if the book.
+be worked around, because the positions of the annotations are highly dependent on the internal layout if the book,
+which usually changes when the book is changed.
 
 
-Notes & Highlights
-------------------
+Annotations
+-----------
 
-At this moment, KSP does **not** back-up the last-read-position, notes and highlights for books downloaded throught it.
-This means that if you delete the book from the device, you will lose this information -- though the notes & hightlight
-may still be kept in the `My Clippings` file on the device.
+Bookmarks, highlights and notes that are added while the Kindle is configured to talk to KSP will be saved in the KSP's
+database (`db/sidecar.sqlite`) -- but only for books in your Calibre library. Annotations made *before* configuring the
+Kindle to use KSP, even for books in you Calibre library, are not visible to the KSP daemon.
 
-If I manage to figure out the details of the MBP format Kindle uses to store these informations, I will add support for
-them into KSP.
+So if you remove a book from the Kindle, and later download it again, the annotations saved to KSP should be present as
+well.

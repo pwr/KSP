@@ -14,7 +14,7 @@ server_certificate = None
 
 # Under what url is the device calling the server.
 # WARNING: MUST be matched by the changes in ServerConfig.conf on the device!
-# NOTE: This is the url of the front-facing https server, not KSP's url!
+# NOTE: This is the url of the front-facing HTTPS server, not KSP's url!
 server_url = 'https://<your_ssl_server>/KSP'
 
 # The folder where the logs will be written; auto-created if it does not exists.

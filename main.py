@@ -77,7 +77,10 @@ def main():
 	_make_root_logger(_stdstream(config.logs_path, args.console), args.log_level)
 
 	config.database_path = abspath(config.database_path, True)
-	config.server_certificate = abspath(config.server_certificate)
+	if hasattr(config, 'server_certificate'):
+		config.server_certificate = abspath(config.server_certificate)
+	else:
+		config.server_certificate = None
 
 	# add the src/ folder to the import path
 	sys.path.append(abspath('src'))

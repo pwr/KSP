@@ -5,7 +5,7 @@
 #
 
 # The default supported book formats are (in this order):
-#   [ 'MOBI', 'AZW', 'PRC' ]
+#   [ 'MOBI', 'AZW', 'PRC', 'PDF' ]
 # If you want to only serve a subset of these, set this option (case does not matter).
 # NOTE: when multiple supported formats are available for a book, only the first one in the list above will be served to the kindle device.
 # Also, if you download a book in one format, then another format with a higher priority appears for that book,
@@ -25,12 +25,6 @@ scrub_uploads = True
 
 # If False, intercept calls to device-messaging and det servers (log uploads).
 # It's not really necessary, but adds a bit of privacy.
-# While KSP will try its best to purge instructions from Amazon to your device to upload these logs, sometimes
-#   the device sends them by itself -- for example, when registering the device with the Kindle Store.
-# So for this feature to work all the time, you should change the following ServerConfig.conf keys:
-#    url.messaging.post
-#    url.det
-#    url.det.unauth
 allow_logs_upload = False
 
 # Set this to True to allow automatic firmware updates.
