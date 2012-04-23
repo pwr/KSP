@@ -1,5 +1,6 @@
 import logging, binascii, struct, time
 
+
 def _flatten(*data_list):
 	for item in data_list:
 		if type(item) == bytes:
@@ -35,9 +36,9 @@ _BKMK_HIGHLIGHT = b'\0\0\0\0', b'\0\xff\xff\x0f\0\0\0\4' # ?, color_mark, 4
 _BKMK_NOTE = b'\0\0\0\0', b'\0\0\0\x20\0\0\0\2' # ?, 32, 2
 
 
-def build_sidecar(book, guid, last_read, sidecar_list):
+def build_sidecar(book, guid, last_read, annotations_list):
 	# compute the size of the index block beforehand
-	indexes_count = 3 * len(sidecar_list) + len([ s for s in sidecar_list if s.kind == 'note' ])
+	indexes_count = 3 * len(annotations_list) + len([ s for s in annotations_list if s.kind == 'note' ])
 	if last_read.state:
 		indexes_count += 1
 
@@ -65,7 +66,7 @@ def build_sidecar(book, guid, last_read, sidecar_list):
 		data_ptr += len(last_read.state)
 
 	# the DATA blocks are listed in timestamp ordere
-	for s in sidecar_list:
+	for s in annotations_list:
 		if s.kind not in ('bookmark', 'highlight', 'note'):
 			logging.error("ignoring unknown kind of annotation item %s", s)
 			continue
@@ -126,8 +127,8 @@ def build_sidecar(book, guid, last_read, sidecar_list):
 
 	mbp_created = int(book.added_to_library) # eh
 	mbp_updated = last_read.timestamp
-	if sidecar_list and sidecar_list[-1].timestamp > mbp_updated:
-		mbp_updated = sidecar_list[-1].timestamp
+	if annotations_list and annotations_list[-1].timestamp > mbp_updated:
+		mbp_updated = annotations_list[-1].timestamp
 	mbp_updated = _ts(mbp_updated) if mbp_updated else int(time.time())
 
 	header = struct.pack('! 32s 4x LL 16x 8s L 2x LL 4x', title, mbp_created, mbp_updated, b'BPARMOBI', next_id, 1 + indexes_count, bpar_ptr)
@@ -148,18 +149,18 @@ def build_sidecar(book, guid, last_read, sidecar_list):
 from collections import namedtuple
 _DUMMY_LAST_READ = namedtuple('Row', 'asin timestamp begin pos state')(None, '', 0, 0, b'')
 
-def assemble_sidecar(book, sidecar_list):
-	if not sidecar_list:
+def assemble_sidecar(book, annotations_list):
+	if not annotations_list:
 		return None
-	# the sidecar_list's first item is an optional last_read block
+	# the annotations_list's first item is an optional last_read block
 	# the rest of the entries are sorted by timestamp
-	if hasattr(sidecar_list[0], 'kind'):
-		logging.error("first item in sidecar list is not last_read!", sidecar_list[0])
+	if hasattr(annotations_list[0], 'kind'):
+		logging.warn("first item in sidecar list is not last_read!", annotations_list[0])
 		last_read = _DUMMY_LAST_READ
-		guid = sidecar_list[0].state[28:32]
+		guid = annotations_list[0].state[28:32]
 	else:
-		last_read = sidecar_list[0]
+		last_read = annotations_list[0]
 		guid = last_read.state[28:32]
-		sidecar_list = sidecar_list[1:]
-	sidecar_bytes = build_sidecar(book, guid, last_read, sidecar_list)
+		annotations_list = annotations_list[1:]
+	sidecar_bytes = build_sidecar(book, guid, last_read, annotations_list)
 	return ('application/x-mobipocket-sidecar', sidecar_bytes)

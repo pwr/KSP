@@ -38,6 +38,16 @@ def add_child(parent_node, tag_name, text_value = None):
 		node.appendChild(node_text)
 	return node
 
+def filter(parent_node, tag_name, **kwargs):
+	for n in list_children(parent_node, tag_name):
+		matches = True
+		for k, v in kwargs.items():
+			if n.getAttribute(k) != v:
+				matches = False
+				break
+		if matches:
+			yield n
+
 
 def set_text(tag_node, text_value = None):
 	if not tag_node:

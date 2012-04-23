@@ -2,7 +2,7 @@ import logging, os.path
 
 from handlers.dummy import Dummy, DummyResponse
 from handlers import is_uuid, CDE, CDE_PATH
-from content import query_params
+import calibre.annotations as annotations
 import calibre
 
 
@@ -11,7 +11,7 @@ class CDE_PageNumbers (Dummy):
 	_HEADERS = { 'Content-Type': 'application/x-apnx-sidecar' }
 
 	def __init__(self):
-		Dummy.__init__(self, CDE, CDE_PATH + 'getPageNumbers?', 'GET')
+		Dummy.__init__(self, CDE, CDE_PATH + 'getPageNumbers', 'GET')
 
 	def call(self, request, device):
 		q = request.get_query_params()
@@ -19,9 +19,8 @@ class CDE_PageNumbers (Dummy):
 		cde_type = q.get('type')
 
 		book = calibre.book(asin) if is_uuid(asin, cde_type) else None
-		apnx_path = book.apnx_path() if book else None
-		logging.debug("looking for apnx of %s, found %s", book, apnx_path)
-
+		apnx_path = annotations.apnx_path(book)
+		# logging.debug("looking for apnx of %s, found %s", book, apnx_path)
 		if apnx_path is None:
 			return None
 

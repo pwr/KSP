@@ -11,7 +11,7 @@ To run KSP, you will need:
 
 1. [Python 3.2](http://python.org/download/)
 
-     KSP has been tested with Python version 3.2.2.
+     KSP has been tested with Python versions 3.2.2 and 3.2.3.
 
 2. Either install the [pyOpenSSL](http://pypi.python.org/pypi/pyOpenSSL) package, or make sure you have the
     [openssl](http://www.openssl.org/) command-line utility accessible in the `PATH`.

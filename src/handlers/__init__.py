@@ -11,17 +11,17 @@ DET = 'det-g7g'
 DET_PATH = '/DeviceEventProxy/'
 DET_TA = 'det-ta-g7g'
 DM = 'device-messaging-na'
-DM_PATH = '/PostDeviceMessages?'
+DM_PATH = '/PostDeviceMessages'
 WWW = 'www'
 #EMBER_PATH = '/gp/ember/xyml/'
 #STORE_PATH = '/gp/g7g/xyml1/'
 
 def is_uuid(text, cde_type = None):
 	def is_hex(text):
-		import string
 		if not text:
 			return True
-		return text[0] in string.hexdigits and is_hex(text[1:])
+		# calibre ids use only lower-case for uuids
+		return text[0] in '0123456789abcdef' and is_hex(text[1:])
 
 	if not text:
 		return False
@@ -33,8 +33,6 @@ def is_uuid(text, cde_type = None):
 	# good enough
 	return False
 
-from .dummy import *
-from .upstream import *
 from .sync_metadata import *
 from .get_items import *
 from .remove_items import *

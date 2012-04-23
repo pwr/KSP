@@ -1,6 +1,6 @@
 from http.client import responses as HTTP_MESSAGES
 
-from content import date_header, str_headers, str_
+from content import date_header, str_
 
 
 class DummyResponse (object):
@@ -25,7 +25,7 @@ class DummyResponse (object):
 		return self.length
 
 	def __str__(self):
-		t = "[DUMMY] %d %s (%d) %s" % (self.status, self.reason, self.length, str_headers(self.headers.items()))
+		t = "[DUMMY] %d %s (%d) %s" % (self.status, self.reason, self.length, self.headers)
 		if self.body:
 			t += "\n" + str_(self.body)
 		return t
@@ -41,11 +41,7 @@ class ExceptionResponse (Exception):
 
 
 def _matches(path, expected_path):
-	if path == expected_path:
-		return True
-	if expected_path[-1] in ('?', '/'):
-		return path.startswith(expected_path)
-	return False
+	return path == expected_path or path.startswith(expected_path + '?') or path.startswith(expected_path + '/')
 
 
 class Dummy (object):

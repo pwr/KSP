@@ -1,10 +1,10 @@
 import os.path, logging
 from sqlite3 import connect as sqlite3
-from sqlite3 import Row as sqlite3_Row
 from collections import namedtuple
 import binascii, time
 
-import config
+import config, calibre
+
 
 def _namedtuple_row_factory(cursor, row):
     fields = [ col[0] for col in cursor.description ]
@@ -13,14 +13,30 @@ def _namedtuple_row_factory(cursor, row):
 
 def _execute(query, parameters = ()):
 	# logging.debug("execute %s %s", query, parameters)
-	with sqlite3(config.db_path_sidecar) as db:
+	with sqlite3(_db_path) as db:
 		db.execute(query, parameters)
 		db.commit()
 		return db.total_changes > 0
 	return False
 
+def apnx_path(asin):
+	if not asin:
+		return None
+	if type(asin) == str:
+		book = calibre.book(asin)
+	else:
+		book = asin
+	apnx_path = os.path.splitext(book.file_path)[0] + '.apnx' if book.file_path else None
+	# logging.debug("checking for apnx file %s", apnx_path)
+	if os.path.isfile(apnx_path):
+		return apnx_path
+
 def has(asin):
-	with sqlite3(config.db_path_sidecar) as db:
+	if not asin:
+		return None
+	if type(asin) != str:
+		asin = asin.asin
+	with sqlite3(_db_path) as db:
 		# it's enough to check the last_read table
 		# if there are no entries there, quite unlikely to have bookmarks/notes/etc
 		c = db.execute('SELECT COUNT(asin) FROM last_read WHERE asin = ?', (asin, ))
@@ -33,8 +49,12 @@ def has(asin):
 	return False
 
 def list(asin):
+	if not asin:
+		return None
+	if type(asin) != str:
+		asin = asin.asin
 	result = []
-	with sqlite3(config.db_path_sidecar) as db:
+	with sqlite3(_db_path) as db:
 		db.row_factory = _namedtuple_row_factory
 		result = [ lr for lr in db.execute('SELECT * FROM last_read WHERE asin = ?', (asin, )) ]
 		if len(result) > 1:
@@ -79,7 +99,7 @@ def modify(asin, kind, timestamp, begin, end, text):
 			(timestamp, text, asin, kind, begin, end))
 
 
-config.db_path_sidecar = os.path.join(config.database_path, 'sidecar.sqlite')
+_db_path = os.path.join(config.database_path, 'sidecar.sqlite')
 
 # we try to create the database schema every time the proxy starts, just in case
 # hopefully won't have to do any stupid schema migration in the future... :P

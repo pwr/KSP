@@ -11,7 +11,7 @@ class TODO_RemoveItems (Upstream):
 	_DUMMY_BODY = b'<?xml version="1.0" encoding="UTF-8"?><response><status>SUCCESS</status></response>'
 
 	def __init__(self):
-		Upstream.__init__(self, TODO, TODO_PATH + 'removeItems?', 'POST')
+		Upstream.__init__(self, TODO, TODO_PATH + 'removeItems', 'POST')
 
 	def call(self, request, device):
 		if device.is_provisional():

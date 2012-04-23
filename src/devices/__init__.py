@@ -1,7 +1,8 @@
 import logging, uuid
 
-import devices_db, certificate
-from devices_db import DeviceInfo
+from devices.device import Device as _Device
+import devices.db as _db
+import devices.certificate as _certificate
 
 
 def _update(device, ip_address = None, cookie = None):
@@ -12,7 +13,7 @@ def _update(device, ip_address = None, cookie = None):
 	device.last_ip = ip_address
 	if cookie:
 		device.last_cookie = cookie[:64]
-	devices_db.update(device)
+	_db.update(device)
 	return device
 
 def _make_context(device):
@@ -21,8 +22,8 @@ def _make_context(device):
 	If the device has no current PKCS12 certificate, loads it from the file 'db/<device_serial>.p12'
 	"""
 	if not device.p12:
-		device.p12 = certificate.load_p12bytes(device.serial)
-	device.context = certificate.make_context(device.serial, device.p12)
+		device.p12 = _certificate.load_p12bytes(device.serial)
+	device.context = _certificate.make_context(device.serial, device.p12)
 	if not device.context:
 		device.mark_context_failed()
 		return False
@@ -38,7 +39,7 @@ def update(device, cookie = None, fiona_id = None, pkcs12_bytes = None):
 	if fiona_id:
 		device.fiona_id = fiona_id
 	if pkcs12_bytes:
-		test_context = certificate.make_context(device.serial, pkcs12_bytes)
+		test_context = _certificate.make_context(device.serial, pkcs12_bytes)
 		if not test_context:
 			logging.error("%s tried to update PKCS12 key with invalid data -- ignored")
 		else:
@@ -47,7 +48,7 @@ def update(device, cookie = None, fiona_id = None, pkcs12_bytes = None):
 			# Even though we're updating the client certificate, active connections will still work with the old one.
 			# Actually, the old certificate will still be able to open new connections for an unknown amount of time.
 			# So there's no point in destroying the current SSL context and creating a new one.
-	devices_db.update(device)
+	_db.update(device)
 
 def detect(ip_address, cookie = None):
 	"""
@@ -61,10 +62,10 @@ def detect(ip_address, cookie = None):
 				# let's give it another chance... maybe the user put the proper .p12 into place
 				if not _make_context(d):
 					return d
-				devices_db.insert(d)
+				_db.insert(d)
 			return _update(d, ip_address, cookie)
 	# create new provisional device
-	d = DeviceInfo(last_ip = ip_address, last_cookie = cookie)
+	d = _Device(last_ip = ip_address, last_cookie = cookie)
 	_devices[d.serial] = d
 	return d
 
@@ -75,7 +76,7 @@ def confirm_device(device, serial):
 
 	# first we check if the device has been previously seen, but we just could not identify it
 	# (for example, the device might connect from a different IP and may have changed its cookie in the meantime)
-	already_registered = devices_db.find(serial)
+	already_registered = _db.find(serial)
 	if already_registered:
 		# yay, update ip and serial
 		_update(already_registered, device.last_ip, device.last_cookie)
@@ -86,15 +87,15 @@ def confirm_device(device, serial):
 		return None
 
 	logging.warn("registered device %s", device)
-	devices_db.insert(device)
+	_db.insert(device)
 	return device
 
 def save_all():
-	devices_db.update_all(_devices.values())
+	_db.update_all(_devices.values())
 
 
 ### module initialization
 _devices = {}
-for d in devices_db.load_all():
+for d in _db.load_all():
 	_devices[d.serial] = d
 	_make_context(d)

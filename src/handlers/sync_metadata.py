@@ -44,7 +44,7 @@ def _slim_book_node(doc, asin, cde_content_type):
 
 class TODO_SyncMetadata (Upstream):
 	def __init__(self):
-		Upstream.__init__(self, TODO, TODO_PATH + 'syncMetaData?', 'GET')
+		Upstream.__init__(self, TODO, TODO_PATH + 'syncMetaData', 'GET')
 
 	def call(self, request, device):
 		if device.is_provisional():

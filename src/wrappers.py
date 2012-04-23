@@ -24,23 +24,24 @@ def _response_readinto(self, buffer):
 	return self.fp.readinto(buffer)
 
 def _response__str__(self):
-	txt = "%d %s (%d) %s" % (self.status, self.reason, self.length, str_headers(self.headers._headers))
+	txt = "%d %s (%d) {%s}" % (self.status, self.reason, self.length, ', '.join(self.headers))
 	if self.body:
-		if not self.content_type or self.content_type.startswith('text/') or self.content_type.startswith('application/xml+'):
-			txt += '\n' + str_(decompress(self.body, self.content_encoding))
-		else:
-			txt += '\nbytes hex: ' + str(binascii.hexlify(self.body), 'ascii')
+		txt += "\n" + str_(decompress(self.body, self.content_encoding))
+		# if not self.content_type or self.content_type.startswith('text/') or self.content_type.startswith('application/xml+'):
+		# 	txt += '\n' + str_(decompress(self.body, self.content_encoding))
+		# else:
+		# 	txt += '\nbytes hex: ' + str(binascii.hexlify(self.body), 'ascii')
 	return txt
 
 def wrap_response(r):
-	r.content_type = r.headers.get("Content-Type", "")
-	r.content_encoding = r.headers.get("Content-Encoding")
+	r.content_type = r.headers.get('Content-Type', '')
+	r.content_encoding = r.headers.get('Content-Encoding')
 	r.body = r.read() # the implementation will fully read the body
 	r.length = 0 if r.body is None else len(r.body)
 	if r.chunked:
 		# the content we've read from upstream was chunked
 		# the one we'll reply with obviously won't be
-		del r.headers["Transfer-Encoding"]
+		del r.headers['Transfer-Encoding']
 	return r
 
 

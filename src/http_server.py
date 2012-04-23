@@ -95,8 +95,7 @@ class Server (ThreadingMixIn, HTTPServer):
 		return hlist
 
 	def find_handler(self, request):
-		for h in self._handlers:
-			# first volunteer wins
+		for h in self._handlers: # first volunteer wins
 			if h.accept(request):
 				return h
 

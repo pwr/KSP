@@ -8,26 +8,28 @@ import calibre, qxml
 import config, features
 
 
-class TODO_GetItems (Upstream):
-	_DUMMY_HEADERS = { 'Content-Type': 'text/xml;charset=UTF-8' }
-	__DUMMY_STR = '''
-			<?xml version="1.0" encoding="UTF-8"?>
-			<response>
-				<total_count>1</total_count>
-				<items>
-					<item action="UPLOAD" is_incremental="false" key="NONE" priority="1600" sequence="0" type="SNAP" url="$SERVER_URL$FionaCDEServiceEngine/UploadSnapshot"/>
-				</items>
-			</response>
-	'''.replace('\t', '').replace('\n', '').replace('$SERVER_URL$', config.server_url)
-	_DUMMY_BODY = bytes(__DUMMY_STR, 'UTF-8')
+_DUMMY_HEADERS = { 'Content-Type': 'text/xml;charset=UTF-8' }
+__DUMMY_STR = '''
+	<?xml version="1.0" encoding="UTF-8"?>
+	<response>
+		<total_count>1</total_count>
+		<items>
+			<item action="UPLOAD" is_incremental="false" key="NONE" priority="50" sequence="0" type="SNAP" url="$SERVER_URL$FionaCDEServiceEngine/UploadSnapshot"/>
+		</items>
+	</response>
+'''.replace('\t', '').replace('\n', '').replace('$SERVER_URL$', config.server_url)
+_DUMMY_BODY = bytes(__DUMMY_STR, 'UTF-8')
+del __DUMMY_STR
 
+
+class TODO_GetItems (Upstream):
 	def __init__(self):
-		Upstream.__init__(self, TODO, TODO_PATH + 'getItems?', 'GET')
+		Upstream.__init__(self, TODO, TODO_PATH + 'getItems', 'GET')
 
 	def call(self, request, device):
 		if device.is_provisional():
 			# tell the device to do a full snapshot upload, so that we can get the device serial and identify it
-			return DummyResponse(headers = self._DUMMY_HEADERS, data = self._DUMMY_BODY)
+			return DummyResponse(headers = _DUMMY_HEADERS, data = _DUMMY_BODY)
 
 		response = self.call_upstream(request, device)
 		if response.status == 200:
@@ -66,6 +68,10 @@ class TODO_GetItems (Upstream):
 				self.add_item(x_items, 'SET', 'SCFG', text = self._servers_config(), key = 'KSP.servers.configuration', priority = 100)
 				device.configuration_updated = True
 				was_updated = True
+			elif action == ('UPLOAD', 'SNAP'):
+				if not qxml.filter(x_items, 'item', action = 'UPLOAD', type = 'SNAP'):
+					self.add_item(x_items, 'UPLOAD', 'SNAP', key = 'KSP.upload.snapshot', url = config.server_url + 'FionaCDEServiceEngine/UploadSnapshot')
+					was_updated = True
 			else:
 				logging.warn("unknown action %s", action)
 

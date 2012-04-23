@@ -5,12 +5,13 @@ from handlers.upstream import Upstream
 from handlers.dummy import DummyResponse, ExceptionResponse
 from handlers import is_uuid, CDE, CDE_PATH
 from content import decompress, compress, query_params
-import postprocess, formats, sidecar_db
+import postprocess, formats
+import calibre.annotations as annotations
 import calibre, qxml
 
 
 def process_sidecar_upload(device, book_ids, book_nodes):
-	# books_on_device is NOT a complete list
+	# book_ids is NOT a complete list of books on device
 	for asin in book_ids:
 		book = calibre.book(asin)
 		if book:
@@ -33,22 +34,22 @@ def process_sidecar_upload(device, book_ids, book_nodes):
 				text = qxml.get_text(x_item) if kind == 'note' else None
 
 				if kind == 'last_read':
-					sidecar_db.last_read(asin, timestamp, begin, pos, state)
+					annotations.last_read(asin, timestamp, begin, pos, state)
 				else:
 					action = x_item.getAttribute('action')
 					if action == 'create':
-						sidecar_db.create(asin, kind, timestamp, begin, end, pos, state, text)
+						annotations.create(asin, kind, timestamp, begin, end, pos, state, text)
 					elif action == 'delete':
-						sidecar_db.delete(asin, kind, timestamp, begin, end)
+						annotations.delete(asin, kind, timestamp, begin, end)
 					elif action == 'modify':
-						sidecar_db.modify(asin, kind, timestamp, begin, end, text)
+						annotations.modify(asin, kind, timestamp, begin, end, text)
 					else:
 						logging.error("unknown sidecar action %s: %s", action, x_item)
 
 
 class CDE_Sidecar (Upstream):
 	def __init__(self):
-		Upstream.__init__(self, CDE, CDE_PATH + 'sidecar?')
+		Upstream.__init__(self, CDE, CDE_PATH + 'sidecar')
 
 	def call(self, request, device):
 		if device.is_provisional():
@@ -65,7 +66,7 @@ class CDE_Sidecar (Upstream):
 				sidecar_data = formats.sidecar(book)
 				if sidecar_data:
 					content_type, data = sidecar_data
-					return DummyResponse(200, { 'Content-Type': content_type }, data)
+					return DummyResponse(headers = { 'Content-Type': content_type }, data = data)
 				return None
 		elif request.command == 'POST':
 			body = decompress(request.body, request.content_encoding)

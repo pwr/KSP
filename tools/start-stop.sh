@@ -35,6 +35,7 @@ case "$1" in
 		$PYBIN $MAIN --config ~/etc &
 		echo $! > $PIDFILE
 		echo "KSP started ($!)"
+		exit 0
 		;;
 	stop)
 		PID=$(cat $PIDFILE 2>/dev/null)
@@ -47,10 +48,10 @@ case "$1" in
 			fi
 		fi
 		echo "KSP not running?"
+		exit 1
 		;;
 	restart)
-		$0 stop
-		sleep 3
+		$0 stop && sleep 3
 		exec $0 start
 		;;
 	status)

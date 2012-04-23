@@ -3,18 +3,12 @@ from urllib.parse import parse_qs
 
 
 def str_(bytes_buffer):
+	if type(bytes_buffer) == str:
+		return bytes_buffer
 	for encoding in [ 'utf-8', 'latin1', None ]:
-		try:
-			return str(bytes_buffer, encoding)
-		except:
-			pass
+		try: return str(bytes_buffer, encoding)
+		except: pass
 	return '<failed to decode bytes>'
-
-def str_headers(headers):
-	l = [ k + ': ' + str(v) for k, v in headers ]
-	return '{' + \
-			', '.join(l) + \
-			'}'
 
 def query_params(text):
 	if not text:

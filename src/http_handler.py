@@ -2,7 +2,7 @@ import logging, time
 from http.server import BaseHTTPRequestHandler
 
 from handlers import ExceptionResponse
-from content import compress, decompress, read_chunked, query_params, str_headers, str_
+from content import compress, decompress, read_chunked, query_params, str_
 import devices
 import config, features
 
@@ -20,21 +20,6 @@ class Handler (BaseHTTPRequestHandler):
 
 	_prefix_len = 0 if not config.server_path_prefix else len(config.server_path_prefix) - 1 # without the final /
 
-	def ignore_request(self):
-		# we ignore requests not targeted to our service
-		if self.request_version != self.protocol_version: # all kindle requests SHOULD be HTTP/1.1
-			return True
-		if config.server_path_prefix:
-			if not self.path.startswith(config.server_path_prefix):
-				return True
-		# if config.server_hostname:
-		# 	host = self.headers.get('Host')
-		# 	# hrm, will let requests without a 'Host' header pass till I establish all the corner cases
-		# 	if host and host != config.server_hostname:
-		# 		logging.warn("got funny Host header: %s", host)
-		# 		return True
-		return False
-
 	def handle_call(self):
 		# logging.debug("## %s", self.requestline)
 
@@ -48,7 +33,7 @@ class Handler (BaseHTTPRequestHandler):
 			return 401
 
 		self._read_body_and_length()
-		logging.debug(str(self))
+		logging.debug("%s", self)
 
 		# strip possible path prefix
 		self.path = self.path[self._prefix_len:]
@@ -70,7 +55,7 @@ class Handler (BaseHTTPRequestHandler):
 		logging.info("replying with %s", response)
 		self.send_response_only(response.status, response.reason)
 
-		header_strings = [k + ': ' + v for k, v in list(response.headers.items())]
+		header_strings = [ k + ': ' + v for k, v in response.headers.items() ]
 		self.wfile.write(bytes('\r\n'.join(header_strings), 'latin1'))
 		self.wfile.write(b'\r\n\r\n')
 
@@ -80,11 +65,26 @@ class Handler (BaseHTTPRequestHandler):
 		# logging.debug("%%%% %s", self.requestline)
 		return 0
 
+	def ignore_request(self):
+		# we ignore requests not targeted to our service
+		if self.request_version != self.protocol_version: # all kindle requests SHOULD be HTTP/1.1
+			return True
+		if config.server_path_prefix:
+			if not self.path.startswith(config.server_path_prefix):
+				return True
+		# if config.server_hostname:
+		# 	host = self.headers.get('Host')
+		# 	# hrm, will let requests without a 'Host' header pass till I establish all the corner cases
+		# 	if host and host != config.server_hostname:
+		# 		logging.warn("got funny Host header: %s", host)
+		# 		return True
+		return False
+
 	def _do_any(self):
 		self.started_at = time.time() # almost
 
 		if self.ignore_request():
-			logging.warn("ignoring request (%s) %s", self.headers.get('Host'), self.requestline)
+			logging.warn("ignoring request %s", self.requestline)
 			# now for most requests, a 404 might be enough, or just closing the connection (impolite, but cheap)
 			# but some idiots retry the request when receiving a 404, so we'll have to be mean to everybody -- redirect them into limbo
 			self.wfile.write(bytes(self.request_version, 'ascii'))
@@ -102,8 +102,8 @@ class Handler (BaseHTTPRequestHandler):
 
 	do_GET = _do_any
 	do_POST = _do_any
-	do_PUT = _do_any
-	do_HEAD = _do_any
+	# do_PUT = _do_any
+	# do_HEAD = _do_any
 
 	def _read_body_and_length(self):
 		"""
@@ -151,18 +151,18 @@ class Handler (BaseHTTPRequestHandler):
 	def update_body(self, new_body = None):
 		self.body = compress(new_body, self.content_encoding)
 		self.length = 0 if new_body is None else len(self.body)
-		del self.headers['Content-Length']
+		del self.headers['Content-Length'] # otherwise there will be a duplcate
 		self.headers['Content-Length'] = str(self.length)
 
 	def __str__(self):
-		txt = "%s %s %s\n\t%s" % (self.command, self.path, self.request_version, str_headers(self.headers._headers))
+		txt = "%s %s %s\n\t{%s}" % (self.command, self.path, self.request_version, ', '.join(self.headers))
 		if self.body:
 			plain = decompress(self.body, self.content_encoding)
 			txt += "\n" + str_(plain)
 		return txt
 
 	def version_string(self):
-		return "Amazon Web Server"
+		return 'Amazon Web Server'
 
 	def log_request(self, code = '-', size = '-'):
 		if hasattr(self, 'started_at'):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-__version__ = '0.6'
+__version__ = '0.7'
 
 import sys, os, os.path
 
@@ -35,7 +35,9 @@ def _args():
 								help = "Use the given pipe to read server control commands")
 	return p.parse_args()
 
+
 import logging
+
 
 def _make_root_logger(stream, log_level = 'NOTSET'):
 	handler = logging.StreamHandler(stream)

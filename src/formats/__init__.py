@@ -1,9 +1,5 @@
 import logging
 
-import formats.mobi as mobi
-import formats.mbp as mbp
-import features
-
 
 CONTENT_TYPE_MOBIPOCKET = 'application/x-mobipocket-ebook'
 CONTENT_TYPE_PDF = 'application/pdf'
@@ -47,6 +43,10 @@ CDE_TYPES = {
 # 	'HAN'  : ( '????', 'application/json' ),
 # 	'APG'  : ( '????', 'application/x-apg-zip' ),
 
+
+import features
+
+
 if hasattr(features, 'supported_formats'):
 	features.supported_formats = [ k.upper() for k in features.supported_formats if k.upper() in CONTENT_TYPES ]
 else:
@@ -57,6 +57,10 @@ else:
 logging.debug("supported formats: %s", features.supported_formats)
 
 
+import formats.mobi as mobi
+import formats.mbp as mbp
+
+
 def handles(content_type):
 	return content_type in ( CONTENT_TYPE_MOBIPOCKET, CONTENT_TYPE_PDF )
 
@@ -65,12 +69,11 @@ def read_cde_type(path, content_type, asin):
 		return mobi.read_cde_type(path, asin)
 	if content_type == CONTENT_TYPE_PDF:
 		return 'PDOC'
-	return None
+
+
+import calibre.annotations as annotations
 
 def sidecar(book):
-	sidecar_list = book.sidecar()
-	if not sidecar_list:
-		return None
 	if book.content_type == CONTENT_TYPE_MOBIPOCKET:
-		return mbp.assemble_sidecar(book, sidecar_list)
-	return None
+		annotations_list = annotations.list(book)
+		return mbp.assemble_sidecar(book, annotations_list)

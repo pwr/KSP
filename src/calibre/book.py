@@ -1,12 +1,9 @@
-import os.path, logging, time
+import os.path, logging
 
-import calibre_db
-LIBRARY_ID = calibre_db.get_library_id()
-import sidecar_db, formats
-import config, features
+import config, formats
 
 
-class _Book:
+class Book:
 	def __init__(self, book_dict, timestamp):
 		self.asin = book_dict['uuid']
 		self.uuid = self.asin
@@ -103,112 +100,5 @@ class _Book:
 		last_downloaded = device.books.get(self.asin)
 		return last_downloaded and self.last_modified > last_downloaded
 
-	def has_sidecar(self):
-		return sidecar_db.has(self.asin)
-
-	def sidecar(self):
-		return sidecar_db.list(self.asin)
-
-	def apnx_path(self):
-		apnx_path = os.path.splitext(self.file_path)[0] + '.apnx' if self.file_path else None
-		# logging.debug("checking for apnx file %s", apnx_path)
-		if os.path.isfile(apnx_path):
-			return apnx_path
-
 	def __str__(self):
 		return '{%s (%s~%s) modified %d, %s %d}' % ( self.title, self.asin[:14], self.cde_content_type, self.last_modified, self.file_path, self.file_size )
-
-
-def missing_from_library(asin, device):
-	last_downloaded = device.books.get(asin)
-	if last_downloaded == 0:
-		logging.debug("%s forgetting about %s", device, asin)
-		device.books.pop(asin, None)
-
-def _book_refresh(uuid, asin, book, book_dict, timestamp):
-	if not book_dict:
-		book_dict = calibre_db.reload(uuid)
-	if not book_dict:
-		logging.debug("book %s not in library", uuid)
-		# no book_dict, means it's not even in the calibre database, so we can forget about it
-		_books.pop(uuid, None) # this should be an exception-free 'del'
-		_books.pop(asin, None)
-		return None
-	if book:
-		book.update(book_dict, timestamp)
-	else:
-		book = _Book(book_dict, timestamp)
-		_books[book.asin] = book
-	return book
-
-def books(refresh = False):
-	"""
-	gets the current books map, optionally updating it from the calibre db first
-	"""
-	if refresh:
-		started_at = time.time()
-		book_dicts = calibre_db.reload_all()
-		if book_dicts:
-			# we use the timestamp to mark which books we've updated this round
-			# so that we know which book have disappeared from the library since the last update
-			timestamp = calibre_db.last_update
-
-			while book_dicts:
-				book_id, book_dict = book_dicts.popitem()
-				uuid = book_dict['uuid']
-				asin = uuid
-				book = _books.get(asin)
-				if not book:
-					asin2 = asin.replace('-', '')
-					book = _books.get(asin2)
-					if book:
-						asin = book.asin
-				_book_refresh(uuid, asin, book, book_dict, timestamp) # adds it to _books as well
-
-			for book in list(_books.values()):
-				if book._timestamp != timestamp: # removed from the library
-					logging.warn("book was in library but missing after refresh: %s", book)
-					_books.pop(book.asin, None)
-
-			load_duration = time.time() - started_at
-			logging.info("Calibre Library loaded and processed in %d:%02.3f minutes, at an average %.3f seconds/book",
-					load_duration // 60, load_duration % 60, load_duration / len(_books))
-
-	return _books
-
-def book(asin, refresh = False):
-	"""
-	gets the Book for a given asin, optionally updating it from the calibre db first
-	"""
-	if not asin:
-		logging.warn("tried to find book with no asin")
-		return None
-	uuid = asin
-	book = _books.get(asin)
-	if book:
-		uuid = book.uuid
-		asin = book.asin
-	if refresh or not book:
-		book = _book_refresh(uuid, asin, book, None, 0)
-	return book
-
-def _collections(asin_mappings):
-	collections = {}
-	for name, asin_list in asin_mappings.items():
-		books_list = [ book(asin) for asin in asin_list ]
-		books_list = [ b for b in books_list if b ]
-		books_with_files = [ b for b in books_list if b.file_path ]
-		if books_with_files: # if at least _some_ books in the collection has files
-			collections[name] = books_list
-	return collections
-
-def series_collections():
-	return _collections(calibre_db.load_series_collections())
-
-def tag_collections():
-	return _collections(calibre_db.load_tag_collections())
-
-
-# module initialization
-_books = {}
-books(True) # force load all the books

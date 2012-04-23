@@ -4,18 +4,15 @@ from re import compile as re_compile
 from handlers.upstream import Upstream
 from handlers.dummy import DummyResponse
 from handlers import is_uuid, CDE, CDE_PATH
-from content import copy_streams, str_headers
+from content import copy_streams
+import calibre.annotations as annotations
 import config, calibre
 
 
 class _BookResponse (DummyResponse):
 	"""an HTTP response for downloading book files"""
 	_BUFFER_SIZE = 64 * 1024 # 64k
-	_HEADERS = {
-			'Hint-Sidecar-Download': '0',
-			'Accept-Ranges': 'bytes',
-			# 'Connection': 'close',
-		}
+	_HEADERS = { 'Accept-Ranges': 'bytes' }
 
 	def __init__(self, book, bytes_range = None):
 		status = 200 if bytes_range is None else 206 # 'OK' or 'Partial Content'
@@ -37,9 +34,10 @@ class _BookResponse (DummyResponse):
 
 		self.headers['Content-Disposition'] = 'attachment; filename="%s"' % os.path.basename(book.file_path)
 		self.headers['Content-Type'] = book.content_type
-		if book.has_sidecar():
+
+		if annotations.has(book):
 			self.headers['Hint-Sidecar-Download'] = '1'
-		if book.apnx_path():
+		if annotations.apnx_path(book):
 			self.headers['Hint-APNX-Available'] = '1'
 
 	def write_to(self, stream_out):
@@ -51,7 +49,7 @@ class _BookResponse (DummyResponse):
 		return bytes_count
 
 	def __str__(self):
-		return "200 OK %s\n%s %d-%d/%d" % ( str_headers(self.headers.items()), self.book, self.range_begin, self.range_end, self.length )
+		return "200 OK %s\n%s %d-%d/%d" % ( self.headers, self.book, self.range_begin, self.range_end, self.length )
 
 
 _RANGE_FORMAT = re_compile('^bytes=([0-9]*)-([0-9]*)$')
@@ -87,21 +85,21 @@ def _range(range_header, max_size):
 	if count == 0:
 		raise ExceptionResponse(204) # No content
 
-	bytes_range = ( begin, end, count )
+	bytes_range = begin, end, count
 	logging.debug("parsed range header '%s' as %s", range_header, bytes_range)
 	return bytes_range
 
 
 class CDE_DownloadContent (Upstream):
 	def __init__(self):
-		Upstream.__init__(self, CDE, CDE_PATH + 'FSDownloadContent?', 'GET')
+		Upstream.__init__(self, CDE, CDE_PATH + 'FSDownloadContent', 'GET')
 
 	def call(self, request, device):
 		q = request.get_query_params()
-		t = q.get('type')
-		if 'key' in q and t in ['EBOK', 'PDOC']:
+		cde_type = q.get('type')
+		if 'key' in q and cde_type in ('EBOK', 'PDOC'):
 			key = q['key']
-			if is_uuid(key, t): # very likely comes from our library
+			if is_uuid(key, cde_type): # very likely comes from our library
 				return self.book_response(key, device, request.headers.get('Range'))
 
 		redirect_header = { 'Location': 'https://cde-g7g.amazon.com/' + request.path }

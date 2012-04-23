@@ -37,7 +37,7 @@ class FIRS_TA_NewDevice (Upstream):
 
 class FIRS_NewDevice (Upstream):
 	def __init__(self):
-		Upstream.__init__(self, FIRS, FIRS_PATH + 'getDeviceCredentials?', 'GET')
+		Upstream.__init__(self, FIRS, FIRS_PATH + 'getDeviceCredentials', 'GET')
 
 	def call(self, request, device):
 		return call_and_process(self, request, device)

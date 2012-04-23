@@ -10,7 +10,6 @@ class Upstream (Dummy):
 	"""
 	simple pass-through handler
 	"""
-
 	def __init__(self, service, path, command = None, idle = 57):
 		Dummy.__init__(self, service, path, command)
 		# the default http keep-alive set-up on kindle is 60 seconds
@@ -46,8 +45,8 @@ class Upstream (Dummy):
 			conn = device.connections.setdefault(self.service, conn) # just in case...
 		with conn._lock:
 			# uuuuugly... but this way we make sure device requests don't step on each other's toes too much
-			del request.headers["Host"]
-			request.headers["Host"] = self.service + '.amazon.com'
+			del request.headers['Host']
+			request.headers['Host'] = self.service + '.amazon.com'
 
 			# yeah, let's not leave these around
 			del request.headers['X-Forwarded-For']
