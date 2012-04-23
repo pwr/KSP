@@ -57,13 +57,17 @@ class TODO_GetItems (Upstream):
 				if book.needs_update_on(device) and book.cde_content_type in ('EBOK', ): # PDOC updates are not supported ATM
 					logging.warn("book %s updated in library, telling device %s to download it again", book, device)
 					# <item action="GET" is_incremental="false" key="asin" priority="600" sequence="0" type="EBOK">title</item>
-					self.add_item(x_items, 'GET', book.cde_content_type, book.asin, book.title, forced = True) # book.title)
+					self.add_item(x_items, 'GET', book.cde_content_type, key = book.asin, text = book.title, forced = True) # book.title)
 					was_updated = True
 
-		if not device.configuration_updated:
-			self.add_item(x_items, 'SET', 'SCFG', priority=100, text=self._servers_config(), key='KSP.servers.configuration')
-			device.configuration_updated = True
-			was_updated = True
+		while device.actions_queue:
+			action = device.actions_queue.pop()
+			if action == ('SET', 'SCFG'):
+				self.add_item(x_items, 'SET', 'SCFG', text = self._servers_config(), key = 'KSP.servers.configuration', priority = 100)
+				device.configuration_updated = True
+				was_updated = True
+			else:
+				logging.warn("unknown action %s", action)
 
 		if was_updated:
 			x_total_count = qxml.get_child(x_response, 'total_count')
@@ -132,16 +136,16 @@ class TODO_GetItems (Upstream):
 
 	def _servers_config(self):
 		servers_config = (
-				'url.todo=' + config.server_url + TODO_PATH,
-				'url.cde=' + config.server_url + CDE_PATH,
-				'url.firs=' + config.server_url + FIRS_PATH,
-				'url.firs.unauth=' + config.server_url + FIRS_PATH,
+				'url.todo=' + config.server_url + TODO_PATH.strip('/'),
+				'url.cde=' + config.server_url + CDE_PATH.strip('/'),
+				'url.firs=' + config.server_url + FIRS_PATH.strip('/'),
+				'url.firs.unauth=' + config.server_url + FIRS_PATH.strip('/'),
 			)
 		if not features.allow_logs_upload:
 			servers_config += (
 				'url.messaging.post=' + config.server_url,
-				'url.det=' + config.server_url + DET_PATH,
-				'url.det.unauth=' + config.server_url + DET_PATH
+				'url.det=' + config.server_url + DET_PATH.strip('/'),
+				'url.det.unauth=' + config.server_url + DET_PATH.strip('/')
 			)
 		return '\n'.join(servers_config)
 

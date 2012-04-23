@@ -26,7 +26,7 @@ class DeviceInfo:
 		# won't be saving the last_sync time to the db
 		# so that each time the proxy is restarted, a full sync takes place for each device
 		self.last_sync = 0
-		self.configuration_updated = False
+		self.actions_queue = [ ('SET', 'SCFG') ]
 
 		if self.p12:
 			logging.info("loaded device %s", self)
@@ -69,7 +69,6 @@ def find(serial):
 		# db.row_factory = sqlite3.Row
 		for row in db.execute('SELECT * FROM devices WHERE serial = ?', (serial, )):
 			return DeviceInfo(*row)
-	return None
 
 def insert(device):
 	if device.is_provisional():

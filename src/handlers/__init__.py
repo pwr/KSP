@@ -41,6 +41,7 @@ from .remove_items import *
 from .download_content import *
 from .upload_snapshot import *
 from .sidecar import *
+from .page_numbers import *
 from .collections import *
 from .registration import *
 #from .store import *

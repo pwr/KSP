@@ -65,7 +65,6 @@ def _update_book_map(cursor, books_map, field, query, params = ()):
 		book[field][row[1]] = row[2] if len(row) == 3 else row[2:]
 
 def _db_connect():
-	global _db_path
 	return sqlite3.connect(_db_path, isolation_level = 'DEFERRED')
 
 def reload_all():
@@ -143,8 +142,6 @@ def reload(uuid):
 
 		return book_dict
 
-	return None
-
 def load_series_collections():
 	series = {}
 
@@ -175,7 +172,6 @@ def get_library_id():
 		for row in db.execute('SELECT uuid FROM library_id'):
 			return row[0]
 	logging.error("failed to get library id")
-	return None
 
 
 # module initialization

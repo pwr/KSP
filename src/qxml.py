@@ -69,7 +69,6 @@ def get_text(tag_node):
 	if tnode.nodeType == Node.TEXT_NODE:
 		return tnode.data
 	logging.warn("get_node found no text node in %s", tag_node)
-	return None
 
 
 def remove_whitespace(tag_node):

@@ -3,7 +3,6 @@ import logging
 
 
 def enqueue(processor, *args):
-	global _task_queue
 	# logging.debug("queueing %s with %s", processor, args)
 	_task_queue.put( (processor, args) )
 

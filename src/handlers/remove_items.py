@@ -30,16 +30,17 @@ class TODO_RemoveItems (Upstream):
 		was_updated = False
 
 		for x_item in qxml.iter_children(x_items, 'item'):
-			typ = x_item.getAttribute('type')
-			action = x_item.getAttribute('action')
 			key = x_item.getAttribute('key')
 			if key.startswith('KSP.'):
 				# our updates, not relevant upstream
 				x_items.removeChild(x_item)
 				was_updated = True
 				continue
-			if action in ('GET', 'DOWNLOAD') and typ in ('EBOK', 'PDOC'):
-				if is_uuid(key, typ):
+
+			action = x_item.getAttribute('action')
+			cde_type = x_item.getAttribute('type')
+			if action in ('GET', 'DOWNLOAD') and cde_type in ('EBOK', 'PDOC'):
+				if is_uuid(key, cde_type):
 					x_items.removeChild(x_item)
 					was_updated = True
 

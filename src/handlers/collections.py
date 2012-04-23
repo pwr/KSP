@@ -43,7 +43,6 @@ class CDE_GetCollections (Upstream):
 		Upstream.__init__(self, CDE, CDE_PATH + 'getCollections?', 'GET')
 
 	def call(self, request, device):
-		global _CALIBRE_DEVICE_ID
 		q = request.get_query_params()
 		if _CALIBRE_DEVICE_ID == q.get('deviceType') and calibre.LIBRARY_ID == q.get('serialNumber'):
 			return self.calibre_collections()

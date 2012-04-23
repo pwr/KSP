@@ -90,9 +90,7 @@ class _Book:
 		device.books[self.asin] = self.last_modified
 
 	def is_known_to(self, device):
-		if not self.file_path: # we don't want to be known
-			return False
-		return self.asin in device.books
+		return self.file_path is not None and self.asin in device.books
 
 	def mark_known_to(self, device):
 		if self.asin not in device.books:
@@ -111,6 +109,12 @@ class _Book:
 	def sidecar(self):
 		return sidecar_db.list(self.asin)
 
+	def apnx_path(self):
+		apnx_path = os.path.splitext(self.file_path)[0] + '.apnx' if self.file_path else None
+		# logging.debug("checking for apnx file %s", apnx_path)
+		if os.path.isfile(apnx_path):
+			return apnx_path
+
 	def __str__(self):
 		return '{%s (%s~%s) modified %d, %s %d}' % ( self.title, self.asin[:14], self.cde_content_type, self.last_modified, self.file_path, self.file_size )
 
@@ -122,7 +126,6 @@ def missing_from_library(asin, device):
 		device.books.pop(asin, None)
 
 def _book_refresh(uuid, asin, book, book_dict, timestamp):
-	global _books
 	if not book_dict:
 		book_dict = calibre_db.reload(uuid)
 	if not book_dict:
@@ -142,7 +145,6 @@ def books(refresh = False):
 	"""
 	gets the current books map, optionally updating it from the calibre db first
 	"""
-	global _books
 	if refresh:
 		started_at = time.time()
 		book_dicts = calibre_db.reload_all()
@@ -181,7 +183,6 @@ def book(asin, refresh = False):
 	if not asin:
 		logging.warn("tried to find book with no asin")
 		return None
-	global _books
 	uuid = asin
 	book = _books.get(asin)
 	if book:

@@ -140,7 +140,6 @@ class Handler (BaseHTTPRequestHandler):
 		cookie = self.headers.get('Cookie')
 		if cookie and cookie.startswith('x-fsn='):
 			return cookie[6:]
-		return None
 
 	def _client_ip(self):
 		return self.headers.get('X-Forwarded-For') or self.client_address[0]

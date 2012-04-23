@@ -5,7 +5,7 @@ from handlers.upstream import Upstream
 from handlers.dummy import DummyResponse
 from handlers import is_uuid, CDE, CDE_PATH
 from content import copy_streams, str_headers
-import calibre
+import config, calibre
 
 
 class _BookResponse (DummyResponse):
@@ -39,6 +39,8 @@ class _BookResponse (DummyResponse):
 		self.headers['Content-Type'] = book.content_type
 		if book.has_sidecar():
 			self.headers['Hint-Sidecar-Download'] = '1'
+		if book.apnx_path():
+			self.headers['Hint-APNX-Available'] = '1'
 
 	def write_to(self, stream_out):
 		bytes_count = 0
@@ -49,7 +51,7 @@ class _BookResponse (DummyResponse):
 		return bytes_count
 
 	def __str__(self):
-		return "200 OK %s\n%s [%s] %d-%d/%d" % ( str_headers(self.headers.items()), self.book, self.book.file_path, self.range_begin, self.range_end, self.length )
+		return "200 OK %s\n%s %d-%d/%d" % ( str_headers(self.headers.items()), self.book, self.range_begin, self.range_end, self.length )
 
 
 _RANGE_FORMAT = re_compile('^bytes=([0-9]*)-([0-9]*)$')
@@ -61,7 +63,6 @@ def _range(range_header, max_size):
 	if not range_header.startswith('bytes='):
 		raise ExceptionResponse(416) # 'Requested Range Not Satisfiable'
 
-	# global _RANGE_FORMAT
 	m = _RANGE_FORMAT.match(range_header)
 	if m is None:
 		raise ExceptionResponse(416) # 'Requested Range Not Satisfiable'

@@ -30,7 +30,6 @@ def _make_context(device):
 
 def get(serial):
 	"""gets a device by serial"""
-	global _devices
 	return _devices.get(serial)
 
 def update(device, cookie = None, fiona_id = None, pkcs12_bytes = None):
@@ -55,7 +54,6 @@ def detect(ip_address, cookie = None):
 	guess the device that made a request
 	if no matching device exists in our database, one may be created on the spot
 	"""
-	global _devices
 	for d in _devices.values():
 		if (cookie and (cookie == d.last_cookie or cookie.startswith(d.last_cookie))) \
 				or ip_address == d.last_ip: # match from most specific to less specific field
@@ -92,7 +90,6 @@ def confirm_device(device, serial):
 	return device
 
 def save_all():
-	global _devices
 	devices_db.update_all(_devices.values())
 
 

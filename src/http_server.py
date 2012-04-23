@@ -59,6 +59,7 @@ class Server (ThreadingMixIn, HTTPServer):
 				handlers.CDE_DownloadContent(),
 				handlers.CDE_UploadSnapshot(),
 				handlers.CDE_Sidecar(),
+				handlers.CDE_PageNumbers(),
 				handlers.CDE_ShareAnnotations(),
 				handlers.CDE_DevicesWithCollections(),
 				handlers.CDE_GetCollections(),
@@ -98,7 +99,6 @@ class Server (ThreadingMixIn, HTTPServer):
 			# first volunteer wins
 			if h.accept(request):
 				return h
-		return None
 
 	def run(self):
 		self.server_bind()

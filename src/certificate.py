@@ -58,16 +58,11 @@ def load_p12bytes(name):
 	if not os.path.isfile(path):
 		logging.warn("file not found: %s", path)
 		return None
-
-	try:
-		f = open(path, 'rb')
+	with open(path, 'rb') as f:
 		bytes = f.read()
-		f.close()
 		os.remove(path)
 		return bytes
-	except:
-		logging.exception("failed to read %s", path)
-	return None
+	logging.exception("failed to read %s", path)
 
 def make_context(name, pkcs12_bytes):
 	pkcs12 = load_pkcs12(name, pkcs12_bytes)
@@ -89,8 +84,6 @@ def make_context(name, pkcs12_bytes):
 	finally:
 		try: os.remove(temp[1])
 		except: pass
-
-	return None
 
 
 logging.debug("certificates for new devices will be searched in %s", config.database_path)
