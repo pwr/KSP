@@ -38,12 +38,18 @@ class Device:
 		return len(self.serial) == 8
 
 	def mark_context_failed(self):
+		logging.debug("%s context failed", self)
 		self.context = self._PKCS12_FAILED
 
 	def context_failed(self):
 		return id(self.context) == id(self._PKCS12_FAILED)
 
 	def __str__(self):
+		if self.is_provisional():
+			return "{%s/provisional %s cookie=%s}" % (
+						self.serial, self.last_ip, None if not self.last_cookie else self.last_cookie[:12] + '...'
+					)
+
 		return "{%s/%s %s cookie=%s%s, sync=%s with %d books}" % (
 					self.serial, self.fiona_id, self.last_ip,
 					None if not self.last_cookie else self.last_cookie[:12] + '...',

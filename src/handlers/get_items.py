@@ -14,7 +14,8 @@ __DUMMY_STR = '''
 	<response>
 		<total_count>1</total_count>
 		<items>
-			<item action="UPLOAD" is_incremental="false" key="NONE" priority="50" sequence="0" type="SNAP" url="$SERVER_URL$FionaCDEServiceEngine/UploadSnapshot"/>
+			<item action="UPLOAD" type="SNAP" key="KSP.provisional.snapshot" priority="50" is_incremental="false" sequence="0"
+				 url="$SERVER_URL$FionaCDEServiceEngine/UploadSnapshot"/>
 		</items>
 	</response>
 '''.replace('\t', '').replace('\n', '').replace('$SERVER_URL$', config.server_url)
@@ -66,7 +67,6 @@ class TODO_GetItems (Upstream):
 			action = device.actions_queue.pop()
 			if action == ('SET', 'SCFG'):
 				self.add_item(x_items, 'SET', 'SCFG', text = self._servers_config(), key = 'KSP.servers.configuration', priority = 100)
-				device.configuration_updated = True
 				was_updated = True
 			elif action == ('UPLOAD', 'SNAP'):
 				if not qxml.filter(x_items, 'item', action = 'UPLOAD', type = 'SNAP'):

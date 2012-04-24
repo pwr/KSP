@@ -103,7 +103,7 @@ class Handler (BaseHTTPRequestHandler):
 	do_GET = _do_any
 	do_POST = _do_any
 	# do_PUT = _do_any
-	# do_HEAD = _do_any
+	do_HEAD = _do_any
 
 	def _read_body_and_length(self):
 		"""
@@ -155,7 +155,8 @@ class Handler (BaseHTTPRequestHandler):
 		self.headers['Content-Length'] = str(self.length)
 
 	def __str__(self):
-		txt = "%s %s %s\n\t{%s}" % (self.command, self.path, self.request_version, ', '.join(self.headers))
+		headers = ( k + ': ' + v for k, v in self.headers.items() )
+		txt = "%s %s %s\n\t{%s}" % (self.command, self.path, self.request_version, ', '.join(headers))
 		if self.body:
 			plain = decompress(self.body, self.content_encoding)
 			txt += "\n" + str_(plain)

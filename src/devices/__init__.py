@@ -67,6 +67,7 @@ def detect(ip_address, cookie = None):
 	# create new provisional device
 	d = _Device(last_ip = ip_address, last_cookie = cookie)
 	_devices[d.serial] = d
+	logging.warn("failed to identify device from %s, created a provisional device %s", ip_address, d)
 	return d
 
 def confirm_device(device, serial):
@@ -76,10 +77,12 @@ def confirm_device(device, serial):
 
 	# first we check if the device has been previously seen, but we just could not identify it
 	# (for example, the device might connect from a different IP and may have changed its cookie in the meantime)
-	already_registered = _db.find(serial)
+	already_registered = _devices[serial]
 	if already_registered:
 		# yay, update ip and serial
+		logging.info("identified provisional device %s as %s", device, already_registered)
 		_update(already_registered, device.last_ip, device.last_cookie)
+		del _devices[device.serial]
 		return already_registered
 
 	device.serial = serial
@@ -95,7 +98,13 @@ def save_all():
 
 
 ### module initialization
-_devices = {}
-for d in _db.load_all():
-	_devices[d.serial] = d
-	_make_context(d)
+def __load_all():
+	_all = {}
+	for d in _db.load_all():
+		if _make_context(d):
+			_all[d.serial] = d
+		else:
+			logging.warn("not loading device %s, SSL context failed")
+	return _all
+_devices = __load_all()
+del __load_all

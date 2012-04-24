@@ -16,11 +16,11 @@ def _execute(query, parameters = ()):
 			raise Exception("don't know how to use parameters", parameters)
 		db.commit()
 
-def find(serial):
-	with sqlite3(_db_path) as db:
-		# db.row_factory = sqlite3.Row
-		for row in db.execute('SELECT * FROM devices WHERE serial = ?', (serial, )):
-			return _Device(*row)
+# def find(serial):
+# 	with sqlite3(_db_path) as db:
+# 		# db.row_factory = sqlite3.Row
+# 		for row in db.execute('SELECT * FROM devices WHERE serial = ?', (serial, )):
+# 			return _Device(*row)
 
 def insert(device):
 	if device.is_provisional():
