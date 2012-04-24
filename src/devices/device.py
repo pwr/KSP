@@ -38,7 +38,7 @@ class Device:
 		return len(self.serial) == 8
 
 	def mark_context_failed(self):
-		logging.debug("%s context failed", self)
+		logging.warn("%s context failed", self)
 		self.context = self._PKCS12_FAILED
 
 	def context_failed(self):

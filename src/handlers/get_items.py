@@ -3,40 +3,31 @@ import xml.dom.minidom as minidom
 
 from handlers.upstream import Upstream
 from handlers.dummy import DummyResponse
-from handlers import is_uuid, TODO, TODO_PATH, CDE_PATH, FIRS_PATH, DET_PATH
+from handlers.ksp import SERVERS_CONFIG, FIRST_CONTACT
+from handlers import is_uuid, TODO, TODO_PATH
 import calibre, qxml
 import config, features
 
 
-_DUMMY_HEADERS = { 'Content-Type': 'text/xml;charset=UTF-8' }
-__DUMMY_STR = '''
-	<?xml version="1.0" encoding="UTF-8"?>
-	<response>
-		<total_count>1</total_count>
-		<items>
-			<item action="UPLOAD" type="SNAP" key="KSP.provisional.snapshot" priority="50" is_incremental="false" sequence="0"
-				 url="$SERVER_URL$FionaCDEServiceEngine/UploadSnapshot"/>
-		</items>
-	</response>
-'''.replace('\t', '').replace('\n', '').replace('$SERVER_URL$', config.server_url)
-_DUMMY_BODY = bytes(__DUMMY_STR, 'UTF-8')
-del __DUMMY_STR
-
+_POLL_RESPONSE = b'<?xml version="1.0" encoding="UTF-8"?><response><total_count/><next_pull_time/></response>'
 
 class TODO_GetItems (Upstream):
 	def __init__(self):
 		Upstream.__init__(self, TODO, TODO_PATH + 'getItems', 'GET')
 
 	def call(self, request, device):
+		q = request.get_query_params()
+		if q.get('reason') == 'Poll':
+			return DummyResponse(data = _POLL_RESPONSE)
+
 		if device.is_provisional():
 			# tell the device to do a full snapshot upload, so that we can get the device serial and identify it
-			return DummyResponse(headers = _DUMMY_HEADERS, data = _DUMMY_BODY)
+			return DummyResponse(headers = { 'Content-Type': 'text/xml;charset=UTF-8' }, data = FIRST_CONTACT)
 
 		response = self.call_upstream(request, device)
 		if response.status == 200:
 			# use default UTF-8 encoding
 			with minidom.parseString(response.body) as doc:
-				q = request.get_query_params()
 				if self.process_xml(doc, device, q.get('reason')):
 					xml = doc.toxml('UTF-8')
 					response.update_body(xml)
@@ -66,7 +57,7 @@ class TODO_GetItems (Upstream):
 		while device.actions_queue:
 			action = device.actions_queue.pop()
 			if action == ('SET', 'SCFG'):
-				self.add_item(x_items, 'SET', 'SCFG', text = self._servers_config(), key = 'KSP.servers.configuration', priority = 100)
+				self.add_item(x_items, 'SET', 'SCFG', text = SERVERS_CONFIG, key = 'KSP.servers.configuration', priority = 100)
 				was_updated = True
 			elif action == ('UPLOAD', 'SNAP'):
 				if not qxml.filter(x_items, 'item', action = 'UPLOAD', type = 'SNAP'):
@@ -131,6 +122,7 @@ class TODO_GetItems (Upstream):
 			if item_type == 'FWUP' and not features.allow_firmware_updates:
 				x_items.removeChild(x_items)
 				return True
+
 		# very unlikely for these to change upstream for books not downloaded from Amazon...
 		# if action == 'UPD_ANOT' or action == 'UPD_LPRD':
 		# 	# annotations and LPRD (last position read?)
@@ -138,22 +130,8 @@ class TODO_GetItems (Upstream):
 		# 	if is_uuid(item_key):
 		# 		x_items.removeChild(x_item)
 		# 		return True
-		return False
 
-	def _servers_config(self):
-		servers_config = (
-				'url.todo=' + config.server_url + TODO_PATH.strip('/'),
-				'url.cde=' + config.server_url + CDE_PATH.strip('/'),
-				'url.firs=' + config.server_url + FIRS_PATH.strip('/'),
-				'url.firs.unauth=' + config.server_url + FIRS_PATH.strip('/'),
-			)
-		if not features.allow_logs_upload:
-			servers_config += (
-				'url.messaging.post=' + config.server_url,
-				'url.det=' + config.server_url + DET_PATH.strip('/'),
-				'url.det.unauth=' + config.server_url + DET_PATH.strip('/')
-			)
-		return '\n'.join(servers_config)
+		return False
 
 	def rewrite_url(self, url):
 		"""

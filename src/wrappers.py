@@ -12,7 +12,7 @@ def _response_update_body(self, new_body = None):
 	self.body = new_body
 	self.length = 0 if new_body is None else len(new_body)
 	del self.headers['Content-Length']
-	self.headers['Content-Length'] = str(self.length)
+	self.headers['Content-Length'] = self.length
 
 def _response_write_to(self, stream_out):
 	if self.length == 0:
@@ -24,7 +24,8 @@ def _response_readinto(self, buffer):
 	return self.fp.readinto(buffer)
 
 def _response__str__(self):
-	txt = "%d %s (%d) {%s}" % (self.status, self.reason, self.length, ', '.join(self.headers))
+	headers = ( k + ': ' + str(v) for k, v in self.headers.items() )
+	txt = "%d %s (%d) {%s}" % (self.status, self.reason, self.length, ', '.join(headers))
 	if self.body:
 		txt += "\n" + str_(decompress(self.body, self.content_encoding))
 		# if not self.content_type or self.content_type.startswith('text/') or self.content_type.startswith('application/xml+'):

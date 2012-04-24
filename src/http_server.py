@@ -10,19 +10,23 @@ import config, features
 # because many of them depend on these values
 if not config.server_url:
 	raise Exception("config.server_url must be set")
-if not config.server_url.endswith('/'):
+if config.server_url[-1] != '/':
 	config.server_url += '/'
 
 from urllib.parse import urlparse
-protocol, hostname, path, params, query, fragment = urlparse(config.server_url)
-config.server_website = '%s://%s' % (protocol, hostname)
-config.server_hostname = hostname
-config.server_path_prefix = path
-logging.debug("server url [%s://%s%s]", protocol, hostname, path )
+__protocol, __host_and_port, __path, _, _, _ = urlparse(config.server_url)
+config.server_path_prefix = __path
+logging.debug("server url [%s://%s%s]", __protocol, __host_and_port, __path )
 
-rewrite_rules = { "https://([-a-z7]*).amazon.com/" : config.server_url }
-logging.debug("rewrite rules: %s", rewrite_rules)
-config.rewrite_rules = { re.compile(k) : v for k, v in rewrite_rules.items()  }
+config.server_hostname, _, _ = __host_and_port.partition(':')
+
+# _, _, config.server_name = __hostname.partition('.')
+# config.server_domain, _, _ = config.server_domain.partition(':')
+# logging.debug("server domain [%s]", config.server_domain)
+
+__rewrite_rules = { "https://([-a-z7]*).amazon.com/" : config.server_url }
+logging.debug("rewrite rules: %s", __rewrite_rules)
+config.rewrite_rules = { re.compile(k) : v for k, v in __rewrite_rules.items()  }
 
 if config.server_certificate:
 	if not os.path.isfile(config.server_certificate):
@@ -38,7 +42,7 @@ class Server (ThreadingMixIn, HTTPServer):
 	actual HTTP server, though is more set-up and configuration than anything else
 	"""
 
-	SERVICES = [ handlers.TODO, handlers.CDE, handlers.FIRS, handlers.FIRS_TA, handlers.DET, handlers.DET_TA, handlers.DM, handlers.WWW ]
+	SERVICES = [ 'ksp', handlers.TODO, handlers.CDE, handlers.FIRS, handlers.FIRS_TA, handlers.DET, handlers.DET_TA, handlers.DM, handlers.WWW ]
 
 	def __init__(self, access_log = None):
 		self.access_log = access_log
@@ -53,11 +57,14 @@ class Server (ThreadingMixIn, HTTPServer):
 	def _setup_handlers(self):
 		# the order is important when paths might collide, e.g. for -ta- services
 		hlist = [
+				handlers.KSP_Handler(),
+
 				handlers.TODO_SyncMetadata(),
 				handlers.TODO_GetItems(),
 				handlers.TODO_RemoveItems(),
 				handlers.CDE_DownloadContent(),
 				handlers.CDE_UploadSnapshot(),
+				handlers.CDE_UploadLog(),
 				handlers.CDE_Sidecar(),
 				handlers.CDE_PageNumbers(),
 				handlers.CDE_ShareAnnotations(),
@@ -98,6 +105,7 @@ class Server (ThreadingMixIn, HTTPServer):
 		for h in self._handlers: # first volunteer wins
 			if h.accept(request):
 				return h
+		logging.warn("no handler found for %s", request.requestline)
 
 	def run(self):
 		self.server_bind()

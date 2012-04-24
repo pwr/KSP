@@ -24,21 +24,21 @@ class _BookResponse (DummyResponse):
 			self.range_begin = 0
 			self.range_end = self.length - 1
 			self.range_length = self.length
-			self.headers['Content-Length'] = str(self.length)
+			self.headers['Content-Length'] = self.length
 		else:
 			self.range_begin = bytes_range[0]
 			self.range_end = bytes_range[1]
 			self.range_length = bytes_range[2]
 			self.headers['Content-Range'] = 'bytes=%d-%d/%d' % ( self.range_begin, self.range_end, self.length )
-			self.headers['Content-Length'] = str(self.range_length)
+			self.headers['Content-Length'] = self.range_length
 
 		self.headers['Content-Disposition'] = 'attachment; filename="%s"' % os.path.basename(book.file_path)
 		self.headers['Content-Type'] = book.content_type
 
 		if annotations.has(book):
-			self.headers['Hint-Sidecar-Download'] = '1'
+			self.headers['Hint-Sidecar-Download'] = 1
 		if annotations.apnx_path(book):
-			self.headers['Hint-APNX-Available'] = '1'
+			self.headers['Hint-APNX-Available'] = 1
 
 	def write_to(self, stream_out):
 		bytes_count = 0

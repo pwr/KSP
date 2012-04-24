@@ -1,3 +1,4 @@
+import logging
 from http.client import responses as HTTP_MESSAGES
 
 from content import date_header, str_
@@ -15,7 +16,7 @@ class DummyResponse (object):
 		self.headers['Server'] = 'Amazon Web Server'
 		self.headers['Date'] = date_header()
 		# if data is not None:
-		self.headers['Content-Length'] = str(self.length)
+		self.headers['Content-Length'] = self.length
 		self.will_close = 'close' == self.headers.get('Connection')
 
 	def write_to(self, stream_out):
@@ -41,6 +42,7 @@ class ExceptionResponse (Exception):
 
 
 def _matches(path, expected_path):
+	# logging.debug("matching %s agains %s", path, expected_path)
 	return path == expected_path or path.startswith(expected_path + '?') or path.startswith(expected_path + '/')
 
 

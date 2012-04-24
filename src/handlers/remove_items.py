@@ -31,14 +31,14 @@ class TODO_RemoveItems (Upstream):
 
 		for x_item in qxml.iter_children(x_items, 'item'):
 			key = x_item.getAttribute('key')
-			if key.startswith('KSP.'):
+			cde_type = x_item.getAttribute('type')
+			if key.startswith('KSP.') or cde_type.startswith('KSP.'):
 				# our updates, not relevant upstream
 				x_items.removeChild(x_item)
 				was_updated = True
 				continue
 
 			action = x_item.getAttribute('action')
-			cde_type = x_item.getAttribute('type')
 			if action in ('GET', 'DOWNLOAD') and cde_type in ('EBOK', 'PDOC'):
 				if is_uuid(key, cde_type):
 					x_items.removeChild(x_item)

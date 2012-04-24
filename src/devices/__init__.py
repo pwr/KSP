@@ -6,24 +6,29 @@ import devices.certificate as _certificate
 
 
 def _update(device, ip_address = None, cookie = None):
-	if ip_address == device.last_ip \
-			and (not cookie or cookie == device.last_cookie or cookie.startswith(device.last_cookie)):
-			# only bother writing to the db if any of them changed
+	cookie_matches = cookie == device.last_cookie
+	if not cookie_matches and cookie and device.last_cookie:
+		cookie_matches = cookie.startswith(device.last_cookie)
+	if ip_address == device.last_ip and cookie_matches:
+		# only bother writing to the db if any of them changed
 		return device
+	logging.debug("updating device %s with ip %s and cookie %s", device, ip_address, cookie)
 	device.last_ip = ip_address
 	if cookie:
 		device.last_cookie = cookie[:64]
 	_db.update(device)
 	return device
 
-def _make_context(device):
+def _make_context(device, serial = None):
 	"""
 	Ensures creation of a SSL context for the device.
 	If the device has no current PKCS12 certificate, loads it from the file 'db/<device_serial>.p12'
 	"""
+	if not serial:
+		serial = device.serial
 	if not device.p12:
-		device.p12 = _certificate.load_p12bytes(device.serial)
-	device.context = _certificate.make_context(device.serial, device.p12)
+		device.p12 = _certificate.load_p12bytes(serial)
+	device.context = _certificate.make_context(serial, device.p12)
 	if not device.context:
 		device.mark_context_failed()
 		return False
@@ -56,18 +61,20 @@ def detect(ip_address, cookie = None):
 	if no matching device exists in our database, one may be created on the spot
 	"""
 	for d in _devices.values():
-		if (cookie and (cookie == d.last_cookie or cookie.startswith(d.last_cookie))) \
-				or ip_address == d.last_ip: # match from most specific to less specific field
+		cookie_matches = False
+		if cookie and d.last_cookie:
+			cookie_matches = cookie == d.last_cookie or cookie.startswith(d.last_cookie)
+		if cookie_matches or ip_address == d.last_ip: # match from most specific to less specific field
 			if d.context_failed():
 				# let's give it another chance... maybe the user put the proper .p12 into place
 				if not _make_context(d):
 					return d
 				_db.insert(d)
 			return _update(d, ip_address, cookie)
+
 	# create new provisional device
 	d = _Device(last_ip = ip_address, last_cookie = cookie)
 	_devices[d.serial] = d
-	logging.warn("failed to identify device from %s, created a provisional device %s", ip_address, d)
 	return d
 
 def confirm_device(device, serial):
@@ -77,7 +84,7 @@ def confirm_device(device, serial):
 
 	# first we check if the device has been previously seen, but we just could not identify it
 	# (for example, the device might connect from a different IP and may have changed its cookie in the meantime)
-	already_registered = _devices[serial]
+	already_registered = _devices.get(serial)
 	if already_registered:
 		# yay, update ip and serial
 		logging.info("identified provisional device %s as %s", device, already_registered)
@@ -85,10 +92,10 @@ def confirm_device(device, serial):
 		del _devices[device.serial]
 		return already_registered
 
-	device.serial = serial
-	if not _make_context(device):
+	if not _make_context(device, serial):
 		return None
 
+	device.serial = serial
 	logging.warn("registered device %s", device)
 	_db.insert(device)
 	return device

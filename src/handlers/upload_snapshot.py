@@ -29,13 +29,7 @@ class CDE_UploadSnapshot (Upstream):
 
 	def call(self, request, device):
 		if device.is_provisional():
-			# bingo! now we get the device serial from the headers
-			xdsn = request.headers.get('X-DSN')
-			if xdsn is None:
-				logging.warn("did not find X-DSN header in request! cannot register device %s", device)
-			else:
-				devices.confirm_device(device, xdsn)
-			return DummyResponse()
+			return None
 
 		request = self.clean_snapshot(request, device)
 		return self.call_upstream(request, device)

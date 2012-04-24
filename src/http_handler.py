@@ -55,7 +55,7 @@ class Handler (BaseHTTPRequestHandler):
 		logging.info("replying with %s", response)
 		self.send_response_only(response.status, response.reason)
 
-		header_strings = [ k + ': ' + v for k, v in response.headers.items() ]
+		header_strings = [ k + ': ' + str(v) for k, v in response.headers.items() ]
 		self.wfile.write(bytes('\r\n'.join(header_strings), 'latin1'))
 		self.wfile.write(b'\r\n\r\n')
 
@@ -102,7 +102,7 @@ class Handler (BaseHTTPRequestHandler):
 
 	do_GET = _do_any
 	do_POST = _do_any
-	# do_PUT = _do_any
+	do_PUT = _do_any
 	do_HEAD = _do_any
 
 	def _read_body_and_length(self):
@@ -151,11 +151,10 @@ class Handler (BaseHTTPRequestHandler):
 	def update_body(self, new_body = None):
 		self.body = compress(new_body, self.content_encoding)
 		self.length = 0 if new_body is None else len(self.body)
-		del self.headers['Content-Length'] # otherwise there will be a duplcate
-		self.headers['Content-Length'] = str(self.length)
+		self.headers.replace_header('Content-Length', self.length)
 
 	def __str__(self):
-		headers = ( k + ': ' + v for k, v in self.headers.items() )
+		headers = ( k + ': ' + str(v) for k, v in self.headers.items() )
 		txt = "%s %s %s\n\t{%s}" % (self.command, self.path, self.request_version, ', '.join(headers))
 		if self.body:
 			plain = decompress(self.body, self.content_encoding)

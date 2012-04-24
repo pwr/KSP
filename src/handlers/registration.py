@@ -29,9 +29,13 @@ def call_and_process(handler, request, device):
 
 class FIRS_TA_NewDevice (Upstream):
 	def __init__(self):
-		Upstream.__init__(self, FIRS_TA, (FIRS_PATH + 'getNewDeviceCredentials', FIRS_PATH + 'registerDevice'), 'POST')
+		Upstream.__init__(self, FIRS_TA, (FIRS_PATH + 'getNewDeviceCredentials', FIRS_PATH + 'registerDevice'))
 
 	def call(self, request, device):
+		if request.command == 'GET' and request.path == FIRS_PATH + 'getNewDeviceCredentials':
+			# page 411 server check
+			return DummyResponse()
+
 		return call_and_process(self, request, device)
 
 
