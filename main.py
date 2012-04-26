@@ -27,7 +27,7 @@ def _args():
 	p = argparse.ArgumentParser(description = "Kindle Store proxy", prog = 'ksp')
 	p.add_argument('--config', dest = 'etc_path', default = 'etc',
 								help = "Path to the configration folder")
-	p.add_argument('--loglevel', dest = 'log_level', choices = ('debug', 'info', 'warn'), default = 'debug',
+	p.add_argument('--loglevel', dest = 'log_level', choices = ('debug', 'info', 'warn'), default = 'info',
 								help = "Set the minimum logging level in the server")
 	p.add_argument('--console', dest = 'console', action = 'store_const', const = True, default = False,
 								help = "Log to the console instead of a log file")
@@ -41,24 +41,18 @@ import logging
 
 def _make_root_logger(stream, log_level = 'NOTSET'):
 	handler = logging.StreamHandler(stream)
-	fmt = logging.Formatter('[%(asctime)-12s.%(msecs)03d] %(levelname)-8s {%(filename)s:%(lineno)d %(funcName)s %(threadName)s} %(message)s', '%Y-%m-%d %H:%M:%S')
+	fmt = logging.Formatter('[%(asctime)-12s.%(msecs)03d] %(levelname)-8s {%(threadName)-10s %(filename)s:%(lineno)d %(funcName)s} %(message)s', '%Y-%m-%d %H:%M:%S')
 	handler.setFormatter(fmt)
-	# handler.addFilter(lambda logrecord: logrecord.name != 'access')
 	log = logging.getLogger()
-	log.setLevel(getattr(logging, log_level.upper()))
+	log.setLevel(log_level.upper())
 	log.addHandler(handler)
 	logging.captureWarnings(True)
 	return log
 
-def _make_access_log(filename):
-	log = logging.getLogger('access')
-	log.addHandler(logging.FileHandler(filename, 'a'))
-	return log
-
-def _stdstream(path, console):
+def _stdstream(path = None):
 	from codecs import open as codecs_open
 
-	if not console:
+	if path:
 		server_log = os.path.join(path, 'server.log')
 		sys.stdout = codecs_open(server_log, mode = 'a', encoding = 'latin1', errors = 'backslashreplace')
 		sys.stderr = sys.stdout # open(os.path.join(config.logs_path, 'stderr.log'), 'w', 1)
@@ -75,8 +69,10 @@ def main():
 	sys.path.append(abspath(args.etc_path))
 
 	import config
-	config.logs_path = abspath(config.logs_path, True)
-	_make_root_logger(_stdstream(config.logs_path, args.console), args.log_level)
+	config.logs_path = None if args.console else abspath(config.logs_path, True)
+	if not hasattr(config, 'log_level'):
+		config.log_level = args.log_level
+	_make_root_logger(_stdstream(config.logs_path), config.log_level)
 
 	config.database_path = abspath(config.database_path, True)
 	if hasattr(config, 'server_certificate'):
@@ -90,20 +86,19 @@ def main():
 	# doing this here because if the pipe does not exit, we want to fail fast,
 	# before we load the devices and calibre databases
 	import ctrl
-	pipe_file = None if not args.control_pipe else open(args.control_pipe, 'rb')
+	pipe_file = open(args.control_pipe, 'rb') if args.control_pipe else None
 
 	try:
 		logging.info("%s start-up", '*' * 20)
 
 		# import calibre and devices here because the config has to be fully processed for them to work
-		import devices, calibre
-		access_log = _make_access_log(os.path.join(config.logs_path, 'access.log'))
-
-		from http_server import Server
-		server = Server(access_log)
+		import devices
+		import calibre
+		import server
+		http_server = server.HTTP()
 		if pipe_file:
-			ctrl.start_server_controller(server, pipe_file, args.control_pipe)
-		server.run()
+			ctrl.start_server_controller(http_server, pipe_file, args.control_pipe)
+		http_server.run()
 	except:
 		logging.exception("")
 	finally:

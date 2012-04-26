@@ -1,21 +1,5 @@
 # when importing this module/folder, actually import all classes in all modules in this folder
 
-TODO = 'todo-g7g'
-TODO_PATH = '/FionaTodoListProxy/'
-CDE = 'cde-g7g'
-CDE_PATH = '/FionaCDEServiceEngine/'
-FIRS = 'firs-g7g'
-FIRS_PATH = '/FirsProxy/'
-FIRS_TA = 'firs-ta-g7g'
-DET = 'det-g7g'
-DET_PATH = '/DeviceEventProxy/'
-DET_TA = 'det-ta-g7g'
-DM = 'device-messaging-na'
-DM_PATH = '/PostDeviceMessages'
-WWW = 'www'
-#EMBER_PATH = '/gp/ember/xyml/'
-#STORE_PATH = '/gp/g7g/xyml1/'
-
 def is_uuid(text, cde_type = None):
 	def is_hex(text):
 		if not text:
@@ -33,15 +17,43 @@ def is_uuid(text, cde_type = None):
 	# good enough
 	return False
 
+
+TODO = 'todo-g7g'
+TODO_PATH = '/FionaTodoListProxy/'
+CDE = 'cde-g7g'
+CDE_PATH = '/FionaCDEServiceEngine/'
+FIRS = 'firs-g7g'
+FIRS_PATH = '/FirsProxy/'
+FIRS_TA = 'firs-ta-g7g'
+DET = 'det-g7g'
+DET_PATH = '/DeviceEventProxy/'
+DET_TA = 'det-ta-g7g'
+DM = 'device-messaging-na'
+DM_PATH = '/PostDeviceMessages'
+WWW = 'www'
+#EMBER_PATH = '/gp/ember/xyml/'
+#STORE_PATH = '/gp/g7g/xyml1/'
+
+
+_handlers = []
+def register(h):
+	_handlers.append(h)
+def match(r):
+	for h in _handlers:
+		if h.accept(r):
+			return r
+
+
+# the order here is the order in which handlers are matched when processing a request
+from .ksp import *
 from .sync_metadata import *
 from .get_items import *
 from .remove_items import *
 from .download_content import *
 from .upload_snapshot import *
-from .upload_log import *
 from .sidecar import *
 from .page_numbers import *
+from .get_annotations import *
 from .collections import *
 from .registration import *
-from .ksp import *
 #from .store import *

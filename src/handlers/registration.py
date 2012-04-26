@@ -11,7 +11,7 @@ def call_and_process(handler, request, device):
 	response = handler.call_upstream(request, device)
 	cookie = None
 	pkcs12 = None
-	with minidom.parseString(response.body) as doc:
+	with minidom.parseString(response.body_text()) as doc:
 		x_response = qxml.get_child(doc, 'response')
 		x_cookie = qxml.get_child(x_response, 'store_authentication_cookie')
 		cookie = qxml.get_text(x_cookie)

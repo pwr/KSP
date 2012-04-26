@@ -1,57 +1,25 @@
-import sys, os.path, logging, re
+import sys, logging
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer
 import socket, ssl
 
 import config, features
-
-
-# need to process the configuration before importing the handlers,
-# because many of them depend on these values
-if not config.server_url:
-	raise Exception("config.server_url must be set")
-if config.server_url[-1] != '/':
-	config.server_url += '/'
-
-from urllib.parse import urlparse
-__protocol, __host_and_port, __path, _, _, _ = urlparse(config.server_url)
-config.server_path_prefix = __path
-logging.debug("server url [%s://%s%s]", __protocol, __host_and_port, __path )
-
-config.server_hostname, _, _ = __host_and_port.partition(':')
-
-# _, _, config.server_name = __hostname.partition('.')
-# config.server_domain, _, _ = config.server_domain.partition(':')
-# logging.debug("server domain [%s]", config.server_domain)
-
-__rewrite_rules = { "https://([-a-z7]*).amazon.com/" : config.server_url }
-logging.debug("rewrite rules: %s", __rewrite_rules)
-config.rewrite_rules = { re.compile(k) : v for k, v in __rewrite_rules.items()  }
-
-if config.server_certificate:
-	if not os.path.isfile(config.server_certificate):
-		raise Exception("server certificate not found at", config.server_certificate)
-else:
-	config.server_certificate = None
-
 import handlers
 
+
+_SERVICES = [ 'ksp', handlers.TODO, handlers.CDE, handlers.FIRS, handlers.FIRS_TA, handlers.DET, handlers.DET_TA, handlers.DM, handlers.WWW ]
 
 class Server (ThreadingMixIn, HTTPServer):
 	"""
 	actual HTTP server, though is more set-up and configuration than anything else
 	"""
 
-	SERVICES = [ 'ksp', handlers.TODO, handlers.CDE, handlers.FIRS, handlers.FIRS_TA, handlers.DET, handlers.DET_TA, handlers.DM, handlers.WWW ]
-
-	def __init__(self, access_log = None):
-		self.access_log = access_log
-
+	def __init__(self):
 		if hasattr(config, 'disconnected') and config.disconnected:
 			self._handlers = []
 		else:
 			self._handlers = self._setup_handlers()
-		from http_handler import Handler
+		from server.http_handler import Handler
 		HTTPServer.__init__(self, (config.server_host, config.server_port), Handler, False)
 
 	def _setup_handlers(self):
@@ -64,9 +32,9 @@ class Server (ThreadingMixIn, HTTPServer):
 				handlers.TODO_RemoveItems(),
 				handlers.CDE_DownloadContent(),
 				handlers.CDE_UploadSnapshot(),
-				handlers.CDE_UploadLog(),
 				handlers.CDE_Sidecar(),
-				handlers.CDE_PageNumbers(),
+				handlers.CDE_GetPageNumbers(),
+				handlers.CDE_GetAnnotations(),
 				handlers.CDE_ShareAnnotations(),
 				handlers.CDE_DevicesWithCollections(),
 				handlers.CDE_GetCollections(),
@@ -97,7 +65,7 @@ class Server (ThreadingMixIn, HTTPServer):
 				])
 
 		for h in hlist:
-			if h.service not in self.SERVICES:
+			if h.service not in _SERVICES:
 				raise Exception("tried to register handler %s for unknown service %s", h, h.service)
 		return hlist
 
@@ -111,7 +79,7 @@ class Server (ThreadingMixIn, HTTPServer):
 		self.server_bind()
 		protocol = 'HTTP'
 		if config.server_certificate:
-			self.socket = ssl.wrap_socket(self.socket, certfile = config.server_certificate, server_side = True)
+			self.socket = ssl.SSLSocket(self.socket, certfile = config.server_certificate, server_side = True)
 			protocol = 'HTTPS'
 		self.server_activate()
 		logging.info("started on %s:%s (%s)", self.server_name, self.server_port, protocol)

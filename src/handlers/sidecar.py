@@ -10,7 +10,7 @@ import calibre.annotations as annotations
 import calibre, qxml
 
 
-def process_sidecar_upload(device, book_ids, book_nodes):
+def _process_sidecar_upload(device, book_ids, book_nodes):
 	# book_ids is NOT a complete list of books on device
 	for asin in book_ids:
 		book = calibre.book(asin)
@@ -46,6 +46,40 @@ def process_sidecar_upload(device, book_ids, book_nodes):
 					else:
 						logging.error("unknown sidecar action %s: %s", action, x_item)
 
+def _process_xml(request, doc, device):
+	books_on_device = set()
+	book_nodes = []
+	was_modified = False
+
+	x_annotations = qxml.get_child(doc, 'annotations')
+
+	for x_book in qxml.list_children(x_annotations, 'book'):
+		asin = x_book.getAttribute('key')
+		if is_uuid(asin, x_book.getAttribute('type')):
+			books_on_device.add(asin)
+			x_annotations.removeChild(x_book)
+			book_nodes.append(x_book)
+			was_modified = True
+
+	for x_collection in qxml.iter_children(x_annotations, 'collection'):
+		for x_book in qxml.iter_children(x_collection, 'book'):
+			asin = x_book.getAttribute('id')
+			if is_uuid(asin, x_book.getAttribute('type')) and 'add' == x_book.getAttribute('action'):
+				books_on_device.add(asin)
+
+	if books_on_device or book_nodes:
+		postprocess.enqueue(_process_sidecar_upload, device, books_on_device, book_nodes)
+
+	if was_modified:
+		qxml.remove_whitespace(x_annotations)
+		if not len(x_annotations.childNodes):
+			doc.removeChild(x_annotations)
+		if not len(doc.childNodes):
+			# there's no more content relevant to Amazon, just reply with an empty 200
+			raise ExceptionResponse()
+
+	return was_modified
+
 
 class CDE_Sidecar (Upstream):
 	def __init__(self):
@@ -69,45 +103,14 @@ class CDE_Sidecar (Upstream):
 					return DummyResponse(headers = { 'Content-Type': content_type }, data = data)
 				return None
 		elif request.command == 'POST':
-			body = decompress(request.body, request.content_encoding)
-			with minidom.parseString(body) as doc:
-				if self.process_xml(request, doc, device):
-					xml = doc.toxml('UTF-8')
-					request.update_body(xml)
+			with minidom.parseString(request.body_text()) as doc:
+				if _process_xml(request, doc, device):
+					if not request.is_signed():
+						# drats
+						xml = doc.toxml('UTF-8')
+						request.update_body(xml)
 
 		return self.call_upstream(request, device)
-
-	def process_xml(self, request, doc, device):
-		books_on_device = set()
-		book_nodes = []
-		was_modified = False
-
-		x_annotations = qxml.get_child(doc, 'annotations')
-		for x_book in qxml.iter_children(x_annotations, 'book'):
-			asin = x_book.getAttribute('key')
-			if is_uuid(asin, x_book.getAttribute('type')):
-				books_on_device.add(asin)
-				x_annotations.removeChild(x_book)
-				book_nodes.append(x_book)
-				was_modified = True
-		for x_collection in qxml.iter_children(x_annotations, 'collection'):
-			for x_book in qxml.iter_children(x_collection, 'book'):
-				asin = x_book.getAttribute('id')
-				if is_uuid(asin, x_book.getAttribute('type')) and 'add' == x_book.getAttribute('action'):
-					books_on_device.add(asin)
-
-		if books_on_device or book_nodes:
-			postprocess.enqueue(process_sidecar_upload, device, books_on_device, book_nodes)
-
-		if was_modified:
-			qxml.remove_whitespace(x_annotations)
-			if not len(x_annotations.childNodes):
-				doc.removeChild(x_annotations)
-			if not len(doc.childNodes):
-				# there's no more content relevant to Amazon, just reply with an empty 200
-				raise ExceptionResponse()
-
-		return was_modified
 
 
 class CDE_ShareAnnotations (Upstream):
@@ -115,7 +118,7 @@ class CDE_ShareAnnotations (Upstream):
 		Upstream.__init__(self, CDE, CDE_PATH + 'shareHighlightAndNote', 'POST')
 
 	def call(self, request, device):
-		q = query_params(request.body)
+		q = query_params(request.body_text())
 		if is_uuid(q.get('key'), q.get('type')):
 			logging.warn("sharing annotations for Calibre books is not supported")
 			return DummyResponse()

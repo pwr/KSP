@@ -10,7 +10,7 @@ class DummyResponse (object):
 		self.status = status
 		self.reason = HTTP_MESSAGES[status]
 		self.body = data
-		self.length = 0 if data is None else len(data)
+		self.length = len(data or b'')
 
 		self.headers = {} if headers is None else dict(headers)
 		self.headers['Server'] = 'Amazon Web Server'

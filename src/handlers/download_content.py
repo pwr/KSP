@@ -100,9 +100,12 @@ class CDE_DownloadContent (Upstream):
 		if 'key' in q and cde_type in ('EBOK', 'PDOC'):
 			key = q['key']
 			if is_uuid(key, cde_type): # very likely comes from our library
-				return self.book_response(key, device, request.headers.get('Range'))
+				return self.book_response(key, device, request.headers['Range'])
 
-		redirect_header = { 'Location': 'https://cde-g7g.amazon.com/' + request.path }
+		if device.is_anonymous():
+			redirect_header = { 'Location': 'https://cde-ta-g7g.amazon.com' + request.path }
+		else:
+			redirect_header = { 'Location': 'https://cde-g7g.amazon.com' + request.path }
 		return DummyResponse(302, redirect_header)
 		# return self.call_upstream(request, device)
 

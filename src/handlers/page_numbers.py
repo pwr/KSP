@@ -7,7 +7,7 @@ import calibre
 
 
 # APNX requests for non-Calibre books should go directly to Amazon...
-class CDE_PageNumbers (Dummy):
+class CDE_GetPageNumbers (Dummy):
 	_HEADERS = { 'Content-Type': 'application/x-apnx-sidecar' }
 
 	def __init__(self):

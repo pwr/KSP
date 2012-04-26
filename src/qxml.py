@@ -11,11 +11,12 @@ def get_child(parent_node, tag_name):
 	# 	logging.warn("get_child: no %s node in %s", tag_name, parent_node)
 	return next(node, None)
 
-
-def list_children(parent_node, tag_name):
+def list_children(parent_node, tag_name = None):
 	if parent_node is None:
 		# logging.warn("list_children: no parent_node")
 		return []
+	if not tag_name:
+		return [ n for n in parent_node.childNodes if n.nodeType == Node.ELEMENT_NODE ]
 	return [ n for n in parent_node.childNodes if n.nodeType == Node.ELEMENT_NODE and n.tagName == tag_name ]
 
 def iter_children(parent_node, tag_name):
@@ -67,7 +68,6 @@ def set_text(tag_node, text_value = None):
 		return True
 	logging.warn("can't handle %s child node %s", tag_node, tnode)
 	return False
-
 
 def get_text(tag_node):
 	if not tag_node:

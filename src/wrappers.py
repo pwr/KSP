@@ -6,11 +6,14 @@ from content import *
 
 # enhance response objects with some extra methods
 
+def _response_body_text(self):
+	return decompress(self.body, self.content_encoding)
+
 def _response_update_body(self, new_body = None):
 	if self.content_encoding:
 		new_body = compress(new_body, self.content_encoding)
 	self.body = new_body
-	self.length = 0 if new_body is None else len(new_body)
+	self.length = len(new_body or '')
 	del self.headers['Content-Length']
 	self.headers['Content-Length'] = self.length
 
@@ -36,9 +39,9 @@ def _response__str__(self):
 
 def wrap_response(r):
 	r.content_type = r.headers.get('Content-Type', '')
-	r.content_encoding = r.headers.get('Content-Encoding')
+	r.content_encoding = r.headers['Content-Encoding']
 	r.body = r.read() # the implementation will fully read the body
-	r.length = 0 if r.body is None else len(r.body)
+	r.length = len(r.body or b'')
 	if r.chunked:
 		# the content we've read from upstream was chunked
 		# the one we'll reply with obviously won't be
@@ -49,6 +52,7 @@ def wrap_response(r):
 """
 attaches extra methods to the response classes
 """
+HTTPResponse.body_text = _response_body_text
 HTTPResponse.update_body = _response_update_body
 HTTPResponse.write_to = _response_write_to
 HTTPResponse.readinto = _response_readinto

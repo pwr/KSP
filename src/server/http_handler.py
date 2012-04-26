@@ -2,9 +2,16 @@ import logging, time
 from http.server import BaseHTTPRequestHandler
 
 from handlers import ExceptionResponse
-from content import compress, decompress, read_chunked, query_params, str_
+from content import decompress, str_
 import devices
 import config, features
+
+from server import logger
+access_log = logger('access', False, 'INFO')
+http_debug = logger('http_debug', 'DEBUG').debug
+del logger
+
+import server.request as request
 
 
 class Handler (BaseHTTPRequestHandler):
@@ -18,13 +25,13 @@ class Handler (BaseHTTPRequestHandler):
 	error_content_type = 'text/plain'
 	# wbufsize = 16 * 1024 # 16k
 
-	_prefix_len = 0 if not config.server_path_prefix else len(config.server_path_prefix) - 1 # without the final /
+	_prefix_len = len(config.server_path_prefix or b'x') - 1 # without the final /
 
 	def handle_call(self):
 		# logging.debug("## %s", self.requestline)
 
 		# look for a device record, will be automatically created if the features is enabled
-		device = devices.detect(self._client_ip(), self._xfsn())
+		device = devices.detect(request.client_ip(self), request.xfsn(self))
 		if not device:
 			logging.error("failed to identify device for %s", self.requestline)
 			return 403
@@ -32,8 +39,8 @@ class Handler (BaseHTTPRequestHandler):
 			logging.warn("denying access to unregistered device %s", device)
 			return 401
 
-		self._read_body_and_length()
-		logging.debug("%s", self)
+		request.read_body_and_length(self)
+		http_debug("%s", self)
 
 		# strip possible path prefix
 		self.path = self.path[self._prefix_len:]
@@ -52,7 +59,7 @@ class Handler (BaseHTTPRequestHandler):
 
 		self.close_connection = response.will_close == True # will_close is a tristate...
 
-		logging.info("replying with %s", response)
+		http_debug("replying with %s", response)
 		self.send_response_only(response.status, response.reason)
 
 		header_strings = [ k + ': ' + str(v) for k, v in response.headers.items() ]
@@ -72,12 +79,6 @@ class Handler (BaseHTTPRequestHandler):
 		if config.server_path_prefix:
 			if not self.path.startswith(config.server_path_prefix):
 				return True
-		# if config.server_hostname:
-		# 	host = self.headers.get('Host')
-		# 	# hrm, will let requests without a 'Host' header pass till I establish all the corner cases
-		# 	if host and host != config.server_hostname:
-		# 		logging.warn("got funny Host header: %s", host)
-		# 		return True
 		return False
 
 	def _do_any(self):
@@ -95,63 +96,22 @@ class Handler (BaseHTTPRequestHandler):
 		try:
 			status = self.handle_call()
 			if status > 0:
-				self.send_error(status)
+				self.send_response_only(status)
+				self.wfile.write('\r\n')
 		except:
 			logging.exception("handling %s", self.requestline)
-			self.send_error(500)
+			self.send_response_only(500)
+			self.wfile.write('\r\n')
 
 	do_GET = _do_any
 	do_POST = _do_any
 	do_PUT = _do_any
-	do_HEAD = _do_any
+	# do_HEAD = _do_any
 
-	def _read_body_and_length(self):
-		"""
-		fully reads the request body, also handles chunked content
-		gzipped content is read as-is
-		sets self.body, self.length and self.content_encoding
-		"""
-		self.content_encoding = self.headers.get('Content-Encoding')
-		if self.content_encoding:
-			logging.warn("request (%s) has Content-Encoding %s", self.requestline, self.content_encoding)
-
-		transfer_encoding = self.headers['Transfer-Encoding']
-		if transfer_encoding:
-			if 'chunked' != transfer_encoding:
-				raise Exception("Transfer-Encoding not supported", transfer_encoding)
-			logging.warn("request (%s) has chunked body", self.requestline)
-			self.body = read_chunked(self.rfile)
-			self.length = 0 if self.body is None else len(self.body)
-			del self.headers['Content-Length']
-			self.headers['Content-Length'] = self.length
-			del self.headers['Transfer-Encoding']
-			return
-
-		self.length = int(self.headers.get('Content-Length', 0))
-		if self.length > 0:
-			self.body = self.rfile.read(self.length)
-		else:
-			self.body = None
-
-	def _xfsn(self):
-		xfsn = self.headers.get('X-fsn')
-		if xfsn:
-			return xfsn
-		cookie = self.headers.get('Cookie')
-		if cookie and cookie.startswith('x-fsn='):
-			return cookie[6:]
-
-	def _client_ip(self):
-		return self.headers.get('X-Forwarded-For') or self.client_address[0]
-
-	def get_query_params(self):
-		path, _, query = self.path.partition('?')
-		return query_params(query)
-
-	def update_body(self, new_body = None):
-		self.body = compress(new_body, self.content_encoding)
-		self.length = 0 if new_body is None else len(self.body)
-		self.headers.replace_header('Content-Length', self.length)
+	body_text = request.body_text
+	update_body = request.update_body
+	is_signed = request.is_signed
+	get_query_params = request.get_query_params
 
 	def __str__(self):
 		headers = ( k + ': ' + str(v) for k, v in self.headers.items() )
@@ -169,9 +129,9 @@ class Handler (BaseHTTPRequestHandler):
 			duration = time.time() - self.started_at
 		else:
 			duration = 0
-		self.server.access_log.info('%s - - [%s] "%s" %s %s (%.3f)',
-				self.client_address[0], self.log_date_time_string(), self.requestline, str(code), str(size), duration)
-		if duration > 5:
+		access_log.info('%s - - [%s] "%s" %s %s (%.3f)', self.client_address[0], self.log_date_time_string(), self.requestline, code, size, duration)
+				# self.client_address[0], self.log_date_time_string(), self.requestline, str(code), str(size), duration)
+		if duration > 5: # call took more than 5 seconds to handle
 			logging.warn("call took %.3f seconds: %s", duration, self.requestline)
 
 	def log_error(self, format, *args):

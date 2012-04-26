@@ -6,38 +6,54 @@ import devices
 import config, features
 
 
-SERVERS_CONFIG = (
-		'url.todo=' + config.server_url + TODO_PATH.strip('/'),
-		'url.cde=' + config.server_url + CDE_PATH.strip('/'),
-		'url.firs=' + config.server_url + FIRS_PATH.strip('/'),
-		'url.firs.unauth=' + config.server_url + FIRS_PATH.strip('/'),
-		'cookie.store.domains=.amazon.com,' + config.server_hostname,
-		# 'cmd.any_amazon.domains=.amazon.com,.images-amazon.com,.amazon.co.uk,.' + config.server_domain,
-		# 'cmd.any_amazon.headers=Accept-Language,X-DSN',
-	)
-if not features.allow_logs_upload:
-	SERVERS_CONFIG += (
-		'url.messaging.post=' + config.server_url,
-		'url.det=' + config.server_url + DET_PATH.strip('/'),
-		'url.det.unauth=' + config.server_url + DET_PATH.strip('/'),
-	)
-SERVERS_CONFIG = '\n'.join(SERVERS_CONFIG)
-
-FIRST_CONTACT = '''
+_FIRST_CONTACT = '''
 	<?xml version="1.0" encoding="UTF-8"?>
 	<response>
-		<total_count>2</total_count>
+		<total_count>0</total_count>
 		<next_pull_time/>
 		<items>
-			<item action="SND" type="KSP.upload.serial" priority="50" is_incremental="false" sequence="0"
-				 key="FILE_/proc/usid" url="$SERVER_URL$ksp/serial"/>
+			$UPLOAD_SERIAL$
 			<item action="SET" type="SCFG" key="KSP.set.scfg" priority="60" is_incremental="false" sequence="0">$SERVERS_CONFIG$</item>
 		</items>
 	</response>
-'''.replace('\t', '').replace('\n', ''). \
-	replace('$SERVER_URL$', config.server_url). \
-	replace('$SERVERS_CONFIG$', SERVERS_CONFIG)
-FIRST_CONTACT = bytes(FIRST_CONTACT, 'UTF-8')
+'''.replace('\t', '').replace('\n', '')
+
+_UPLOAD_SERIAL = '''
+	<item action="SND" type="KSP.upload.serial" priority="50" is_incremental="false" sequence="0"
+		 key="FILE_/proc/usid" url="$SERVER_URL$ksp/serial"/>
+'''.replace('\t', '').replace('\n', '').replace('$SERVER_URL$', config.server_url)
+
+def _first_contact(device):
+	text = _FIRST_CONTACT.replace('$UPLOAD_SERIAL$', '' if device.is_anonymous() else _UPLOAD_SERIAL)
+	text = text.replace('$SERVERS_CONFIG$', _servers_config(device))
+	return bytes(text, 'UTF-8')
+
+def _servers_config(device):
+	anon = device.is_anonymous()
+	def _url(x):
+		# always drop the last / from the url
+		return config.server_url[:-1] if anon else config.server_url + x.strip('/')
+
+	urls = [ 'url.todo=' + _url(TODO_PATH), 'url.cde=' + _url(CDE_PATH) ]
+
+	if anon:
+		urls.append('url.cde.nossl=' + _url(CDE_PATH))
+	else:
+		urls.extend((
+			'url.firs=' + _url(FIRS_PATH),
+			'url.firs.unauth=' + _url(FIRS_PATH),
+			'cookie.store.domains=.amazon.com,' + config.server_hostname,
+		))
+
+	if not features.allow_logs_upload:
+		urls.extend((
+			'url.messaging.post=' + config.server_url,
+			'url.det=' + _url(DET_PATH),
+		))
+		if not anon:
+			urls.append('url.det.unauth=' + _url(DET_PATH))
+
+	return '\n'.join(urls)
 
 
 class KSP_Handler (Dummy):

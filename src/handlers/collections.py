@@ -8,9 +8,7 @@ import calibre.collections as collections
 
 
 _CALIBRE_DEVICE_ID = 'CalibreLibrary'
-__DEVICE_NODE_TEMPLATE = '<device devicetype="%s" name="Calibre Library" serialnumber="%s"/>'
-_DEVICE_NODE = bytes(__DEVICE_NODE_TEMPLATE % (_CALIBRE_DEVICE_ID, LIBRARY_ID), 'UTF-8')
-del __DEVICE_NODE_TEMPLATE
+_DEVICE_NODE = bytes('<device devicetype="%s" name="Calibre Library" serialnumber="%s"/>' % (_CALIBRE_DEVICE_ID, LIBRARY_ID), 'UTF-8')
 
 
 class CDE_DevicesWithCollections (Upstream):
@@ -22,7 +20,7 @@ class CDE_DevicesWithCollections (Upstream):
 		if response.status != 200:
 			return response
 
-		text = response.body
+		text = response.body_text()
 		devices_tag = text.find(b'<devices>')
 		if devices_tag < 0:
 			logging.warn("did not find <devices> in (%s) %s", type(text), str(text, 'utf-8'))

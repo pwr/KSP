@@ -21,6 +21,9 @@ server_url = 'https://<your_ssl_server>/KSP'
 # MUST be writable.
 logs_path = 'logs/'
 
+# minimum log level
+log_level = 'INFO'
+
 # The folder where KSP keeps its databases; auto-created on the first run if it does not exist.
 # MUST be writable.
 database_path = 'db/'

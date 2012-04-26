@@ -24,6 +24,8 @@ def _make_context(device, serial = None):
 	Ensures creation of a SSL context for the device.
 	If the device has no current PKCS12 certificate, loads it from the file 'db/<device_serial>.p12'
 	"""
+	if device.is_anonymous():
+		return True
 	if not serial:
 		serial = device.serial
 	if not device.p12:
@@ -64,7 +66,8 @@ def detect(ip_address, cookie = None):
 		cookie_matches = False
 		if cookie and d.last_cookie:
 			cookie_matches = cookie == d.last_cookie or cookie.startswith(d.last_cookie)
-		if cookie_matches or ip_address == d.last_ip: # match from most specific to less specific field
+		if cookie_matches or (not cookie and ip_address == d.last_ip):
+			# match from most specific to less specific field
 			if d.context_failed():
 				# let's give it another chance... maybe the user put the proper .p12 into place
 				if not _make_context(d):
@@ -72,9 +75,22 @@ def detect(ip_address, cookie = None):
 				_db.insert(d)
 			return _update(d, ip_address, cookie)
 
+	serial = None
+	anonymous = False
+	if cookie.startswith('{enc:'):
+		# Kindle 4 PC/Android client?
+		for k in cookie.split('{'):
+			if k.startswith('name:'):
+				serial = k[5:-1]
+				break
+		cookie = cookie[:64]
+		anonymous = serial is not None
 	# create new provisional device
-	d = _Device(last_ip = ip_address, last_cookie = cookie)
+	d = _Device(serial = serial, last_ip = ip_address, last_cookie = cookie, anonymous = anonymous)
 	_devices[d.serial] = d
+	if anonymous:
+		logging.warn("registered anonymous device %s", d)
+		_db.insert(d)
 	return d
 
 def confirm_device(device, serial):
