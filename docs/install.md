@@ -33,24 +33,34 @@ There are three entries you **need** to modify in `etc/config.py`:
     Usually this is `https://_machine_running_ksp_:_ksp_port_/KSP/`. If you want to use an HTTPS frontend to proxy the
     calls to KSP, it will be the its server url.
 
-    The value of this option **must** be matched by the modifications you do on the device, in the `ServerConfig.conf`
-    file (see `docs/devices.md`).
+    The value of this option **must** be matched by the modifications you do on the device, in the `ServerConfig` file
+    (see `docs/devices.md`).
 
-	WARNING: while technically you can use just HTTP for the `server_url`, IS IS VERY UNSECURE.
-	Consider that the Kindle will be talking to the KSP server in plain text, over WiFi. Please read `docs/security.md`
-	for details.
+	WARNING: while technically you can use just HTTP for the `server_url`, IS IS VERY UNSECURE. Consider that the Kindle
+    will be talking to the KSP server in plain text, over WiFi. Please read `docs/security.md` for details.
 
 * `server_certificate`
 
-	Path to the SSL server certificate.  You have to set this for HTTPS to work in KSP.
+	Path to the KSP's HTTPS server certificate. You have to set this for HTTPS to work in KSP.
 
-    The file must contain the server private key and server certificate. You cannot use a self-signed certificate, but
-    you can create your own private CA and sign the server certificate with that. In this case, you will have to add
-    your CA certificate to this file.
+    The file must contain the server private key and certificate chain in PEM format. You *cannot* use a self-signed
+    server certificate (the Kindle device will refuse to talk to the server), but you can create your own private CA and
+    sign the server certificate with that, *or* get a free SSL certificate from a CA provider like
+    [StartSSL](https://www.startssl.com/?app=1). In this case, you will have to append the CA certificate to this file.
+
+    Alternatively, you can have a regular HTTPS server (apache, nginx, etc.) running in front of KSP, configure it to
+    proxy calls to KSP (this is where having `/KSP/` in your `server_url` path helps), and set `server_url` to point to
+    the HTTPS front-end. However, same SSL certificate requirements apply to the HTTPS front-end.
+
+    If the HTTPS front-end is running on the same machine as KSP, you can probably just run KSP with plain HTTP and
+    comment-out this option. If the HTTPS front-end is running on a different machine (even if it's within the same
+    local network), running KSP over HTTPS is still recommended, *but* you can use a regular self-signed server
+    certificate.
 
 * `calibre_library`
 
-    Path to your Calibre library, where its `metadata.db` file is, e.g. `~/calibre`, or `C:\\Calibre`.
+    Path to your Calibre library, where its `metadata.db` file is, e.g. `~/calibre`, or `C:\\Calibre`. The KSP daemon
+    requires read-only access to this folder and all its files and sub-folders.
 
 Everything else is optional, though you might find some interesting stuff in `etc/features.py`.
 
@@ -58,12 +68,16 @@ Everything else is optional, though you might find some interesting stuff in `et
 Running KSP
 -----------
 
-Just run `main.py` in the KSP folder. You can call it with `--help` to see what arguments it accepts.
+You can just run `main.py` in the KSP folder. You can call it with `--help` to see what arguments it accepts.
 
 When running as a daemon, all output will go into `logs/server.log`. If DEBUG logging is active, the server log
 should come in handy with troubleshooting.
 
-Windows users can use the [AutoHotKey_L](http://www.autohotkey.com/download/) script at `tools/windows.ahk`, it will
+When runing on a \*nix machine, it's recommended (but not necessary) to create a separate user for the KSP daemon, and
+deploy and configure KSP in its `HOME`. There is also a script (`tools/start-stop.sh`) you can use to, well, start and
+stop the KSP daemon.
+
+Windows users can use the [AutoHotKey_L](http://www.autohotkey.com/download/) script at `tools/windows.ahk`. It will
 give you a nice SysTray icon to start/stop KSP. For the AHK script to work, make sure you have `PYTHONHOME` set in your
 environment.
 

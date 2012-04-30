@@ -19,6 +19,9 @@ guarantee briking it. You'll have to do the configuration by hand, if configurin
 If you have an usupported device, continue reading for details on what configuration changes are necessary. Maybe you'll
 figure out what you need to do on your device. And if you do, please let me know :).
 
+Before changing your device configuration, you need to have KSP deployed and running. Please read `docs/install.md` for
+instructions.
+
 
 Scripted configuration
 ----------------------
@@ -103,16 +106,21 @@ KSP. The port is also optional, if you use the default 443 port for HTTPS.
 *Note*: technically, there are a few more urls that need updating (url.cde, url.firs, etc), but you don't need to add
 them at this point. The KSP daemon will update the device's configuration as soon as the Kindle registers with it.
 
+You will also need to make a copy of the file `/var/local/java/prefs/certs/client.p12` into your KSP deployment's
+`./db` folder, and name it `_your_device_serial_.p12`. It is the device's client SSL certificate, that KSP will need in
+order to talk to Amazon's services as if it were your device.
+
 To apply the change, restart your device. Or, if you're SSH'ed in, you can just kill the `cvm` process (should be only
 one).
 
-One more important thing: if your server's SSL certificate is not signed by a known CA authority, the Kindle will not be
-able to talk to the KSP daemon. You will have to:
+One more important thing: if your server's SSL certificate is not signed by a known CA authority, the Kindle will refuse
+to talk to the new `url.todo` url pointing to the KSP daemon. You will have to:
 
-* Append your CA's certificate to `/etc/ssl/certs/ca-certificates.crt`, used by the daemon that does book downloads.
 * Import it into the Java VM's certificate store, `/usr/java/lib/security/cacerts`. You need to use the `keytool`
     utility from a Java deployment on your machine -- the utility is *not* present on the device. Or, you can use the
     script `tools/ksp-config/keytool.sh` which provides a limited (but sufficient) sub-set of `keytool`'s functions.
+* Append your CA's certificate to `/etc/ssl/certs/ca-certificates.crt` -- this file is used by the daemon that does book
+downloads.
 * Restart the device.
 
 
