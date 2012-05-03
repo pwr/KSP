@@ -30,11 +30,18 @@ class Handler (BaseHTTPRequestHandler):
 	def handle_call(self):
 		# logging.debug("## %s", self.requestline)
 
-		# look for a device record, will be automatically created if the features is enabled
-		device = devices.detect(request.client_ip(self), request.xfsn(self))
+		# all requests handled by the same Handler instance come from the same device, always
+		device = self.last_device if hasattr(self, 'last_device') else None
+		if device:
+			logging.debug("%s last_device = %s", id(self), device)
 		if not device:
-			logging.error("failed to identify device for %s", self.requestline)
-			return 403
+			# look for a device record, will be automatically created if the features is enabled
+			device = devices.detect(request.client_ip(self), cookie = request.xfsn(self),
+									kind = request.guess_client(self), serial = request.get_device_serial(self))
+			if not device:
+				logging.error("failed to identify device for %s", self.requestline)
+				return 403
+			self.last_device = device
 		if device.context_failed(): # failed to create a proper SSL context
 			logging.warn("denying access to unregistered device %s", device)
 			return 401
@@ -56,6 +63,8 @@ class Handler (BaseHTTPRequestHandler):
 		if response is None:
 			logging.warn("not found (%s) %s", self.headers.get('Host'), self.requestline)
 			return 404
+		if type(response) == int: # returned just a status code
+			return response
 
 		self.close_connection = response.will_close == True # will_close is a tristate...
 
@@ -68,9 +77,6 @@ class Handler (BaseHTTPRequestHandler):
 
 		byte_count = response.write_to(self.wfile) # writes the body
 		self.log_request(response.status, byte_count)
-
-		# logging.debug("%%%% %s", self.requestline)
-		return 0
 
 	def ignore_request(self):
 		# we ignore requests not targeted to our service
@@ -95,13 +101,16 @@ class Handler (BaseHTTPRequestHandler):
 
 		try:
 			status = self.handle_call()
-			if status > 0:
+			if status:
 				self.send_response_only(status)
-				self.wfile.write('\r\n')
+				if status != 100:
+					self.wfile.write(b'Server: Amazon Web Server\r\nContent-Length: 0\r\n\r\n')
+				self.log_request(status)
 		except:
 			logging.exception("handling %s", self.requestline)
 			self.send_response_only(500)
-			self.wfile.write('\r\n')
+			self.wfile.write(b'Server: Amazon Web Server\r\nContent-Length: 0\r\n\r\n')
+			self.log_request(500)
 
 	do_GET = _do_any
 	do_POST = _do_any
@@ -125,10 +134,10 @@ class Handler (BaseHTTPRequestHandler):
 		return 'Amazon Web Server'
 
 	def log_request(self, code = '-', size = '-'):
-		if hasattr(self, 'started_at'):
-			duration = time.time() - self.started_at
-		else:
-			duration = 0
+		# if hasattr(self, 'started_at'):
+		duration = time.time() - self.started_at
+		# else:
+		# 	duration = 0
 		access_log.info('%s - - [%s] "%s" %s %s (%.3f)', self.client_address[0], self.log_date_time_string(), self.requestline, code, size, duration)
 				# self.client_address[0], self.log_date_time_string(), self.requestline, str(code), str(size), duration)
 		if duration > 5: # call took more than 5 seconds to handle

@@ -37,10 +37,10 @@ def _response__str__(self):
 		# 	txt += '\nbytes hex: ' + str(binascii.hexlify(self.body), 'ascii')
 	return txt
 
-def wrap_response(r):
+def wrap(r):
 	r.content_type = r.headers.get('Content-Type', '')
 	r.content_encoding = r.headers['Content-Encoding']
-	r.body = r.read() # the implementation will fully read the body
+	r.body = r.read() # fully read the body
 	r.length = len(r.body or b'')
 	if r.chunked:
 		# the content we've read from upstream was chunked
@@ -50,7 +50,7 @@ def wrap_response(r):
 
 
 """
-attaches extra methods to the response classes
+attaches extra methods to the response class
 """
 HTTPResponse.body_text = _response_body_text
 HTTPResponse.update_body = _response_update_body

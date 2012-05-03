@@ -3,17 +3,12 @@ from http.client import HTTPSConnection, HTTPException, _CS_IDLE
 from threading import RLock
 
 from handlers.dummy import Dummy
-from wrappers import wrap_response
+from server.response import wrap as wrap_response
 
 
 from server import logger
 http_debug = logger('http_debug').debug
 del logger
-
-from ssl import SSLContext, PROTOCOL_TLSv1
-_DUMMY_CONTEXT = SSLContext(PROTOCOL_TLSv1)
-del SSLContext
-del PROTOCOL_TLSv1
 
 _IDLE = 4 * 60 + 57 # seconds
 
@@ -36,7 +31,7 @@ class Upstream (Dummy):
 			conn.last_call = request.started_at
 
 	def _upstream_host(self, request, device):
-		if device.is_anonymous() and self.service.endswith('-g7g') and not self.service.endswith('-ta-g7g'):
+		if request.is_signed() and self.service.endswith('-g7g') and not self.service.endswith('-ta-g7g'):
 			return self.service.partition('-')[0] + '-ta-g7g.amazon.com'
 		return self.service + '.amazon.com'
 
@@ -50,8 +45,7 @@ class Upstream (Dummy):
 		if not conn:
 			# it's very unlikely a device will shoot two requests to the same service at the same time, just after KSP started
 			# so we should be reasonable safe creating the connection without locking
-			context = _DUMMY_CONTEXT if upstream_host.endswith('-ta-g7g.amazon.com') else device.context
-			conn = HTTPSConnection(upstream_host, context = context)
+			conn = HTTPSConnection(upstream_host, context = device.ssl_context(upstream_host))
 			conn.last_call = 0
 			conn._lock = RLock()
 			logging.info("created upstream connection to %s for %s", upstream_host, device)

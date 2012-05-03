@@ -1,6 +1,6 @@
 import logging
 
-from handlers import TODO_PATH, CDE_PATH, FIRS_PATH, DET_PATH
+from handlers import TODO_PATH, CDE_PATH, FIRS_PATH
 from handlers.dummy import Dummy, DummyResponse
 import devices
 import config, features
@@ -12,47 +12,61 @@ _FIRST_CONTACT = '''
 		<total_count>0</total_count>
 		<next_pull_time/>
 		<items>
-			$UPLOAD_SERIAL$
-			<item action="SET" type="SCFG" key="KSP.set.scfg" priority="60" is_incremental="false" sequence="0">$SERVERS_CONFIG$</item>
+			<item action="UPLOAD" type="SCFG" key="KSP.upload.scfg" priority="50" is_incremental="false" sequence="0" url="$_SERVER_URL_$ksp/scfg"/>
+			<item action="UPLOAD" type="SNAP" key="KSP.upload.snap" priority="50" is_incremental="false" sequence="0" url="$_SERVER_URL_$FionaCDEServiceEngine/UploadSnapshot"/>
+			<item action="SET" type="SCFG" key="KSP.set.scfg" priority="200" is_incremental="false" sequence="0">$_SERVERS_CONFIG_$</item>
 		</items>
 	</response>
-'''.replace('\t', '').replace('\n', '')
+'''.replace('\t', '').replace('\n', '').replace('$_SERVER_URL_$', config.server_url)
 
 _UPLOAD_SERIAL = '''
 	<item action="SND" type="KSP.upload.serial" priority="50" is_incremental="false" sequence="0"
-		 key="FILE_/proc/usid" url="$SERVER_URL$ksp/serial"/>
-'''.replace('\t', '').replace('\n', '').replace('$SERVER_URL$', config.server_url)
+		 key="FILE_/proc/usid" url="$_SERVER_URL_$ksp/serial"/>
+'''.replace('\t', '').replace('\n', '').replace('$_SERVER_URL_$', config.server_url)
+
 
 def _first_contact(device):
-	text = _FIRST_CONTACT.replace('$UPLOAD_SERIAL$', '' if device.is_anonymous() else _UPLOAD_SERIAL)
-	text = text.replace('$SERVERS_CONFIG$', _servers_config(device))
+	# triggered actions:
+	# - upload config, for debugging purposes (we can check the client config in the logs)
+	# - upload snapshot -- it will include device serial and model for the kindles
+	# - update client API urls -- this needs to happen later, after we've confirmed the client kind/model
+	text = _FIRST_CONTACT # _FIRST_CONTACT.replace('$_UPLOAD_SERIAL_$', _UPLOAD_SERIAL if device.is_kindle() else '')
+	text = text.replace('$_SERVERS_CONFIG_$', _servers_config(device))
 	return bytes(text, 'UTF-8')
 
 def _servers_config(device):
-	anon = device.is_anonymous()
+	is_kindle = device.is_kindle()
 	def _url(x):
 		# always drop the last / from the url
-		return config.server_url[:-1] if anon else config.server_url + x.strip('/')
+		# the kindle devices urls also need to include the service paths (FionaTodoListProxy, FionaCDEServiceEngine, etc)
+		# the other clients seem to require urls without those paths
+		return (config.server_url + x.strip('/')) if is_kindle else config.server_url[:-1]
 
-	urls = [ 'url.todo=' + _url(TODO_PATH), 'url.cde=' + _url(CDE_PATH) ]
+	# we always need the todo and cde urls
+	urls = [ '', 'url.todo=' + _url(TODO_PATH), 'url.cde=' + _url(CDE_PATH) ]
 
-	if anon:
-		urls.append('url.cde.nossl=' + _url(CDE_PATH))
-	else:
+	if is_kindle:
+		# cookie domains ensures we get the proper cookie and are able to identify the device
+		urls.append('cookie.store.domains=.amazon.com,' + config.server_hostname)
+		# we need these urls to intercept registration/deregistration calls,
+		# so that we can update the client certificate
 		urls.extend((
 			'url.firs=' + _url(FIRS_PATH),
 			'url.firs.unauth=' + _url(FIRS_PATH),
-			'cookie.store.domains=.amazon.com,' + config.server_hostname,
 		))
+	else:
+		# not sure what this is for, but all non-kindle clients seem to have it
+		urls.append('url.cde.nossl=' + _url(CDE_PATH))
 
 	if not features.allow_logs_upload:
+		ignore = config.server_url + 'ksp/ignore'
 		urls.extend((
-			'url.messaging.post=' + config.server_url,
-			'url.det=' + _url(DET_PATH),
+			'url.messaging.post=' + ignore,
+			'url.det=' + ignore,
+			'url.det.unauth=' + ignore,
 		))
-		if not anon:
-			urls.append('url.det.unauth=' + _url(DET_PATH))
 
+	urls.append('')
 	return '\n'.join(urls)
 
 
@@ -61,18 +75,12 @@ class KSP_Handler (Dummy):
 		Dummy.__init__(self, 'ksp', '/ksp')
 
 	def call(self, request, device):
-		if request.command == 'PUT' and request.path.endswith('/ksp/serial'):
-			# logging.debug("got a serial %s", request.body)
-			if device.is_provisional():
-				xdsn = str(request.body, 'latin1')
-				d = devices.confirm_device(device, xdsn)
-				if not d:
-					logging.critical("failed to confirm serial %s for %s", xdsn, device)
+		if request.path.startswith('/ksp/ignore'):
+			return 200
 
-		# elif request.command == 'PUT' and request.path.endswith('/ksp/certificate'):
-		# 	logging.debug("got a certificate %s", request.body)
-		# 	# if device.is_provisional():
-		# 	# 	xdsn = request.headers.get('X-DSN')
-		# 	# 	devices.confirm_device(device, xdsn, request.body)
+		if request.command == 'PUT' and request.path == '/ksp/scfg':
+			logging.debug("got client configuration:\n%s", request.body)
+			return 200
 
-		return DummyResponse()
+		logging.warn("unknown /ksp call %s", request.path)
+		return 200

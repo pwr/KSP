@@ -7,7 +7,7 @@ import config, features
 import handlers
 
 
-_SERVICES = [ 'ksp', handlers.TODO, handlers.CDE, handlers.FIRS, handlers.FIRS_TA, handlers.DET, handlers.DET_TA, handlers.DM, handlers.WWW ]
+_SERVICES = [ 'ksp', handlers.TODO, handlers.CDE, handlers.FIRS, handlers.FIRS_TA ]
 
 class Server (ThreadingMixIn, HTTPServer):
 	"""
@@ -40,29 +40,16 @@ class Server (ThreadingMixIn, HTTPServer):
 				handlers.CDE_GetCollections(),
 
 				# catch-all for todo and cde services
-				handlers.Upstream(handlers.TODO, handlers.TODO_PATH), # all other todo calls
-				handlers.Upstream(handlers.CDE, handlers.CDE_PATH), # all other cde calls
+				handlers.Upstream(handlers.TODO, handlers.TODO_PATH[:-1]), # all other todo calls
+				handlers.Upstream(handlers.CDE, handlers.CDE_PATH[:-1]), # all other cde calls
 
 				# device (de)registration
 				handlers.FIRS_TA_NewDevice(),
 				handlers.FIRS_NewDevice(),
-				handlers.Upstream(handlers.FIRS, handlers.FIRS_PATH),
+				handlers.Upstream(handlers.FIRS, handlers.FIRS_PATH[:-1]),
 				# handlers.Store(), # book infos?
 				# handlers.Dummy(handlers.WWW, handlers.EMBER_PATH), # ads?
 			]
-
-		if features.scrub_uploads:
-			hlist.extend([
-					handlers.Dummy(handlers.DM, handlers.DM_PATH),
-					handlers.Dummy(handlers.DET, handlers.DET_PATH + 'MessageLogServlet'),
-					handlers.Dummy(handlers.DET_TA, handlers.DET_PATH),
-				])
-		else:
-			hlist.extend([
-					handlers.Upstream(handlers.DM, handlers.DM_PATH),
-					handlers.Upstream(handlers.DET, handlers.DET_PATH + 'MessageLogServlet'),
-					handlers.Upstream(handlers.DET_TA, handlers.DET_PATH),
-				])
 
 		for h in hlist:
 			if h.service not in _SERVICES:

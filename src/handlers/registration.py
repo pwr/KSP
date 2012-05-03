@@ -23,7 +23,7 @@ def call_and_process(handler, request, device):
 		except:
 			logging.exception("failed to decode incoming device key")
 			pkcs12 = None
-	devices.update(device, cookie = qxml.get_text(x_cookie), pkcs12_bytes = pkcs12)
+	devices.update_pkcs12(device, cookie = qxml.get_text(x_cookie), pkcs12_bytes = pkcs12)
 	return response
 
 
@@ -33,8 +33,8 @@ class FIRS_TA_NewDevice (Upstream):
 
 	def call(self, request, device):
 		if request.command == 'GET' and request.path == FIRS_PATH + 'getNewDeviceCredentials':
-			# page 411 server check
-			return DummyResponse()
+			# 411/711 server check
+			return 200
 
 		return call_and_process(self, request, device)
 

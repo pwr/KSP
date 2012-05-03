@@ -40,6 +40,7 @@ def add_child(parent_node, tag_name, text_value = None):
 	return node
 
 def filter(parent_node, tag_name, **kwargs):
+	# logging.debug("matching %s -> %s : %s", parent_node, tag_name, kwargs)
 	for n in list_children(parent_node, tag_name):
 		matches = True
 		for k, v in kwargs.items():
@@ -47,7 +48,9 @@ def filter(parent_node, tag_name, **kwargs):
 				matches = False
 				break
 		if matches:
+			# logging.debug("matched %s", n)
 			yield n
+	# logging.debug("none matched")
 
 
 def set_text(tag_node, text_value = None):

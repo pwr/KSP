@@ -5,6 +5,7 @@ from handlers.upstream import Upstream
 from handlers.dummy import DummyResponse, ExceptionResponse
 from handlers import is_uuid, TODO, TODO_PATH
 import calibre, qxml
+import features
 
 
 _DUMMY_BODY = b'<?xml version="1.0" encoding="UTF-8"?><response><status>SUCCESS</status></response>'
@@ -13,7 +14,10 @@ def _process_item(device, action = None, cde_type = None, key = None, complete_s
 	if key.startswith('KSP.') or cde_type.startswith('KSP.'):
 		return True
 
-	if action in ('GET', 'DOWNLOAD') and cde_type in ('EBOK', 'PDOC'):
+	if not features.allow_logs_upload and action == 'SND' and cde_type == 'CMND' and key.endswith(':SYSLOG:UPLOAD'):
+		return True
+
+	if action in ('GET', 'DOWNLOAD') and cde_type in ('EBOK', 'PDOC', 'APNX'):
 		if is_uuid(key, cde_type):
 			book = calibre.book(key)
 			if complete_status == 'COMPLETED':

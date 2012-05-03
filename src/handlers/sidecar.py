@@ -121,6 +121,6 @@ class CDE_ShareAnnotations (Upstream):
 		q = query_params(request.body_text())
 		if is_uuid(q.get('key'), q.get('type')):
 			logging.warn("sharing annotations for Calibre books is not supported")
-			return DummyResponse()
+			return 200
 
 		return self.call_upstream(request, device)

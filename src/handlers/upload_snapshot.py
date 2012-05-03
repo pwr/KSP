@@ -54,11 +54,9 @@ def _clean_snapshot(request, device):
 	if books_on_device:
 		postprocess.enqueue(_process_books_on_device, device, books_on_device)
 
-	if was_updated:
-		if request.is_signed():
-			# erm, can we just skip this part?
-			raise ExceptionResponse()
+	if was_updated and not request.is_signed():
 		request.update_body(b''.join(lines))
+	return was_updated
 
 
 class CDE_UploadSnapshot (Upstream):
@@ -67,7 +65,14 @@ class CDE_UploadSnapshot (Upstream):
 
 	def call(self, request, device):
 		if device.is_provisional():
+			serial = request.headers['X-DSN']
+			if serial:
+				devices.confirm_serial(device, serial)
 			return None
 
-		_clean_snapshot(request, device)
+		was_updated = _clean_snapshot(request, device)
+		if was_updated and request.is_signed():
+			# the request body has now been changed, but we can't send it upstream because the call is signed
+			# skipping the upstream call might not be the best idea, let's see how it goes
+			return 200
 		return self.call_upstream(request, device)

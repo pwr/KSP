@@ -61,8 +61,8 @@ def _process_xml(doc, device):
 	for book in calibre_books.values():
 		if not book.file_path:
 			continue
-		if device.is_anonymous() and book.cde_content_type == 'PDOC':
-			# Kindle4PC does not like PDFs
+		if book.cde_content_type == 'PDOC' and not device.supports_pdoc():
+			# desktop clients do not handle PDOCs
 			continue
 		if book.last_modified > last_sync or not book.is_known_to(device) or book.needs_update_on(device):
 			if last_sync != 0:
@@ -89,7 +89,7 @@ class TODO_SyncMetadata (Upstream):
 
 	def call(self, request, device):
 		if device.is_provisional():
-			return DummyResponse() # we need to wait for the client to do an UploadStanpshot
+			return 200 # we need to wait for the client to do an UploadStanpshot
 
 		response = self.call_upstream(request, device)
 		if response.status != 200:

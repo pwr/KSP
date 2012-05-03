@@ -42,7 +42,7 @@ No further information is available
 		q = request.get_query_params()
 		asin = q.get('ASIN')
 		if not asin:
-			return DummyResponse(400) # wtf?
+			return 400
 
 		if is_uuid(asin): # yay
 			return process(self, request, device)

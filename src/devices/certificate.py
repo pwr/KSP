@@ -84,5 +84,7 @@ def make_context(name, pkcs12_bytes):
 		try: os.remove(temp[1])
 		except: pass
 
+DEFAULT_CONTEXT = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+
 
 logging.debug("certificates for new devices will be searched in %s", config.database_path)

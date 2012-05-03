@@ -9,8 +9,6 @@ import calibre, qxml
 import config, features
 
 
-_POLL_RESPONSE = b'<?xml version="1.0" encoding="UTF-8"?><response><total_count/><next_pull_time/></response>'
-
 def _rewrite_url(url):
 	"""
 	certain responses from the server contain urls pointing to amazon services
@@ -74,11 +72,11 @@ def _filter_item(x_items, x_item):
 			x_items.removeChild(x_items)
 			return True
 
-	if action == 'SND' and item_type == 'CMND':
-		item_key = x_item.getAttribute('key')
-		if item_key and item_key.endswith(':SYSLOG:UPLOAD') and not features.allow_logs_upload:
-			x_items.removeChild(x_item)
-			return True
+	# if action == 'SND' and item_type == 'CMND':
+	# 	item_key = x_item.getAttribute('key')
+	# 	if item_key and item_key.endswith(':SYSLOG:UPLOAD') and not features.allow_logs_upload:
+	# 		x_items.removeChild(x_item)
+	# 		return True
 
 	# very unlikely for these to change upstream for books not downloaded from Amazon...
 	# if action == 'UPD_ANOT' or action == 'UPD_LPRD':
@@ -112,13 +110,19 @@ def _process_xml(doc, device, reason):
 
 	while device.actions_queue:
 		action = device.actions_queue.pop()
+		# logging.debug("checking action %s", action)
+		if list(qxml.filter(x_items, 'item', action = action[0], type = action[1])):
+			# logging.debug("action %s already found in %s, skipping", action, x_items)
+			continue
 		if action == ('SET', 'SCFG'):
-			_add_item(x_items, 'SET', 'SCFG', text = _servers_config(device), key = 'KSP.servers.configuration', priority = 100)
+			_add_item(x_items, 'SET', 'SCFG', text = _servers_config(device), key = 'KSP.set.scfg', priority = 100)
 			was_updated = True
 		elif action == ('UPLOAD', 'SNAP'):
-			if not qxml.filter(x_items, 'item', action = 'UPLOAD', type = 'SNAP'):
-				_add_item(x_items, 'UPLOAD', 'SNAP', key = 'KSP.upload.snapshot', url = config.server_url + 'FionaCDEServiceEngine/UploadSnapshot')
-				was_updated = True
+			_add_item(x_items, 'UPLOAD', 'SNAP', key = 'KSP.upload.snap', priority = 1000, url = config.server_url + 'FionaCDEServiceEngine/UploadSnapshot')
+			was_updated = True
+		# elif action == ('UPLOAD', 'SCFG'):
+		# 	_add_item(x_items, 'UPLOAD', 'SCFG', key = 'KSP.upload.scfg', priority = 50, url = config.server_url + 'ksp/scfg')
+		# 	was_updated = True
 		else:
 			logging.warn("unknown action %s", action)
 
@@ -128,6 +132,8 @@ def _process_xml(doc, device, reason):
 
 	return was_updated
 
+
+_POLL_RESPONSE = b'<?xml version="1.0" encoding="UTF-8"?><response><total_count/><next_pull_time/></response>'
 
 class TODO_GetItems (Upstream):
 	def __init__(self):

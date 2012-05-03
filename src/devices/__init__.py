@@ -5,42 +5,31 @@ import devices.db as _db
 import devices.certificate as _certificate
 
 
-def _update(device, ip_address = None, cookie = None):
+def _update(device, ip = None, cookie = None, kind = None):
 	cookie_matches = cookie == device.last_cookie
 	if not cookie_matches and cookie and device.last_cookie:
 		cookie_matches = cookie.startswith(device.last_cookie)
-	if ip_address == device.last_ip and cookie_matches:
+	kind_matches = kind == device.kind
+	if not kind_matches and kind and device.kind:
+		kind_matches = device.kind.startswith(kind)
+	if ip == device.last_ip and cookie_matches and kind_matches:
 		# only bother writing to the db if any of them changed
 		return device
-	logging.debug("updating device %s with ip %s and cookie %s", device, ip_address, cookie)
-	device.last_ip = ip_address
+	logging.debug("updating device %s with ip %s and cookie %s", device, ip, cookie[:12] if cookie else None)
+	device.last_ip = ip
 	if cookie:
 		device.last_cookie = cookie[:64]
+	if not kind_matches:
+		# only update the device kind when it's more specific than the one we knew
+		device.kind = kind
 	_db.update(device)
 	return device
-
-def _make_context(device, serial = None):
-	"""
-	Ensures creation of a SSL context for the device.
-	If the device has no current PKCS12 certificate, loads it from the file 'db/<device_serial>.p12'
-	"""
-	if device.is_anonymous():
-		return True
-	if not serial:
-		serial = device.serial
-	if not device.p12:
-		device.p12 = _certificate.load_p12bytes(serial)
-	device.context = _certificate.make_context(serial, device.p12)
-	if not device.context:
-		device.mark_context_failed()
-		return False
-	return True
 
 def get(serial):
 	"""gets a device by serial"""
 	return _devices.get(serial)
 
-def update(device, cookie = None, fiona_id = None, pkcs12_bytes = None):
+def update_pkcs12(device, cookie = None, fiona_id = None, pkcs12_bytes = None):
 	if cookie:
 		device.last_cookie = cookie[:64]
 	if fiona_id:
@@ -57,63 +46,49 @@ def update(device, cookie = None, fiona_id = None, pkcs12_bytes = None):
 			# So there's no point in destroying the current SSL context and creating a new one.
 	_db.update(device)
 
-def detect(ip_address, cookie = None):
+def detect(ip, cookie = None, kind = None, serial = None):
 	"""
 	guess the device that made a request
 	if no matching device exists in our database, one may be created on the spot
 	"""
+	found = None
 	for d in _devices.values():
-		cookie_matches = False
-		if cookie and d.last_cookie:
-			cookie_matches = cookie == d.last_cookie or cookie.startswith(d.last_cookie)
-		if cookie_matches or (not cookie and ip_address == d.last_ip):
-			# match from most specific to less specific field
-			if d.context_failed():
-				# let's give it another chance... maybe the user put the proper .p12 into place
-				if not _make_context(d):
-					return d
-				_db.insert(d)
-			return _update(d, ip_address, cookie)
-
-	serial = None
-	anonymous = False
-	if cookie.startswith('{enc:'):
-		# Kindle 4 PC/Android client?
-		for k in cookie.split('{'):
-			if k.startswith('name:'):
-				serial = k[5:-1]
+		if serial:
+			if serial == d.serial:
+				found = d
 				break
-		cookie = cookie[:64]
-		anonymous = serial is not None
+			if not d.is_provisional():
+				continue
+		if cookie and d.last_cookie:
+			if cookie[:64] == d.last_cookie:
+				found = d
+				break
+		if kind and d.kind:
+			if kind.partition('-')[0] != d.kind.partition('-')[0]:
+				continue
+		# very flimsy, especially when the request is port-forwarded through a router
+		if ip == d.last_ip:
+			logging.warn("matched device by ip: %s => %s", ip, d)
+			found = d
+			break
+
+	if found:
+		_update(found, ip = ip, cookie = cookie, kind = kind)
+		if found.is_provisional() and serial:
+			if found.load_context(serial):
+				if found.serial in _devices:
+					del _devices[found.serial]
+				found.serial = serial
+				_devices[serial] = found
+				_db.insert(found)
+				logging.warn("registered device %s", found)
+		return found
+
 	# create new provisional device
-	d = _Device(serial = serial, last_ip = ip_address, last_cookie = cookie, anonymous = anonymous)
-	_devices[d.serial] = d
-	if anonymous:
-		logging.warn("registered anonymous device %s", d)
-		_db.insert(d)
-	return d
-
-def confirm_device(device, serial):
-	"""we've found the serial of a provisional device"""
+	device = _Device(serial = serial, kind = kind, last_ip = ip, last_cookie = cookie)
+	_devices[device.serial] = device
 	if not device.is_provisional():
-		raise Exception("tried to confirm an already known device, wtf", device, serial)
-
-	# first we check if the device has been previously seen, but we just could not identify it
-	# (for example, the device might connect from a different IP and may have changed its cookie in the meantime)
-	already_registered = _devices.get(serial)
-	if already_registered:
-		# yay, update ip and serial
-		logging.info("identified provisional device %s as %s", device, already_registered)
-		_update(already_registered, device.last_ip, device.last_cookie)
-		del _devices[device.serial]
-		return already_registered
-
-	if not _make_context(device, serial):
-		return None
-
-	device.serial = serial
-	logging.warn("registered device %s", device)
-	_db.insert(device)
+		_db.insert(device)
 	return device
 
 def save_all():
@@ -121,13 +96,4 @@ def save_all():
 
 
 ### module initialization
-def __load_all():
-	_all = {}
-	for d in _db.load_all():
-		if _make_context(d):
-			_all[d.serial] = d
-		else:
-			logging.warn("not loading device %s, SSL context failed")
-	return _all
-_devices = __load_all()
-del __load_all
+_devices = { d.serial: d for d in _db.load_all() }
