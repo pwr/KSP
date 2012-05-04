@@ -56,8 +56,10 @@ CREATE TABLE IF NOT EXISTS devices (
 	p12 BLOB,
 	books BLOB
 )''')
+_execute('CREATE INDEX IF NOT EXISTS index_devices_serial ON devices ( serial )')
 
 # guessed wrong.
 try: _execute('ALTER TABLE devices ADD COLUMN kind TEXT')
 except: pass
+
 _execute('VACUUM')
