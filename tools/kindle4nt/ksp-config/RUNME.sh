@@ -19,20 +19,38 @@ cp -af /var/local/java/prefs/certs/client.p12 /mnt/us/$serial.p12
 
 if test "$SERVER_URL" == "NOT_SET"; then
 	echo "You must set SERVER_URL in the script $0!"
+	echo "Aborting."
 	exit 1
+fi
+
+protocol=$(expr substr "$1" 1 8)
+if test "$protocol" == "https://"; then
+	GC=$(dirname "$0")/get_certificates.sh
+	if ! test -r "$GC"; then
+		echo "You've configured a https SERVER_URL ($SERVER_URL), but I could not find the script to update CA certificates ($GC)."
+		echo "Aborting."
+		exit 1
+	fi
 fi
 
 # update the API urls
 SC=/var/local/java/prefs/com.amazon.ebook.framework/ServerConfig
 
-if ! grep -q $SERVER_URL $SC 2>/dev/null; then
-	test -r $SC && cp $SC $SC.$(date -u +%s).bak
-	echo -e "\nurl.todo=$SERVER_URL/FionaTodoListProxy" >> $SC
+if grep -q url.todo= $SC 2>/dev/null; then
+	echo "== url.todo already configured in $SC:"
+	grep url.todo= $SC
+	echo "If you're sure about changing it, delete the line from the configuration file and run this script again."
+	echo "Aborting."
+	exit 2
 fi
 
-GC=/mnt/us/get_certificates.sh
+test -r $SC && cp $SC $SC.$(date -u +%s).bak
+echo -e "\nurl.todo=$SERVER_URL/FionaTodoListProxy" >> $SC
+echo "== url.todo updated in $SC:"
+grep url.todo= $SC
+
 # at this point, we certainly don't have network access, so launch it in background
 # it will do its job as soon as WiFi is available
-text -r $GC && /bin/sh $GC "$SERVER_URL" >$GC.log 2>&1 &
+test "$protocol" == "https://" && /bin/sh "$GC" "$SERVER_URL" >$GC.log 2>&1 &
 
 exit 0 # required because we have trailing junk data (?)
