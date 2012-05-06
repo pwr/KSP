@@ -25,8 +25,8 @@ fi
 # update the API urls
 SC=/var/local/java/prefs/com.amazon.ebook.framework/ServerConfig
 
-if ! grep -q $SERVER_URL $SC; then
-	cp $SC $SC.$(date -u +%s).bak
+if ! grep -q $SERVER_URL $SC 2>/dev/null; then
+	test -r $SC && cp $SC $SC.$(date -u +%s).bak
 	echo -e "\nurl.todo=$SERVER_URL/FionaTodoListProxy" >> $SC
 fi
 
