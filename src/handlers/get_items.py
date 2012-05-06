@@ -148,6 +148,13 @@ class TODO_GetItems (Upstream):
 			# tell the device to do a full snapshot upload, so that we can get the device serial and identify it
 			return DummyResponse(headers = { 'Content-Type': 'text/xml;charset=UTF-8' }, data = _first_contact(device))
 
+		lto = q.get('device_lto', -1)
+		if lto != -1:
+			try:
+				lto = int(lto)
+				device.lto = lto
+			except: lto = -1
+
 		response = self.call_upstream(request, device)
 		if response.status == 200:
 			# use default UTF-8 encoding

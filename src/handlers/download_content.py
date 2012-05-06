@@ -95,15 +95,15 @@ class CDE_DownloadContent (Upstream):
 		Upstream.__init__(self, CDE, CDE_PATH + 'FSDownloadContent', 'GET')
 
 	def call(self, request, device):
-		if device.is_provisional():
-			return None
-
 		q = request.get_query_params()
 		cde_type = q.get('type')
 		if 'key' in q and cde_type in ('EBOK', 'PDOC'):
 			key = q['key']
 			if is_uuid(key, cde_type): # very likely comes from our library
 				return self.book_response(key, device, request.headers['Range'])
+
+		if device.is_provisional():
+			return None
 
 		if request.is_signed():
 			redirect_header = { 'Location': 'https://cde-ta-g7g.amazon.com' + request.path }

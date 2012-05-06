@@ -103,6 +103,14 @@ class CDE_Sidecar (Upstream):
 					return DummyResponse(headers = { 'Content-Type': content_type }, data = data)
 				return None
 		elif request.command == 'POST':
+			q = request.get_query_params()
+			lto = q.get('device_lto', -1)
+			if lto != -1:
+				try:
+					lto = int(lto)
+					device.lto = lto
+				except: lto = -1
+
 			with minidom.parseString(request.body_text()) as doc:
 				if _process_xml(request, doc, device):
 					if not request.is_signed():

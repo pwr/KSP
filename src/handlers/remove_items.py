@@ -12,6 +12,7 @@ _DUMMY_BODY = b'<?xml version="1.0" encoding="UTF-8"?><response><status>SUCCESS<
 
 def _process_item(device, action = None, cde_type = None, key = None, complete_status = None, **extra):
 	if key.startswith('KSP.') or cde_type.startswith('KSP.'):
+		# KSP internal stuff, not relevant upstream
 		return True
 
 	if not features.allow_logs_upload and action == 'SND' and cde_type == 'CMND' and key.endswith(':SYSLOG:UPLOAD'):
