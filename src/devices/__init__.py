@@ -84,7 +84,7 @@ def detect(ip, cookie = None, kind = None, serial = None):
 				logging.warn("registered device %s", found)
 		return found
 
-	# create new provisional device
+	# create new device, may be provisional
 	device = _Device(serial = serial, kind = kind, last_ip = ip, last_cookie = cookie)
 	_devices[device.serial] = device
 	if not device.is_provisional():

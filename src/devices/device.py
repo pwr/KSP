@@ -10,12 +10,13 @@ class Device:
 	keeps a device's serial, last known ip and cookie it connected with
 	"""
 
-	def __init__(self, serial = None, fiona_id = None, kind = None, last_ip = None, last_cookie = None, p12 = None, books = None):
+	def __init__(self, serial = None, fiona_id = None, kind = None, lto = -1, last_ip = None, last_cookie = None, p12 = None, books = None):
 		self.serial = serial or str(uuid4())
 		self.fiona_id = fiona_id or None
 		self.last_ip = last_ip
 		self.last_cookie = last_cookie
 		self.kind = kind
+		self.lto = lto
 		self.p12 = p12 or None
 		self.books = {} if not books else pickle.loads(books)
 
@@ -33,10 +34,7 @@ class Device:
 		# self.actions_queue = [ ('UPLOAD', 'SCFG'), ('SET', 'SCFG'), ('UPLOAD', 'SNAP') ]
 		self.actions_queue = [ ('SET', 'SCFG'), ('UPLOAD', 'SNAP') ]
 
-		if self.p12:
-			logging.info("loaded device %s", self)
-		else:
-			logging.warn("new device %s", self)
+		logging.warn("new device %s", self)
 
 	def load_context(self, new_serial = None):
 		if new_serial is None and self.context_failed():
