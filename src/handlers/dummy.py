@@ -53,7 +53,7 @@ class Dummy (object):
 	"""
 	def __init__(self, service, path, command = None):
 		if not path:
-			raise Exception("path required", self)
+			raise Exception("path required", str(self))
 		self.service = service
 		self.expected_path = path
 		self.expected_command = command

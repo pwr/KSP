@@ -13,15 +13,15 @@ def _execute(query, parameters = ()):
 		elif type(parameters) == list: # multiple queries, assume the parameters contains a list of tuples
 			db.executemany(query, parameters)
 		else: # err...
-			raise Exception("don't know how to use parameters", parameters)
+			raise Exception("don't know how to use parameters", str(parameters))
 		db.commit()
 
 def insert(device):
 	if device.is_provisional():
-		raise Exception("may not save provisional device", device)
+		raise Exception("may not save provisional device", str(device))
 	books = None if not device.books else pickle.dumps(device.books)
 	params = ( device.serial, device.fiona_id, device.kind, device.lto, device.last_ip, device.last_cookie, device.p12, books )
-	_execute('INSERT INTO devices (serial, fiona_id, kind, lto, last_ip, last_cookie, p12, books) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', params)
+	_execute('INSERT INTO devices (serial, fiona_id, kind, lto, last_ip, last_cookie, p12, books) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params)
 
 def update(device):
 	books = None if not device.books else pickle.dumps(device.books)

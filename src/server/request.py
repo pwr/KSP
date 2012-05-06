@@ -53,7 +53,7 @@ def body_text(req):
 
 def update_body(req, new_body = None):
 	if is_signed(req):
-		raise Exception("cannot update body of signed request", req, new_body)
+		raise Exception("cannot update body of signed request", str(req), new_body)
 	req.body = compress(new_body, req.content_encoding)
 	req.length = len(req.body or b'')
 	del req.headers['Content-Length']
@@ -101,14 +101,14 @@ _DEVICE_FAMILIES = {
 		'A1PA6795UKMFR9' : 'kindle-DXus',		# 0x04
 		'A13V1IB3VIYZZH' : 'kindle-DXintl',		# 0x05
 		'A1VC38T7YXB528' : 'kindle-3wifi3g',	# 0x06
-		'A2EUQ1WTGCTBG2' : 'kindle-?',			# 0x07
+		'A2EUQ1WTGCTBG2' : 'kindle',			# 0x07 3?
 		'A3AEGXETSR30VB' : 'kindle-3wifi',		# 0x08
 		'A3P5ROKL5A1OLE' : 'kindle-DXgraphite',	# 0x09
 		'A3JWKAKR8XB7XF' : 'kindle-3wifi3geu',	# 0x0A
-		'A1X6FK5RDHNB96' : 'kindle-4?',			# 0x0B
-		'AN1VRQENFRJN5'  : 'kindle-4?',			# 0x0C
-		'A3DWYIK6Y9EEQB' : 'kindle-4?',			# 0x0D
-		'A3R76HOPU0Z2CB' : 'kindle-4nt',		# 0x0E
+		'A1X6FK5RDHNB96' : 'kindle',			# 0x0B 4?
+		'AN1VRQENFRJN5'  : 'kindle',			# 0x0C 4?
+		'A3DWYIK6Y9EEQB' : 'kindle',			# 0x0D 4?
+		'A3R76HOPU0Z2CB' : 'kindle-4intl',		# 0x0E
 		'?1' : 'kindle-5wifi3g', # 0x0F
 		'?2' : 'kindle-5wifi', # 0x11
 	}
@@ -116,7 +116,7 @@ _DEVICE_FAMILIES = {
 def guess_client(req):
 	xdfv = req.headers['X-DeviceFirmwareVersion']
 	if xdfv and xdfv.startswith('Kindle '):
-		return 'kindle-' + xdfv[8]
+		return 'kindle-' + xdfv[7]
 	xdevtype = req.headers['X-DeviceType']
 	if xdevtype in _DEVICE_FAMILIES:
 		return _DEVICE_FAMILIES[xdevtype]

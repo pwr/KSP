@@ -63,7 +63,7 @@ class Upstream (Dummy):
 			# we check the connection state because otherwise we might mess up another request in process
 			if conn.sock:
 				if conn._HTTPConnection__state != _CS_IDLE:
-					raise Exception("acquired connection but it's not idle!", upstream_host, device)
+					raise Exception("acquired connection but it's not idle!", upstream_host, str(device))
 				if request.started_at - conn.last_call > _IDLE: # avoid socket timeouts
 					conn.close()
 

@@ -106,10 +106,8 @@ class CDE_Sidecar (Upstream):
 			q = request.get_query_params()
 			lto = q.get('device_lto', -1)
 			if lto != -1:
-				try:
-					lto = int(lto)
-					device.lto = lto
-				except: lto = -1
+				try: device.lto = int(lto)
+				except: pass
 
 			with minidom.parseString(request.body_text()) as doc:
 				if _process_xml(request, doc, device):

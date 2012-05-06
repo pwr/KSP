@@ -1,7 +1,7 @@
 import logging, pickle
 from uuid import uuid4
 
-import devices.certificate as _certificate
+import devices.certificate as cert
 
 _PKCS12_FAILED = 'FAILED'
 
@@ -39,30 +39,37 @@ class Device:
 	def load_context(self, new_serial = None):
 		if new_serial is None and self.context_failed():
 			logging.warn("no SSL context available for %s, PKCS12 failed", self)
-			raise Exception("no SSL context available, PKCS12 failed", self)
+			return False
 		serial = new_serial or self.serial
-		self.p12 = self.p12 or _certificate.load_p12bytes(serial)
-		self.context = _certificate.make_context(serial, self.p12) or _PKCS12_FAILED
+		self.p12 = self.p12 or cert.load_p12bytes(serial)
+		self.context = cert.make_context(serial, self.p12) or _PKCS12_FAILED
 		if self.context_failed():
 			# so we don't try this more than once
 			logging.warn("%s context failed", self)
-			raise Exception("cannot connect to upstream, failed to create context", self, host)
+			return False
+		return True
 
 	def ssl_context(self, host):
 		if host.endswith('-ta-g7g.amazon.com'):
-			return _certificate.DEFAULT_CONTEXT
+			return cert.DEFAULT_CONTEXT
 		if host.endswith('-g7g.amazon.com'): # client certificate required
 			if self.is_provisional():
-				logging.warn("%s: no SSL context available for %s", host, self)
-				return None
+				# logging.warn("%s: no SSL context available for %s", host, self)
+				raise Exception("no SSL context available", host, str(self))
 			if not self.context:
-				self.load_context()
+				if not self.load_context():
+					raise Exception("failed to create SSL context", str(self))
 			return self.context
-		return _certificate.DEFAULT_CONTEXT
+		return cert.DEFAULT_CONTEXT
 
 	def is_provisional(self): # do we know the device serial yet?
-		return ((self.kind is None and len(self.serial) == 36) or
-				(self.kind and self.kind.startswith('kindle') and not self.p12))
+		return (len(self.serial) == 36
+				or (len(self.serial) == 16
+					and self.serial.startswith('B0')
+					and (self.kind is None or self.kind.startswith('kindle'))
+					and not self.p12
+					)
+				)
 
 	def is_kindle(self):
 		return self.kind and self.kind.startswith('kindle')

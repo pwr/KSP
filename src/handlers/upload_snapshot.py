@@ -65,9 +65,6 @@ class CDE_UploadSnapshot (Upstream):
 
 	def call(self, request, device):
 		if device.is_provisional():
-			serial = request.headers['X-DSN']
-			if serial:
-				devices.confirm_serial(device, serial)
 			return None
 
 		was_updated = _clean_snapshot(request, device)

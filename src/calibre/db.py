@@ -14,12 +14,12 @@ def _clean_timeformat(text):
 
 def _parse_timestamp(text):
 	"""converts calibre date time to a posix timestamp"""
-	if text.endswith("+00:00"):
+	if text.endswith('+00:00'):
 		text = text[:-6]
-	if text.endswith("+0000"):
+	if text.endswith('+0000'):
 		text = text[:-5]
-	if text[10] == " ":
-		text = text.replace(" ", "T", 1)
+	if len(text) > 10 and text[10] == ' ':
+		text = text[:10] + 'T' + text[11:]
 
 	try:
 		if len(text) == 19:

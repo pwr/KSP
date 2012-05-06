@@ -133,7 +133,7 @@ def _process_xml(doc, device, reason):
 	return was_updated
 
 
-_POLL_RESPONSE = b'<?xml version="1.0" encoding="UTF-8"?><response><total_count/><next_pull_time/></response>'
+_POLL_RESPONSE = b'<?xml version="1.0" encoding="UTF-8"?><response><total_count>0</total_count><next_pull_time>0</next_pull_time></response>'
 
 class TODO_GetItems (Upstream):
 	def __init__(self):
@@ -150,10 +150,8 @@ class TODO_GetItems (Upstream):
 
 		lto = q.get('device_lto', -1)
 		if lto != -1:
-			try:
-				lto = int(lto)
-				device.lto = lto
-			except: lto = -1
+			try: device.lto = int(lto)
+			except: pass
 
 		response = self.call_upstream(request, device)
 		if response.status == 200:

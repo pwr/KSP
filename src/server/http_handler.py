@@ -41,7 +41,10 @@ class Handler (BaseHTTPRequestHandler):
 			if not device:
 				logging.error("failed to identify device for %s", self.requestline)
 				return 403
-			self.last_device = device
+			# if hasattr(self, 'last_device') and self.last_device != device:
+			# 	logging.debug("identified device %s", device)
+			if not device.is_provisional():
+				self.last_device = device
 		if device.context_failed(): # failed to create a proper SSL context
 			logging.warn("denying access to unregistered device %s", device)
 			return 401
@@ -106,11 +109,14 @@ class Handler (BaseHTTPRequestHandler):
 				if status != 100:
 					self.wfile.write(b'Server: Amazon Web Server\r\nContent-Length: 0\r\n\r\n')
 				self.log_request(status)
+				if status >= 400:
+					self.close_connection = 1
 		except:
 			logging.exception("handling %s", self.requestline)
 			self.send_response_only(500)
 			self.wfile.write(b'Server: Amazon Web Server\r\nContent-Length: 0\r\n\r\n')
 			self.log_request(500)
+			self.close_connection = 1
 
 	do_GET = _do_any
 	do_POST = _do_any

@@ -51,44 +51,36 @@ def detect(ip, cookie = None, kind = None, serial = None):
 	guess the device that made a request
 	if no matching device exists in our database, one may be created on the spot
 	"""
-	found = None
-	for d in _devices.values():
-		if serial:
-			if serial == d.serial:
+	found = _devices.get(serial) if serial else None
+	if not found:
+		for d in _devices.values():
+			# logging.debug("matching '%s' vs '%s'", cookie, d.last_cookie)
+			if cookie and d.last_cookie:
+				if cookie[:64] == d.last_cookie:
+					found = d
+					break
+				continue
+			if kind and d.kind:
+				if kind.partition('-')[0] != d.kind.partition('-')[0]:
+					continue
+			if ip == d.last_ip:
+				# very flimsy, especially when the request is port-forwarded through a router
+				logging.warn("matched device by ip: %s => %s", ip, d)
 				found = d
 				break
-			if not d.is_provisional():
-				continue
-		if cookie and d.last_cookie:
-			if cookie[:64] == d.last_cookie:
-				found = d
-				break
-		if kind and d.kind:
-			if kind.partition('-')[0] != d.kind.partition('-')[0]:
-				continue
-		# very flimsy, especially when the request is port-forwarded through a router
-		if ip == d.last_ip:
-			logging.warn("matched device by ip: %s => %s", ip, d)
-			found = d
-			break
 
 	if found:
 		_update(found, ip = ip, cookie = cookie, kind = kind)
-		if found.is_provisional() and serial:
-			if found.load_context(serial):
-				if found.serial in _devices:
-					del _devices[found.serial]
-				found.serial = serial
-				_devices[serial] = found
-				_db.insert(found)
-				logging.warn("registered device %s", found)
 		return found
 
 	# create new device, may be provisional
-	device = _Device(serial = serial, kind = kind, last_ip = ip, last_cookie = cookie)
+	device = _Device(serial = serial, kind = kind, last_ip = ip, last_cookie = cookie[:64] if cookie else None)
+	if device.is_provisional():
+		if not serial or not device.load_context(serial):
+			return device
+	logging.warn("registered Kindle device %s", device)
 	_devices[device.serial] = device
-	if not device.is_provisional():
-		_db.insert(device)
+	_db.insert(device)
 	return device
 
 def save_all():
