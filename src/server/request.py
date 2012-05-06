@@ -5,16 +5,22 @@ from content import read_chunked, query_params, compress, decompress
 import qxml
 
 
+def is_signed(req):
+	return 'X-ADP-Request-Digest' in req.headers
+
 def get_query_params(req):
 	_, _, query = req.path.partition('?')
 	if query:
 		return query_params(query)
 	q = {}
 	if is_signed(req) and req.command == 'POST' and req.body and req.headers['Content-Type'] == 'text/xml':
-		with minidom.parseString(req.body) as doc:
-			parameters = qxml.get_child(qxml.get_child(doc, 'request'), 'parameters')
-			for p in qxml.list_children(parameters):
-				q[p.nodeName] = qxml.get_text(p)
+		try:
+			with minidom.parseString(req.body) as doc:
+				x_request = qxml.get_child(doc, 'request')
+				x_parameters = qxml.get_child(x_request, 'parameters')
+				for p in qxml.list_children(x_parameters):
+					q[p.nodeName] = qxml.get_text(p)
+		except: pass
 	return q
 
 def read_body_and_length(req):
@@ -52,9 +58,6 @@ def update_body(req, new_body = None):
 	req.length = len(req.body or b'')
 	del req.headers['Content-Length']
 	req.headers['Content-Length'] = req.length
-
-def is_signed(req):
-	return 'X-ADP-Request-Digest' in req.headers
 
 #
 #
