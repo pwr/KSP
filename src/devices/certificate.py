@@ -14,8 +14,8 @@ def _load_pkcs12_crypto(name, pkcs12_bytes):
 		return None
 
 	pkcs_name = str(pkcs12.get_friendlyname(), 'utf-8')
-	p_number, _, p_serial, p_fiona, p_digest = pkcs_name.split(',')
-	if p_serial == name:
+	p_number, _, p_serial, p_fiona, p_digest = pkcs_name.split(',')[:5]
+	if p_serial[:16] == name:
 		return pkcs12
 
 	logging.warn("certificate is not for this device? mismatched friendly name %s", pkcs_name)
@@ -57,11 +57,14 @@ def load_p12bytes(name):
 	if not os.path.isfile(path):
 		logging.warn("file not found: %s", path)
 		return None
-	with open(path, 'rb') as f:
-		bytes = f.read()
-		os.remove(path)
-		return bytes
-	logging.exception("failed to read %s", path)
+	try:
+		with open(path, 'rb') as f:
+			bytes = f.read()
+	except:
+		logging.exception("failed to read %s", path)
+		return None
+	os.remove(path)
+	return bytes
 
 def make_context(name, pkcs12_bytes):
 	pkcs12 = load_pkcs12(name, pkcs12_bytes)
