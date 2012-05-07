@@ -57,11 +57,14 @@ def load_p12bytes(name):
 	if not os.path.isfile(path):
 		logging.warn("file not found: %s", path)
 		return None
-	with open(path, 'rb') as f:
-		bytes = f.read()
-		os.remove(path)
-		return bytes
-	logging.exception("failed to read %s", path)
+	try:
+		with open(path, 'rb') as f:
+			bytes = f.read()
+	except:
+		logging.exception("failed to read %s", path)
+		return None
+	os.remove(path)
+	return bytes
 
 def make_context(name, pkcs12_bytes):
 	pkcs12 = load_pkcs12(name, pkcs12_bytes)
