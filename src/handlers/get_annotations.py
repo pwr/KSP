@@ -6,7 +6,7 @@ from handlers.dummy import DummyResponse, ExceptionResponse
 from handlers import is_uuid, CDE, CDE_PATH
 from content import decompress, compress, query_params
 import postprocess, formats
-import calibre.annotations as annotations
+import annotations
 import calibre, qxml
 
 

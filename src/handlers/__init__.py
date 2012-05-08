@@ -47,7 +47,7 @@ from .remove_items import *
 from .download_content import *
 from .upload_snapshot import *
 from .sidecar import *
-from .page_numbers import *
+from .get_pagenumbers import *
 from .get_annotations import *
 from .collections import *
 from .registration import *

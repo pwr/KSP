@@ -6,7 +6,7 @@ from handlers.dummy import DummyResponse, ExceptionResponse
 from handlers import is_uuid, CDE, CDE_PATH
 from content import decompress, compress, query_params
 import postprocess, formats
-import calibre.annotations as annotations
+import annotations
 import calibre, qxml
 
 
@@ -34,7 +34,7 @@ def _process_sidecar_upload(device, book_ids, book_nodes):
 				text = qxml.get_text(x_item) if kind == 'note' else None
 
 				if kind == 'last_read':
-					annotations.last_read(asin, timestamp, begin, pos, state)
+					annotations.set_last_read(asin, timestamp, begin, pos, state)
 				else:
 					action = x_item.getAttribute('action')
 					if action == 'create':

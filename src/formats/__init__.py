@@ -71,9 +71,10 @@ def read_cde_type(path, content_type, asin):
 		return 'PDOC'
 
 
-import calibre.annotations as annotations
+import annotations
 
-def sidecar(book):
+def sidecar(book, annotations_list = None):
 	if book.content_type == CONTENT_TYPE_MOBIPOCKET:
-		annotations_list = annotations.list(book)
+		if not annotations_list:
+			annotations_list = annotations.list(book.asin)
 		return mbp.assemble_sidecar(book, annotations_list)

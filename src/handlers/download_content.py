@@ -5,7 +5,7 @@ from handlers.upstream import Upstream
 from handlers.dummy import DummyResponse
 from handlers import is_uuid, CDE, CDE_PATH
 from content import copy_streams
-import calibre.annotations as annotations
+import annotations
 import config, calibre
 
 
@@ -35,10 +35,12 @@ class _BookResponse (DummyResponse):
 		self.headers['Content-Disposition'] = 'attachment; filename="%s"' % os.path.basename(book.file_path)
 		self.headers['Content-Type'] = book.content_type
 
-		if annotations.has(book):
-			self.headers['Hint-Sidecar-Download'] = 1
-		if annotations.apnx_path(book):
-			self.headers['Hint-APNX-Available'] = 1
+		if book.cde_content_type == 'EBOK':
+			# Kindles do not support annotations for PDOCs
+			if annotations.has(book.asin):
+				self.headers['Hint-Sidecar-Download'] = 1
+			if annotations.apnx_path(book):
+				self.headers['Hint-APNX-Available'] = 1
 
 	def write_to(self, stream_out):
 		bytes_count = 0

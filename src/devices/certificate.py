@@ -14,11 +14,12 @@ def _load_pkcs12_crypto(name, pkcs12_bytes):
 		return None
 
 	pkcs_name = str(pkcs12.get_friendlyname(), 'utf-8')
-	p_number, _, p_serial, p_fiona, p_digest = pkcs_name.split(',')[:5]
-	if p_serial[:16] == name:
+	cert_serial = pkcs_name.split(',')[3]
+	cert_serial = cert_serial.strip('\\') if cert_serial else cert_serial
+	if cert_serial == name:
 		return pkcs12
-
 	logging.warn("certificate is not for this device? mismatched friendly name %s", pkcs_name)
+	logging.warn("expected serial %s, found %s", name, cert_serial)
 
 def _dump_pkcs12_crypto(pkcs12, out_file):
 	with os.fdopen(out_file, 'wb') as tempf:

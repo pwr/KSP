@@ -13,25 +13,19 @@ _FIRST_CONTACT = '''
 		<next_pull_time/>
 		<items>
 			<item action="UPLOAD" type="SCFG" key="KSP.upload.scfg" priority="50" is_incremental="false" sequence="0" url="$_SERVER_URL_$ksp/scfg"/>
-			<item action="UPLOAD" type="SNAP" key="KSP.upload.snap" priority="50" is_incremental="false" sequence="0" url="$_SERVER_URL_$FionaCDEServiceEngine/UploadSnapshot"/>
-			<item action="SET" type="SCFG" key="KSP.set.scfg" priority="200" is_incremental="false" sequence="0">$_SERVERS_CONFIG_$</item>
+			<item action="SET" type="SCFG" key="KSP.set.scfg" priority="600" is_incremental="false" sequence="0">$_SERVERS_CONFIG_$</item>
+			<item action="UPLOAD" type="SNAP" key="KSP.upload.snap" priority="1100" is_incremental="false" sequence="0"
+				 url="$_SERVER_URL_$FionaCDEServiceEngine/UploadSnapshot"/>
 		</items>
 	</response>
 '''.replace('\t', '').replace('\n', '').replace('$_SERVER_URL_$', config.server_url)
 
-_UPLOAD_SERIAL = '''
-	<item action="SND" type="KSP.upload.serial" priority="50" is_incremental="false" sequence="0"
-		 key="FILE_/proc/usid" url="$_SERVER_URL_$ksp/serial"/>
-'''.replace('\t', '').replace('\n', '').replace('$_SERVER_URL_$', config.server_url)
-
-
 def _first_contact(device):
 	# triggered actions:
-	# - upload config, for debugging purposes (we can check the client config in the logs)
+	# - upload config, for debugging purposes (we can check the API urls config in the logs)
+	# - update client API urls, customized for the particular client type
 	# - upload snapshot -- it will include device serial and model for the kindles
-	# - update client API urls -- this needs to happen later, after we've confirmed the client kind/model
-	text = _FIRST_CONTACT # _FIRST_CONTACT.replace('$_UPLOAD_SERIAL_$', _UPLOAD_SERIAL if device.is_kindle() else '')
-	text = text.replace('$_SERVERS_CONFIG_$', _servers_config(device))
+	text = _FIRST_CONTACT.replace('$_SERVERS_CONFIG_$', _servers_config(device))
 	return bytes(text, 'UTF-8')
 
 def _servers_config(device):
