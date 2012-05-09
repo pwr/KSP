@@ -1,4 +1,4 @@
-import logging, binascii, struct, time
+import logging, binascii, struct
 
 
 def _flatten(*data_list):
@@ -10,10 +10,6 @@ def _flatten(*data_list):
 		else:
 			for item2 in _flatten(*item):
 				yield item2
-
-def _ts(timestamp):
-	t = time.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
-	return int(time.mktime(t))
 
 
 _FILL_FF = b'\xFF' * 4
@@ -129,7 +125,9 @@ def build_sidecar(book, guid, last_read, annotations_list):
 	mbp_updated = last_read.timestamp
 	if annotations_list and annotations_list[-1].timestamp > mbp_updated:
 		mbp_updated = annotations_list[-1].timestamp
-	mbp_updated = _ts(mbp_updated) if mbp_updated else int(time.time())
+	# either we have a dummy last_read and _some_ annotations
+	# or a proper last_read and optional annotations
+	# either way, mbp_updated SHOULD not be 0 (the value of the dummy last_read)
 
 	header = struct.pack('! 32s 4x LL 16x 8s L 2x LL 4x', title, mbp_created, mbp_updated, b'BPARMOBI', next_id, 1 + indexes_count, bpar_ptr)
 	# assert len(header) == _HEADER_LEN, "header length is %s" % len(header)

@@ -49,6 +49,7 @@ def _servers_config(device):
 			'url.firs.unauth=' + _url(FIRS_PATH),
 		))
 	else:
+		urls.append('url.firs=' + _url(FIRS_PATH))
 		# not sure what this is for, but all non-kindle clients seem to have it
 		urls.append('url.cde.nossl=' + _url(CDE_PATH))
 

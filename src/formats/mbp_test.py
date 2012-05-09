@@ -13,7 +13,7 @@ import annotations
 
 ASIN = '34436c3a-8233-41f9-aed2-4cd4b019cb3e'
 
-sidecar_list = annotations.list(ASIN)
+sidecar_list = annotations.get_all(ASIN)
 for s in sidecar_list:
 	print(*s)
 book = namedtuple('_Book', 'file_path added_to_library')(os.path.join(config.database_path, 'test.mobi'), int(time.time()))

@@ -31,8 +31,9 @@ class Device:
 		# devices connecting for the first time after KSP boots up will:
 		#	- update their configuration with our server urls
 		#	- do a snapshot upload, so we can get up-to-date with the list of books on the device
-		# self.actions_queue = [ ('UPLOAD', 'SCFG'), ('SET', 'SCFG'), ('UPLOAD', 'SNAP') ]
 		self.actions_queue = [ ('SET', 'SCFG'), ('UPLOAD', 'SNAP') ]
+		if self.is_kindle(): # for debugging purposes
+			self.actions_queue.append(('UPLOAD', 'SCFG'))
 
 		logging.warn("new device %s", self)
 

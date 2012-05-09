@@ -72,11 +72,12 @@ def _filter_item(x_items, x_item):
 			x_items.removeChild(x_items)
 			return True
 
-	# if action == 'SND' and item_type == 'CMND':
-	# 	item_key = x_item.getAttribute('key')
-	# 	if item_key and item_key.endswith(':SYSLOG:UPLOAD') and not features.allow_logs_upload:
-	# 		x_items.removeChild(x_item)
-	# 		return True
+	if action == 'SND' and item_type == 'CMND':
+		item_key = x_item.getAttribute('key')
+		if item_key and item_key.endswith(':SYSLOG:UPLOAD') and not features.allow_logs_upload:
+			# not sure if this is smart, ignoring these items appears to queue them up at amazon
+			x_items.removeChild(x_item)
+			return True
 
 	# very unlikely for these to change upstream for books not downloaded from Amazon...
 	# if action == 'UPD_ANOT' or action == 'UPD_LPRD':
@@ -120,9 +121,12 @@ def _process_xml(doc, device, reason):
 		elif action == ('UPLOAD', 'SNAP'):
 			_add_item(x_items, 'UPLOAD', 'SNAP', key = 'KSP.upload.snap', priority = 1000, url = config.server_url + 'FionaCDEServiceEngine/UploadSnapshot')
 			was_updated = True
-		# elif action == ('UPLOAD', 'SCFG'):
-		# 	_add_item(x_items, 'UPLOAD', 'SCFG', key = 'KSP.upload.scfg', priority = 50, url = config.server_url + 'ksp/scfg')
+		# elif action == ('GET', 'NAMS'):
+		# 	_add_item(x_items, 'GET', 'NAMS', key = 'NameChange' if device.is_kindle() else 'AliasChange')
 		# 	was_updated = True
+		elif action == ('UPLOAD', 'SCFG'):
+			_add_item(x_items, 'UPLOAD', 'SCFG', key = 'KSP.upload.scfg', priority = 50, url = config.server_url + 'ksp/scfg')
+			was_updated = True
 		else:
 			logging.warn("unknown action %s", action)
 

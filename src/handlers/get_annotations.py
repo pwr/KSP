@@ -1,18 +1,26 @@
 import logging
 import xml.dom.minidom as minidom
+import time
 
 from handlers.upstream import Upstream
-from handlers.dummy import DummyResponse, ExceptionResponse
+from handlers.dummy import DummyResponse
 from handlers import is_uuid, CDE, CDE_PATH
-from content import decompress, compress, query_params
-import postprocess, formats
 import annotations
-import calibre, qxml
+from annotations.lto import device_lto
+import calibre, devices
 
 
-def _annotations(query):
-	logging.warn("get annotations %s", query)
-	return None
+_LAST_READ = '<last_read annotation_time_utc="%d" country_code="%s" lto="%d" pos="%d" source_device="%s" version="0" />'
+
+def _last_read(book, exclude_device = None):
+	lr_list = []
+	for lr in annotations.list_last_read(book.asin):
+		if lr.device == exclude_device:
+			continue
+		device = devices.get(lr.device)
+		lr_list.append(_LAST_READ % (lr.timestamp * 1000, 'US', device_lto(device), lr.pos, lr.device))
+	xml = '<?xml version="1.0" encoding="UTF-8"?><book>' + ''.join(lr_list) + '</book>'
+	return DummyResponse(headers = { 'Content-Type': 'text/xml;charset=UTF-8' }, data = bytes(xml, 'UTF-8'))
 
 
 # APNX requests for non-Calibre books should go directly to Amazon...
@@ -25,6 +33,14 @@ class CDE_GetAnnotations (Upstream):
 		asin = q.get('key')
 
 		if is_uuid(asin, q.get('type')):
-			return _annotations(q)
+			kind = q.get('filter')
+			book = calibre.book(asin)
+			if not book:
+				logging.warn("book not found %s", asin)
+				return None
+			if kind == 'last_read':
+				return _last_read(book, device.serial)
+			logging.warn("don't know how to filter annotations of kind %s", kind)
+			return None
 
 		return self.call_upstream(request, device)

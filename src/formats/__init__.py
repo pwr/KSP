@@ -76,5 +76,5 @@ import annotations
 def sidecar(book, annotations_list = None):
 	if book.content_type == CONTENT_TYPE_MOBIPOCKET:
 		if not annotations_list:
-			annotations_list = annotations.list(book.asin)
+			annotations_list = annotations.get_all(book.asin)
 		return mbp.assemble_sidecar(book, annotations_list)

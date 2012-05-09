@@ -34,15 +34,15 @@ def _process_sidecar_upload(device, book_ids, book_nodes):
 				text = qxml.get_text(x_item) if kind == 'note' else None
 
 				if kind == 'last_read':
-					annotations.set_last_read(asin, timestamp, begin, pos, state)
+					annotations.set_last_read(device, asin, timestamp, begin, pos, state)
 				else:
 					action = x_item.getAttribute('action')
 					if action == 'create':
-						annotations.create(asin, kind, timestamp, begin, end, pos, state, text)
+						annotations.create(device, asin, kind, timestamp, begin, end, pos, state, text)
 					elif action == 'delete':
-						annotations.delete(asin, kind, timestamp, begin, end)
+						annotations.delete(device, asin, kind, timestamp, begin, end)
 					elif action == 'modify':
-						annotations.modify(asin, kind, timestamp, begin, end, text)
+						annotations.modify(device, asin, kind, timestamp, begin, end, text)
 					else:
 						logging.error("unknown sidecar action %s: %s", action, x_item)
 
