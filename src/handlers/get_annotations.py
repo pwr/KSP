@@ -18,7 +18,10 @@ def _last_read(book, exclude_device = None):
 		if lr.device == exclude_device:
 			continue
 		device = devices.get(lr.device)
-		lr_list.append(_LAST_READ % (lr.timestamp * 1000, 'US', device_lto(device), lr.pos, lr.device))
+		alias = device.alias if device else lr.device
+		alias = lr.device if alias is None \
+					else alias.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace('\'', '&apos;')
+		lr_list.append(_LAST_READ % (lr.timestamp * 1000, 'US', device_lto(device), lr.pos, alias))
 	xml = '<?xml version="1.0" encoding="UTF-8"?><book>' + ''.join(lr_list) + '</book>'
 	return DummyResponse(headers = { 'Content-Type': 'text/xml;charset=UTF-8' }, data = bytes(xml, 'UTF-8'))
 

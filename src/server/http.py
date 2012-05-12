@@ -44,8 +44,9 @@ class Server (ThreadingMixIn, HTTPServer):
 				handlers.Upstream(handlers.CDE, handlers.CDE_PATH[:-1]), # all other cde calls
 
 				# device (de)registration
-				handlers.FIRS_TA_NewDevice(),
+				handlers.FIRS_GetNamesForFiona(),
 				handlers.FIRS_NewDevice(),
+				handlers.FIRS_TA_NewDevice(),
 				handlers.Upstream(handlers.FIRS, handlers.FIRS_PATH[:-1]),
 				# handlers.Store(), # book infos?
 				# handlers.Dummy(handlers.WWW, handlers.EMBER_PATH), # ads?

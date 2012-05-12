@@ -10,8 +10,9 @@ class Device:
 	keeps a device's serial, last known ip and cookie it connected with
 	"""
 
-	def __init__(self, serial = None, fiona_id = None, kind = None, lto = -1, last_ip = None, last_cookie = None, p12 = None, books = None):
+	def __init__(self, serial = None, alias = None, fiona_id = None, kind = None, lto = -1, last_ip = None, last_cookie = None, p12 = None, books = None):
 		self.serial = serial or str(uuid4())
+		self.alias = alias or None
 		self.fiona_id = fiona_id or None
 		self.last_ip = last_ip
 		self.last_cookie = last_cookie
@@ -31,9 +32,11 @@ class Device:
 		# devices connecting for the first time after KSP boots up will:
 		#	- update their configuration with our server urls
 		#	- do a snapshot upload, so we can get up-to-date with the list of books on the device
-		self.actions_queue = [ ('SET', 'SCFG'), ('UPLOAD', 'SNAP') ]
+		self.actions_queue = [ 'SET_SCFG', 'UPLOAD_SNAP' ]
 		if self.is_kindle(): # for debugging purposes
-			self.actions_queue.append(('UPLOAD', 'SCFG'))
+			self.actions_queue.append('UPLOAD_SCFG')
+		if self.alias is None:
+			self.actions_queue.append('GET_NAMS')
 
 		logging.warn("new device %s", self)
 
@@ -88,7 +91,7 @@ class Device:
 					)
 
 		return "{%s/%s %s %s cookie=%s%s, sync=%s with %d books}" % (
-					self.serial, self.fiona_id, self.kind, self.last_ip,
+					self.serial, self.alias, self.kind, self.last_ip,
 					None if not self.last_cookie else self.last_cookie[:12],
 					' no PKCS12' if self.context_failed() else '',
 					self.last_sync, len(self.books),

@@ -11,13 +11,14 @@ def _call_and_process(handler, request, device):
 	response = handler.call_upstream(request, device)
 	cookie = None
 	pkcs12 = None
+	alias = None
 	with minidom.parseString(response.body_text()) as doc:
 		x_response = qxml.get_child(doc, 'response')
-		x_adp_token = qxml.get_child('adp_token')
+		x_alias = qxml.get_child(x_response, 'user_device_name')
+		alias = qxml.get_text(x_alias)
+		x_adp_token = qxml.get_child(x_response, 'adp_token')
 		if x_adp_token:
 			cookie = qxml.get_text(x_adp_token)
-			# x_alias = qxml.get_child('user_device_name')
-			# todo update device alias
 		else:
 			x_cookie = qxml.get_child(x_response, 'store_authentication_cookie')
 			cookie = qxml.get_text(x_cookie)
@@ -29,7 +30,7 @@ def _call_and_process(handler, request, device):
 		except:
 			logging.exception("failed to decode incoming device key")
 			pkcs12 = None
-	devices.update_pkcs12(device, cookie = cookie, pkcs12_bytes = pkcs12)
+	devices.update(device, alias = alias, cookie = cookie, pkcs12_bytes = pkcs12)
 	return response
 
 
@@ -48,6 +49,14 @@ class FIRS_TA_NewDevice (Upstream):
 class FIRS_NewDevice (Upstream):
 	def __init__(self):
 		Upstream.__init__(self, FIRS, FIRS_PATH + 'getDeviceCredentials', 'GET')
+
+	def call(self, request, device):
+		return _call_and_process(self, request, device)
+
+
+class FIRS_GetNamesForFiona (Upstream):
+	def __init__(self):
+		Upstream.__init__(self, FIRS, FIRS_PATH + 'getNamesForFiona', 'GET')
 
 	def call(self, request, device):
 		return _call_and_process(self, request, device)

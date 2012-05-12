@@ -29,7 +29,9 @@ def get(serial):
 	"""gets a device by serial"""
 	return _devices.get(serial)
 
-def update_pkcs12(device, cookie = None, fiona_id = None, pkcs12_bytes = None):
+def update(device, alias = None, cookie = None, fiona_id = None, pkcs12_bytes = None):
+	if alias:
+		device.alias = alias
 	if cookie:
 		device.last_cookie = cookie[:64]
 	if fiona_id:

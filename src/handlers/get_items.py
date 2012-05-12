@@ -115,16 +115,16 @@ def _process_xml(doc, device, reason):
 		if list(qxml.filter(x_items, 'item', action = action[0], type = action[1])):
 			# logging.debug("action %s already found in %s, skipping", action, x_items)
 			continue
-		if action == ('SET', 'SCFG'):
+		if action == 'SET_SCFG':
 			_add_item(x_items, 'SET', 'SCFG', text = _servers_config(device), key = 'KSP.set.scfg', priority = 100)
 			was_updated = True
-		elif action == ('UPLOAD', 'SNAP'):
+		elif action == 'UPLOAD_SNAP':
 			_add_item(x_items, 'UPLOAD', 'SNAP', key = 'KSP.upload.snap', priority = 1000, url = config.server_url + 'FionaCDEServiceEngine/UploadSnapshot')
 			was_updated = True
-		# elif action == ('GET', 'NAMS'):
-		# 	_add_item(x_items, 'GET', 'NAMS', key = 'NameChange' if device.is_kindle() else 'AliasChange')
-		# 	was_updated = True
-		elif action == ('UPLOAD', 'SCFG'):
+		elif action == 'GET_NAMS':
+			_add_item(x_items, 'GET', 'NAMS', key = 'NameChange' if device.is_kindle() else 'AliasChange')
+			was_updated = True
+		elif action == 'UPLOAD_SCFG':
 			_add_item(x_items, 'UPLOAD', 'SCFG', key = 'KSP.upload.scfg', priority = 50, url = config.server_url + 'ksp/scfg')
 			was_updated = True
 		else:
