@@ -6,6 +6,7 @@ from handlers.dummy import DummyResponse, ExceptionResponse
 from handlers import is_uuid, TODO, TODO_PATH
 import calibre, qxml
 import features
+import annotations
 
 
 _DUMMY_BODY = b'<?xml version="1.0" encoding="UTF-8"?><response><status>SUCCESS</status></response>'
@@ -18,20 +19,27 @@ def _process_item(device, action = None, cde_type = None, key = None, complete_s
 	if not features.allow_logs_upload and action == 'SND' and cde_type == 'CMND' and key.endswith(':SYSLOG:UPLOAD'):
 		return True
 
-	if action in ('GET', 'DOWNLOAD') and cde_type in ('EBOK', 'PDOC', 'APNX'):
-		if is_uuid(key, cde_type):
-			book = calibre.book(key)
-			if complete_status == 'COMPLETED':
-				if book:
-					book.mark_downloaded_by(device)
-				else:
-					logging.warn("%s successfully downloaded missing book %s", device, book)
-			elif complete_status == 'FAILED':
-				logging.warn("device failed to download book %s %s", key, book)
+	if action in ('GET', 'DOWNLOAD') and cde_type in ('EBOK', 'PDOC', 'APNX') and is_uuid(key, cde_type):
+		book = calibre.book(key)
+		if complete_status == 'COMPLETED':
+			if book:
+				book.mark_downloaded_by(device)
 			else:
-				logging.warn("%s: unknown downloaded status %s for book %s", device, complete_status, book)
+				logging.warn("%s successfully updated unknown book %s", device, key)
+		elif complete_status == 'FAILED':
+			logging.warn("%s failed to update book %s", device, book or key)
+		else:
+			logging.warn("%s: unknown downloaded status %s for %s", device, complete_status, book or key)
+		return True
 
-			return True
+	if action == 'UPD_LPRD' and is_uuid(key, cde_type):
+		if complete_status == 'COMPLETED':
+			annotations.last_read_updated(device, key)
+		elif complete_status == 'FAILED':
+			logging.warn("%s failed to update last_read for book %s", device, key)
+		else:
+			logging.warn("%s: unknown UPD_LPRD status %s for book %s", device, complete_status, key)
+		return True
 
 	return False
 

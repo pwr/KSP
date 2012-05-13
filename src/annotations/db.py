@@ -6,18 +6,21 @@ import config
 
 
 def _namedtuple_row_factory(cursor, row):
-    fields = [ col[0] for col in cursor.description ]
-    Row = namedtuple('Row', fields)
-    return Row(*row)
+	fields = [ col[0] for col in cursor.description ]
+	Row = namedtuple('Row', fields)
+	return Row(*row)
 
 def _execute(query, parameters = ()):
-	with sqlite3(_db_path) as db:
-		if query.startswith('INSERT INTO '):
-			qmarks = ('?', ) * len(parameters)
-			query = query.replace('*', ','.join(qmarks))
-		logging.debug("execute %s %s", query, parameters)
-		db.execute(query, parameters)
-		db.commit()
+	try:
+		with sqlite3(_db_path) as db:
+			if query.startswith('INSERT INTO '):
+				qmarks = ('?', ) * len(parameters)
+				query = query.replace('*', ','.join(qmarks))
+			db.execute(query, parameters)
+			db.commit()
+			logging.debug("execute %s %s", query, parameters)
+	except:
+		logging.exception("execute %s %s", query, parameters)
 
 def get_all(asin):
 	with sqlite3(_db_path) as db:
@@ -31,8 +34,6 @@ def list_last_read(asin, count = -1):
 	# lists all last_reads, in reverse timestamp order
 	with sqlite3(_db_path) as db:
 		db.row_factory = _namedtuple_row_factory
-		# it's enough to check the last_read table
-		# if there are no entries there, quite unlikely to have bookmarks/notes/etc
 		return [ lr for lr in db.execute('SELECT * FROM last_read2 WHERE asin = ? ORDER BY timestamp DESC LIMIT ' + str(count), (asin, )) ]
 
 def set_last_read(device_serial, asin, timestamp, begin, position, state):
@@ -40,6 +41,27 @@ def set_last_read(device_serial, asin, timestamp, begin, position, state):
 	_execute('DELETE FROM last_read2 WHERE asin = ? AND device = ?', (asin, device_serial))
 	_execute('INSERT INTO last_read2 (id, asin, device, timestamp, begin, pos, state) VALUES (*)',
 			(None, asin, device_serial, timestamp, begin, position, state))
+
+def delete_last_read(device_serial, asin):
+	_execute('DELETE FROM last_read2 WHERE asin = ? AND device = ?', (asin, device_serial))
+
+def get_last_read_updates(device_serial, furthest = True):
+	with sqlite3(_db_path) as db:
+		db.row_factory = _namedtuple_row_factory
+		# get all book ids for which this device has last_read entries
+		device_books = [ r[0] for r in db.execute('SELECT asin FROM last_read2 WHERE device = ?', (device_serial, )) ]
+		# logging.debug("%s has last_read for %s", device_serial, device_books)
+		# get all entries where the latest read was done by some other device
+		if furthest:
+			last_read_query = 'SELECT * FROM last_read2 GROUP BY asin HAVING pos = MAX(pos) AND device != ?'
+		else:
+			last_read_query = 'SELECT * FROM last_read2 GROUP BY asin HAVING timestamp = MAX(timestamp) AND device != ?'
+		latest_lr = [ lr for lr in db.execute(last_read_query, (device_serial, )) ]
+		# only pick the latest entries done by other devices, when this device also has an entry
+		latest_lr = [ lr for lr in latest_lr if lr.asin in device_books ]
+		if latest_lr:
+			logging.debug("%s needs to update last_read from %s", device_serial, [ (lr.asin, lr.device, lr.pos) for lr in latest_lr ])
+		return latest_lr
 
 def create(device_serial, asin, kind, timestamp, begin, end, position, state, text):
 	_execute('INSERT INTO annotations2 VALUES (*)',
@@ -73,6 +95,7 @@ CREATE TABLE IF NOT EXISTS last_read2 (
 )''')
 _execute('CREATE INDEX IF NOT EXISTS index_last_read2_asin_timestamp_desc ON last_read2 (asin, timestamp DESC)')
 _execute('CREATE INDEX IF NOT EXISTS index_last_read2_asin_device ON last_read2 (asin, device)')
+_execute('CREATE INDEX IF NOT EXISTS index_last_read2_device ON last_read2 (device)')
 
 _execute('''
 CREATE TABLE IF NOT EXISTS annotations2 (

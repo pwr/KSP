@@ -10,7 +10,7 @@ from annotations.lto import device_lto
 import calibre, devices
 
 
-_LAST_READ = '<last_read annotation_time_utc="%d" country_code="%s" lto="%d" pos="%d" source_device="%s" version="0" />'
+_LAST_READ = '<last_read annotation_time_utc="%d" lto="%d" pos="%d" source_device="%s" method="FRL" version="0"/>'
 
 def _last_read(book, exclude_device = None):
 	lr_list = []
@@ -21,8 +21,11 @@ def _last_read(book, exclude_device = None):
 		alias = device.alias if device else lr.device
 		alias = lr.device if alias is None \
 					else alias.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace('\'', '&apos;')
-		lr_list.append(_LAST_READ % (lr.timestamp * 1000, 'US', device_lto(device), lr.pos, alias))
-	xml = '<?xml version="1.0" encoding="UTF-8"?><book>' + ''.join(lr_list) + '</book>'
+		lr_list.append(_LAST_READ % (lr.timestamp * 1000, device_lto(device), lr.pos, alias))
+	if lr_list:
+		xml = '<?xml version="1.0" encoding="UTF-8"?><book>' + ''.join(lr_list) + '</book>'
+	else:
+		xml = '<?xml version="1.0" encoding="UTF-8"?><book/>'
 	return DummyResponse(headers = { 'Content-Type': 'text/xml;charset=UTF-8' }, data = bytes(xml, 'UTF-8'))
 
 

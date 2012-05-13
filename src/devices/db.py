@@ -63,12 +63,6 @@ CREATE TABLE IF NOT EXISTS devices (
 )''')
 _execute('CREATE INDEX IF NOT EXISTS index_devices_serial ON devices ( serial )')
 
-# guessed wrong.
-try: _execute('ALTER TABLE devices ADD COLUMN alias TEXT')
-except: pass
-try: _execute('ALTER TABLE devices ADD COLUMN kind TEXT')
-except: pass
-try: _execute('ALTER TABLE devices ADD COLUMN lto INTEGER DEFAULT -1')
-except: pass
-
-_execute('VACUUM')
+from devices.db_migration import migrate_3
+migrate_3(_db_path)
+del migrate_3

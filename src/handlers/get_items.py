@@ -5,8 +5,10 @@ from handlers.upstream import Upstream
 from handlers.dummy import DummyResponse
 from handlers.ksp import _servers_config, _first_contact
 from handlers import is_uuid, TODO, TODO_PATH
-import calibre, qxml
+import devices, calibre, qxml
 import config, features
+import annotations
+from annotations.lto import device_lto
 
 
 def _rewrite_url(url):
@@ -21,22 +23,21 @@ def _rewrite_url(url):
 				url = url[:m.start()] + m.expand(replacement) + url[m.end():]
 	return url
 
-def _add_item(x_items, action, item_type, key = 'NONE', text = None, priority = 600, url = None, forced = False):
+def _add_item(x_items, action, item_type, key = 'NONE', text = None, priority = 600, sequence = 0, url = None, body = None, **kwargs):
 	item = qxml.add_child(x_items, 'item')
 	item.setAttribute('action', str(action))
 	item.setAttribute('is_incremental', 'false')
 	item.setAttribute('key', str(key))
 	item.setAttribute('priority', str(priority))
-	item.setAttribute('sequence', '0')
+	item.setAttribute('sequence', str(sequence))
 	item.setAttribute('type', str(item_type))
 	if url:
 		item.setAttribute('url', url)
-	if text:
-		if forced:
-			qxml.add_child(item, 'title', text)
-			qxml.add_child(item, 'forced', 'true')
-		else:
-			qxml.set_text(item, text)
+	if body:
+		qxml.set_text(item, body)
+	else:
+		for k, v in kwargs.items():
+			qxml.add_child(item, k, str(v))
 	return item
 
 def _filter_item(x_items, x_item):
@@ -79,15 +80,44 @@ def _filter_item(x_items, x_item):
 			x_items.removeChild(x_item)
 			return True
 
-	# very unlikely for these to change upstream for books not downloaded from Amazon...
-	# if action == 'UPD_ANOT' or action == 'UPD_LPRD':
-	# 	# annotations and LPRD (last position read?)
-	# 	item_key = x_item.getAttribute('key')
-	# 	if is_uuid(item_key):
-	# 		x_items.removeChild(x_item)
-	# 		return True
-
 	return False
+
+def _consume_action_queue(device, x_items):
+	was_updated = False
+	while device.actions_queue:
+		action = device.actions_queue.pop()
+		# logging.debug("checking action %s", action)
+		if list(qxml.filter(x_items, 'item', action = action[0], type = action[1])):
+			# logging.debug("action %s already found in %s, skipping", action, x_items)
+			continue
+		if action == 'SET_SCFG':
+			_add_item(x_items, 'SET', 'SCFG', key = 'KSP.set.scfg', priority = 100, body = _servers_config(device))
+			was_updated = True
+		elif action == 'UPLOAD_SNAP':
+			_add_item(x_items, 'UPLOAD', 'SNAP', key = 'KSP.upload.snap', priority = 1000, url = config.server_url + 'FionaCDEServiceEngine/UploadSnapshot')
+			was_updated = True
+		elif action == 'GET_NAMS':
+			_add_item(x_items, 'GET', 'NAMS', key = 'NameChange' if device.is_kindle() else 'AliasChange')
+			was_updated = True
+		elif action == 'UPLOAD_SCFG':
+			_add_item(x_items, 'UPLOAD', 'SCFG', key = 'KSP.upload.scfg', priority = 50, url = config.server_url + 'ksp/scfg')
+			was_updated = True
+		else:
+			logging.warn("unknown action %s", action)
+	return was_updated
+
+def _update_annotations(device, x_items):
+	was_updated = False
+	lru = annotations.get_last_read_updates(device)
+	# logging.debug("%s has last_read updates: %s", device, lru)
+	for lr in lru:
+		# LPRD is only supported by EBOKs
+		source_device = devices.get(lr.device)
+		source_device_alias = (source_device.alias or source_device.serial) if source_device else lr.device
+		_add_item(x_items, 'UPD_LPRD', 'EBOK', key = lr.asin, priority = 1100, sequence = lr.pos,
+				source_device = source_device_alias, lto = device_lto(source_device), annotation_time_utc = lr.timestamp)
+		was_updated = True
+	return was_updated
 
 def _process_xml(doc, device, reason):
 	x_response = qxml.get_child(doc, 'response')
@@ -101,34 +131,15 @@ def _process_xml(doc, device, reason):
 	for x_item in qxml.list_children(x_items, 'item'):
 		was_updated |= _filter_item(x_items, x_item)
 
+	was_updated |= _consume_action_queue(device, x_items)
+	was_updated |= _update_annotations(device, x_items)
+
 	if features.download_updated_books:
 		for book in calibre.books().values():
 			if book.needs_update_on(device) and book.cde_content_type in ('EBOK', ): # PDOC updates are not supported ATM
 				logging.warn("book %s updated in library, telling device %s to download it again", book, device)
-				# <item action="GET" is_incremental="false" key="asin" priority="600" sequence="0" type="EBOK">title</item>
-				_add_item(x_items, 'GET', book.cde_content_type, key = book.asin, text = book.title, forced = True) # book.title)
+				_add_item(x_items, 'GET', book.cde_content_type, key = book.asin, title = book.title, forced = True)
 				was_updated = True
-
-	while device.actions_queue:
-		action = device.actions_queue.pop()
-		# logging.debug("checking action %s", action)
-		if list(qxml.filter(x_items, 'item', action = action[0], type = action[1])):
-			# logging.debug("action %s already found in %s, skipping", action, x_items)
-			continue
-		if action == 'SET_SCFG':
-			_add_item(x_items, 'SET', 'SCFG', text = _servers_config(device), key = 'KSP.set.scfg', priority = 100)
-			was_updated = True
-		elif action == 'UPLOAD_SNAP':
-			_add_item(x_items, 'UPLOAD', 'SNAP', key = 'KSP.upload.snap', priority = 1000, url = config.server_url + 'FionaCDEServiceEngine/UploadSnapshot')
-			was_updated = True
-		elif action == 'GET_NAMS':
-			_add_item(x_items, 'GET', 'NAMS', key = 'NameChange' if device.is_kindle() else 'AliasChange')
-			was_updated = True
-		elif action == 'UPLOAD_SCFG':
-			_add_item(x_items, 'UPLOAD', 'SCFG', key = 'KSP.upload.scfg', priority = 50, url = config.server_url + 'ksp/scfg')
-			was_updated = True
-		else:
-			logging.warn("unknown action %s", action)
 
 	if was_updated:
 		x_total_count = qxml.get_child(x_response, 'total_count')
