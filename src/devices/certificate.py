@@ -14,7 +14,7 @@ def _load_pkcs12_crypto(name, pkcs12_bytes):
 		return None
 
 	pkcs_name = str(pkcs12.get_friendlyname(), 'utf-8')
-	cert_serial = pkcs_name.split(',')[3]
+	cert_serial = pkcs_name.split(',')[2]
 	cert_serial = cert_serial.strip('\\') if cert_serial else cert_serial
 	if cert_serial == name:
 		return pkcs12
