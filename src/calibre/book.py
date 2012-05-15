@@ -1,6 +1,6 @@
 import os.path, logging
 
-import config, formats
+import config, formats, features
 
 
 class Book:
@@ -39,7 +39,7 @@ class Book:
 			logging.debug("book updated %s", self)
 
 	def _ebook_file(self, book_path, files_dict):
-		for format, content_type in formats.CONTENT_TYPES.items():
+		for format in features.supported_formats:
 			name = files_dict.get(format)
 			if not name:
 				continue
@@ -54,6 +54,7 @@ class Book:
 				# we're doing an update of an already-loaded book, and the file did not change
 				return
 
+			content_type = formats.CONTENT_TYPES[format]
 			if formats.handles(content_type):
 				cde_type = formats.read_cde_type(path, content_type, self.asin)
 				if not cde_type:

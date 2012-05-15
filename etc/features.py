@@ -5,13 +5,12 @@
 #
 
 # The default supported book formats are (in this order):
-#   [ 'MOBI', 'AZW', 'PRC', 'PDF' ]
+#supported_formats = [ 'MOBI', 'AZW', 'PRC', 'PDF' ]
 # If you want to only serve a subset of these, set this option (case does not matter).
 # NOTE: when multiple supported formats are available for a book, only the first one in the list above will be served to the kindle device.
 # Also, if you download a book in one format, then another format with a higher priority appears for that book,
 #   you'll just confuse the hell out of the kindle...
 # NOTE: KSP will only 'see' MOBI books with the proper ASIN tag -- see docs/library.md for details.
-#supported_formats = [ 'mobi' ]
 
 # New revisions of books are automatically downloaded by the device.
 # WARNING: updating a book file on the device will reset the last-read-position, and delete the notes and highlights for the book!
