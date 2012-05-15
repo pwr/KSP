@@ -51,7 +51,7 @@ def get_last_read_updates(device_serial, furthest = True):
 	with sqlite3(_db_path) as db:
 		db.row_factory = _namedtuple_row_factory
 		# get all book ids for which this device has last_read entries
-		device_books = [ r[0] for r in db.execute('SELECT asin FROM last_read2 WHERE device = ?', (device_serial, )) ]
+		device_lr = { r.asin : r for r in db.execute('SELECT * FROM last_read2 WHERE device = ?', (device_serial, )) }
 		# logging.debug("%s has last_read for %s", device_serial, device_books)
 		# get all entries where the latest read was done by some other device
 		if furthest:
@@ -60,7 +60,7 @@ def get_last_read_updates(device_serial, furthest = True):
 			last_read_query = 'SELECT * FROM last_read2 GROUP BY asin HAVING timestamp = MAX(timestamp) AND device != ?'
 		latest_lr = [ lr for lr in db.execute(last_read_query, (device_serial, )) ]
 		# only pick the latest entries done by other devices, when this device also has an entry
-		latest_lr = [ lr for lr in latest_lr if lr.asin in device_books ]
+		latest_lr = [ lr for lr in latest_lr if lr.asin in device_lr and device_lr[lr.asin].pos < lr.pos ]
 		if latest_lr:
 			logging.debug("%s needs to update last_read from %s", device_serial, [ (lr.asin, lr.device, lr.pos) for lr in latest_lr ])
 		return latest_lr
