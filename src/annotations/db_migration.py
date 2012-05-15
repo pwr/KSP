@@ -13,7 +13,7 @@ def _migrate_2_last_read(db_path, row_factory):
 			for lr in db.execute('SELECT * FROM last_read'):
 				# all the timestamp the device sent are local time
 				timestamp = parse_timestamp(lr.timestamp)
-				db.execute('INSERT INTO last_read2 VALUES (?, ?, ?, ?, ?, ?, ?)',
+				db.execute('INSERT INTO last_read2 (id, asin, device, timestamp, begin, pos, state) VALUES (?, ?, ?, ?, ?, ?, ?)',
 					(None, lr.asin, 'UNKNOWN', timestamp, lr.begin, lr.pos, lr.state))
 			db.commit()
 	except:
@@ -30,8 +30,8 @@ def _migrate_2_annotations(db_path, row_factory):
 			for anot in db.execute('SELECT * FROM annotations'):
 				# all the timestamp the device sent are local time
 				timestamp = parse_timestamp(anot.timestamp)
-				db.execute('INSERT INTO annotations2 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-					(None, anot.asin, 'UNKNOWN', anot.kind, timestamp, anot.begin, anot.end, anot.pos, anot.state, anot.text, None))
+				db.execute('INSERT INTO annotations2 (id, asin, device, kind, timestamp, begin, end, pos, state, text) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+					(None, anot.asin, 'UNKNOWN', anot.kind, timestamp, anot.begin, anot.end, anot.pos, anot.state, anot.text))
 			db.commit()
 	except:
 		logging.exception("migrating to annotations2")

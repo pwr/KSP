@@ -108,15 +108,18 @@ def _consume_action_queue(device, x_items):
 
 def _update_annotations(device, x_items):
 	was_updated = False
-	lru = annotations.get_last_read_updates(device)
-	# logging.debug("%s has last_read updates: %s", device, lru)
-	for lr in lru:
-		# LPRD is only supported by EBOKs
+
+	for lr in annotations.get_last_read_updates(device):
 		source_device = devices.get(lr.device)
 		source_device_alias = (source_device.alias or source_device.serial) if source_device else lr.device
 		_add_item(x_items, 'UPD_LPRD', 'EBOK', key = lr.asin, priority = 1100, sequence = lr.pos,
 				source_device = source_device_alias, lto = device_lto(source_device), annotation_time_utc = lr.timestamp)
 		was_updated = True
+
+	for asin in annotations.get_annotation_updates(device):
+		_add_item(x_items, 'UPD_ANOT', 'EBOK', key = asin, priority = 1100)
+		was_updated = True
+
 	return was_updated
 
 def _process_xml(doc, device, reason):

@@ -41,6 +41,15 @@ def _process_item(device, action = None, cde_type = None, key = None, complete_s
 			logging.warn("%s: unknown UPD_LPRD status %s for book %s", device, complete_status, key)
 		return True
 
+	if action == 'UPD_ANOT' and is_uuid(key, cde_type):
+		if complete_status == 'COMPLETED':
+			annotations.annotations_updated(device, key)
+		elif complete_status == 'FAILED':
+			logging.warn("%s failed to update last_read for book %s", device, key)
+		else:
+			logging.warn("%s: unknown UPD_LPRD status %s for book %s", device, complete_status, key)
+		return True
+
 	return False
 
 def _process_xml_response(doc, device):

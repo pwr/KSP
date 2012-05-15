@@ -50,6 +50,13 @@ def set_last_read(device, asin, timestamp, begin, position, state):
 	state = _bin(state)
 	db.set_last_read(device.serial, asin, timestamp, begin, position, state)
 
+def get_annotation_updates(device):
+	au = _db.get_annotation_updates(device.serial)
+	return set([a.asin for a in au if device.books.get(a.asin) > 0 ])
+
+def annotations_updated(device, asin):
+	_db.annotations_updated(device.serial, asin)
+
 def create(device, asin, kind, timestamp, begin, end, position, state, text = None):
 	timestamp = _parse_timestamp(timestamp, device.lto)
 	begin = int(begin)

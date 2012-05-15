@@ -17,10 +17,11 @@ def _execute(query, parameters = ()):
 				qmarks = ('?', ) * len(parameters)
 				query = query.replace('*', ','.join(qmarks))
 			db.execute(query, parameters)
-			db.commit()
-			logging.debug("execute %s %s", query, parameters)
+			if not query.startswith('SELECT '):
+				db.commit()
+			logging.debug("%s %s", query, parameters)
 	except:
-		logging.exception("execute %s %s", query, parameters)
+		logging.exception("%s %s", query, parameters)
 
 def get_all(asin):
 	with sqlite3(_db_path) as db:
@@ -29,6 +30,7 @@ def get_all(asin):
 		result = [ lr for lr in db.execute('SELECT * FROM last_read2 WHERE asin = ? ORDER BY timestamp DESC LIMIT 1', (asin, )) ]
 		result.extend(db.execute('SELECT * FROM annotations2 WHERE asin = ? AND pos > 0 ORDER BY timestamp', (asin, )))
 		return result
+
 
 def list_last_read(asin, count = -1):
 	# lists all last_reads, in reverse timestamp order
@@ -63,18 +65,37 @@ def get_last_read_updates(device_serial, furthest = True):
 			logging.debug("%s needs to update last_read from %s", device_serial, [ (lr.asin, lr.device, lr.pos) for lr in latest_lr ])
 		return latest_lr
 
+
+def get_annotation_updates(device_serial):
+	with sqlite3(_db_path) as db:
+		db.row_factory = _namedtuple_row_factory
+
+		result = []
+		for a in db.execute('SELECT * from annotations2 WHERE device != ?', (device_serial, )):
+			if a.synced_devices is None or device_serial not in a.synced_devices.split(','):
+				result.append(a)
+		return result
+
+def annotations_updated(device_serial, asin):
+	with sqlite3(_db_path) as db:
+		db.row_factory = _namedtuple_row_factory
+
+		for a in db.execute('SELECT * from annotations2 WHERE asin = ? AND device != ?', (asin, device_serial)):
+			synced_devices = device_serial if a.synced_devices is None else a.synced_devices + "," + device_serial
+			db.execute('UPDATE annotations2 SET synced_devices = ? WHERE id = ?', (synced_devices, a.id))
+
 def create(device_serial, asin, kind, timestamp, begin, end, position, state, text):
-	_execute('INSERT INTO annotations2 VALUES (*)',
-			(None, asin, device_serial, kind, timestamp, begin, end, position, state, text, None))
+	_execute('INSERT INTO annotations2 (id, asin, device, kind, timestamp, begin, end, pos, state, text) VALUES (*)',
+			(None, asin, device_serial, kind, timestamp, begin, end, position, state, text))
 
 def delete(device_serial, asin, kind, timestamp, begin, end):
 	# only mark it as deleted, so other devices can be notified of it
-	_execute('''UPDATE annotations2 SET device = ?, timestamp = ?, pos = ?, state = ?, text = ?, other_devices = ?
+	_execute('''UPDATE annotations2 SET device = ?, timestamp = ?, pos = ?, state = ?, text = ?, synced_devices = ?
 				WHERE asin = ? AND kind = ? AND begin = ? AND end = ?''',
 			(device_serial, timestamp, -1, None, None, None, asin, kind, begin, end))
 
 def modify(device_serial, asin, kind, timestamp, begin, end, text):
-	_execute('''UPDATE annotations2 SET device = ?, timestamp = ?, text = ?, other_devices = ?
+	_execute('''UPDATE annotations2 SET device = ?, timestamp = ?, text = ?, synced_devices = ?
 				WHERE asin = ? AND kind = ? AND begin = ? AND end = ?''',
 			(device_serial, timestamp, text, None, asin, kind, begin, end))
 
@@ -109,8 +130,10 @@ CREATE TABLE IF NOT EXISTS annotations2 (
 	pos INTEGER NOT NULL,
 	state BLOB,
 	text TEXT,
-	other_devices BLOB
+	synced_devices TEXT
 )''')
+_execute('CREATE INDEX IF NOT EXISTS index_annotations2_device ON annotations2 (device)')
+_execute('CREATE INDEX IF NOT EXISTS index_annotations2_asin_device ON annotations2 (asin, device)')
 _execute('CREATE INDEX IF NOT EXISTS index_annotations2_apt ON annotations2 (asin, pos, timestamp)')
 _execute('CREATE INDEX IF NOT EXISTS index_annotations2_akbe ON annotations2 (asin, kind, begin, end)')
 

@@ -17,7 +17,7 @@ def _execute(query, parameters = ()):
 				raise Exception("don't know how to use parameters", str(parameters))
 			db.commit()
 	except:
-		logging.exception("query %s %s", query, parameters)
+		logging.exception("%s %s", query, parameters)
 
 def insert(device):
 	if device.is_provisional():
