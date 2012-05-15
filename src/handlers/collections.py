@@ -26,7 +26,7 @@ class CDE_DevicesWithCollections (Upstream):
 			logging.warn("did not find <devices> in (%s) %s", type(text), str(text, 'utf-8'))
 			return response
 
-		response.update_body(text[:devices_tag] + _DEVICE_NODE + text[devices_tag:])
+		response.update_body(text[:devices_tag + 9] + _DEVICE_NODE + text[devices_tag + 9:])
 		return response
 
 
