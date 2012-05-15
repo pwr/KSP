@@ -5,11 +5,11 @@ While SSH access into your Kindle 4 Non-Touch (again, no other Kindle is support
 the configuration changes, it may help to ensure the proper changes have been made and troubleshoot possible problems.
 If you don't have SSH enabled on your Kindle, and don't want to bother with it, just skip to the next section.
 
-If you do not have SSH enabled, you can use the script `tools/kindle4nt/enable-ssh/RUNME.sh` as such:
+If you do not have SSH enabled, you can use the script `tools/kindle-4/enable-ssh/RUNME.sh` as such:
 
 1. Connect the Kindle with the USB cable to your machine.
 
-2. Copy `tools/kindle4nt/data.tar.gz` and `tools/kindle4nt/enable-ssh/RUNME.sh` to the root of the mounted volume, next
+2. Copy `tools/kindle-4/data.tar.gz` and `tools/kindle-4/enable-ssh/RUNME.sh` to the root of the mounted volume, next
     to the `documents` folder.
 
 Eject the Kindle volume, and restart the device: [MENU] -> _Settings_ -> [MENU] -> _Restart_.
