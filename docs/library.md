@@ -16,7 +16,7 @@ Supported formats
     library, you **must** re-convert them to MOBI -- the original file will be kept, as `_book_name_.ORIGINAL_MOBI`,
     right next to the new MOBI file.
 
-* PDF files are seen as personal documents by the Kindle device
+* PDF files are seen as personal documents (PDOCs) by the Kindle device
 
     You should make sure the PDFs have the proper metadata in them (title/author).
 
@@ -63,6 +63,23 @@ be worked around, because the positions of the annotations are highly dependent 
 which usually changes when the book is changed.
 
 
+Last-read positions
+-------------------
+
+Last-read positions for Calibre books are uploaded to KSP and saved locally (in `db/sidecar.sqlite`), so if you read a
+Calibre book on the device, delete it, and then download it again, it should re-open to the last read positiion you were
+at before.
+
+When using multiple devices with KSP, last-read positions in the books will sync across devices. There is one small
+difference from the way Amazon does its last-read sync. Amazon keeps the furthest position ever reached on any device,
+even if you go backwards in the book on that device or un-register the device altogheter. KSP however keeps the current
+last-read position on all devices, and syncs across devices when one device is currently further along in the book. I
+think this is a more useful way for the sync to work.
+
+*Note*: last-read positions for PDOCs are not uploaded by the Kindle devices to Amazon, so they cannot be synced across
+devices by KSP either.
+
+
 Annotations
 -----------
 
@@ -72,3 +89,6 @@ Kindle to use KSP, even for books in you Calibre library, are not visible to the
 
 So if you remove a book from the Kindle, and later download it again, the annotations saved to KSP should be present as
 well.
+
+Annotations are sync'ed across devices, and adding/modifying/deleting annotations on one device should appear on all
+other devices registered with KSP.
