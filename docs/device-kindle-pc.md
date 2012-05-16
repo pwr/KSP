@@ -32,7 +32,7 @@ capable of editing responses should work.
 4. Start K4PC, and enable the HTTPS proxy: Tools -> Options -> Network -> Manual proxy configuration. Set
 	'HTTP Proxy' to `127.0.0.1`, and 'Port' to `8888`.
 
-	Restart K4PC (tends to behave a bit wonky right after you've changed it Network settings), and sync (F5). In
+	Restart K4PC (tends to behave a bit wonky right after you've changed its Network settings), and sync (F5). In
 	Fiddler, you should see requests to `todo-ta-g7g.amazon.com` and `cde-ta-g7g.amazon.com`, and you should be able to
 	see the request and respose bodies in the 'Inspectors' tab at the right. Make sure the proxy works (all responses
 	should have status 200) before going further.
@@ -60,10 +60,10 @@ capable of editing responses should work.
 </response>
 ```
 
-	You will have to replace `$_SERVER_URL_$` with KSP's `server_url`; just the base url, you *must not* include
-	`/FionaTodoListProxy` as for the Kindle 4.
+You will have to replace `$_SERVER_URL_$` with KSP's `server_url`; just the base url, you *must not* include
+`/FionaTodoListProxy` as for the Kindle 4.
 
-	Save the edited response, and enabled the autoresponder for this request (checkbox to its left).
+Save the edited response, and enabled the autoresponder for this request (checkbox to its left).
 
 7. In K4PC, sync (F5). Fiddler should reply to its `getItems` request with the response you've edited. After the request
 	has been replied once, disable it in the 'Autoresponder' tab.
@@ -71,6 +71,40 @@ capable of editing responses should work.
 8. Disable the proxy in K4PC, and restart it.
 
 At this point, K4PC should be talking with your KSP server, and should have registered automatically in it.
+
+
+Book covers
+-----------
+
+K4PC tries to download book covers from one of Amazon's servers (`ecx.images-amazon.com`). For books from Calibre's
+library, provided by KSP, it will not find those covers. Though this is not exactly a necessary feature, K4PC can be
+tricked to get the book covers from KSP.
+
+First, you will need to set-up an HTTP server (I've used Apache, any other should work), and modify your Windows' hosts
+file (`%windir%\system32\drivers\etc\hosts`) to point `ecx.images-amazon.com` to the HTTP server's IP, by adding a new
+line like this:
+
+```<your HTTP server's IP> ecx.images-amazon.com```
+
+This will have the unfortunate side-effect of breaking *all* Amazon images (including when browsing the site), so we
+have to fix that.
+
+In your HTTP server's configuration, add a couple of Rewrite rules (this configuration is for Apache, if you use another
+HTTP server you should look into its documentation for an equivalent):
+
+```
+RewriteEngine on
+RewriteCond %{HTTP_HOST} ecx.images-amazon.com
+RewriteRule ^/(images/P/[-a-f0-9]{36}\.01\._SX250_SY250_SCLZZZZZZZ_\.jpg)$ _your_KSP_server_url_/$0 [R=302,NC]
+RewriteCond %{HTTP_HOST} ecx.images-amazon.com
+RewriteRule ^/(.*)$ http://z-ecx.images-amazon.com/$0 [R=302]
+```
+
+The first rule matches requests for book covers, for books provided by KSP (identified by having their ID in the form of
+a UUID), and redirects them to KSP's image handler, which will return the book cover from Calibre.
+
+The second rule matches all other requests to `ecx.images-amazon.com`, and redirects them to `z-ecx.images-amazon.com`,
+which appears to be an equivalent to `ecx`.
 
 
 Reverting the cofiguration
