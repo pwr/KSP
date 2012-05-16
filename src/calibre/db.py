@@ -89,7 +89,7 @@ def reload_all():
 			books[row['id']] = _book_dict(row)
 
 		_update_book_list(c, books, 'authors',
-				"select books_authors_link.book, authors.name from books_authors_link, authors"
+				"select books_authors_link.book, authors.sort from books_authors_link, authors"
 					" where books_authors_link.author = authors.id")
 		_update_book_list(c, books, 'publishers',
 				"select books_publishers_link.book, publishers.name from books_publishers_link, publishers"
