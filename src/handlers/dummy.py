@@ -18,6 +18,7 @@ class DummyResponse (object):
 		# if data is not None:
 		self.headers['Content-Length'] = self.length
 		self.will_close = 'close' == self.headers.get('Connection')
+		self.content_type = self.headers.get('Content-Type')
 
 	def write_to(self, stream_out):
 		if not self.body:
@@ -27,7 +28,7 @@ class DummyResponse (object):
 
 	def __str__(self):
 		t = "[DUMMY] %d %s (%d) %s" % (self.status, self.reason, self.length, self.headers)
-		if self.body:
+		if self.body and (self.content_type is None or self.content_type.startswith('text/') or self.content_type.startswith('application/xml-')):
 			t += "\n" + str_(self.body)
 		return t
 

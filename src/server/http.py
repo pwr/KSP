@@ -7,7 +7,7 @@ import config, features
 import handlers
 
 
-_SERVICES = [ 'ksp', handlers.TODO, handlers.CDE, handlers.FIRS, handlers.FIRS_TA ]
+# _SERVICES = [ 'ksp', handlers.TODO, handlers.CDE, handlers.FIRS, handlers.FIRS_TA ]
 
 class Server (ThreadingMixIn, HTTPServer):
 	"""
@@ -50,11 +50,13 @@ class Server (ThreadingMixIn, HTTPServer):
 				handlers.Upstream(handlers.FIRS, handlers.FIRS_PATH[:-1]),
 				# handlers.Store(), # book infos?
 				# handlers.Dummy(handlers.WWW, handlers.EMBER_PATH), # ads?
+
+				handlers.ECX_Images(),
 			]
 
-		for h in hlist:
-			if h.service not in _SERVICES:
-				raise Exception("tried to register handler %s for unknown service %s", h, h.service)
+		# for h in hlist:
+		# 	if h.service not in _SERVICES:
+		# 		raise Exception("tried to register handler %s for unknown service %s", h, h.service)
 		return hlist
 
 	def find_handler(self, request):
