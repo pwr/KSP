@@ -13,39 +13,39 @@ skip to the next section.
 
 To use the scripts, follow these steps:
 
-1. Connect the Kindle to your machine with the USB cable.
+ 1. Connect the Kindle to your machine with the USB cable.
 
-2. Copy `tools/kindle-4/data.tag.gz` and `tools/kindle-4/ksp-config/*.sh` to the root of the mounted volume, next to the
-    `documents` folder.
+ 2. Copy `tools/kindle-4/data.tag.gz` and `tools/kindle-4/ksp-config/*.sh` to the root of the mounted volume, next to the
+   `documents` folder.
 
-3. *Edit the `RUNME.sh` script*. In the first few lines of the script, there is an option you need to change,
+ 3. *Edit the `RUNME.sh` script*. In the first few lines of the script, there is an option you need to change,
     `SERVER_URL`. This is the url you've configured in `etc/config.py`, option `server_url`. If you don't change the
     script, it won't do much.
 
     NOTE: Windows users, please use a decent text editor (*not* Notepad) to edit the file. The script uses Unix line
     endings which are usually mangled by most Windows text editors, making it unusable on your Kindle.
 
-4. Eject he Kindle volume, remove the USB cable, and restart the device.
+ 4. Eject he Kindle volume, remove the USB cable, and restart the device.
 
     What the `RUNME.sh` script will do:
 
     * When the device boots, it will update the runtime java config
-        (`/var/local/java/prefs/com.amazon.ebook.framework/ServerConfig`, contains overrides for the default values in
-        `/opt/amazon/ebook/config/ServerConfig.conf`), adding a customized entry for the TODO API url, based on the
-        value you've set in the `RUNME.sh` script for `SERVER_URL`.
+      (`/var/local/java/prefs/com.amazon.ebook.framework/ServerConfig`, contains overrides for the default values in
+      `/opt/amazon/ebook/config/ServerConfig.conf`), adding a customized entry for the TODO API url, based on the
+      value you've set in the `RUNME.sh` script for `SERVER_URL`.
 
     * Start a background task that waits for WiFi to come up (make sure you have WiFi enabled). It will then grab the
-        HTTPS server's CA certificate and import it, if it is unknown to the Kindle. After the CA certificate is
-        imported, the Java GUI will restart, so your device will look as if it's rebooting twice.
+      HTTPS server's CA certificate and import it, if it is unknown to the Kindle. After the CA certificate is
+      imported, the Java GUI will restart, so your device will look as if it's rebooting twice.
 
-    * Make backups of all changed files :).
+    * Make backups of all files before chaning them :).
 
-5. Connect the USB cable and mount the device.
+ 5. Connect the USB cable and mount the device.
 
-6. In the device's root folder you should find a file named `_your_device_serial_.p12` -- it is your Kindle's SSL client
+ 6. In the device's root folder you should find a file named `_your_device_serial_.p12` -- it is your Kindle's SSL client
     certificate; copy it next to KSP's database file (in `db/`).
 
-7. Eject the Kindle volume.
+ 7. Eject the Kindle volume.
 
 Your Kindle should now be talking to your KSP daemon instead of Amazon's services.
 
@@ -72,7 +72,7 @@ Amazon, you need to add one line in the second file (*don't change the master fi
 
 This URL is necessary to make KSP work. You'll *have* to add it, and point it to the KSP daemon's `server_url`:
 
-* `url.todo` -- default `https://todo-g7g.amazon.com/FionaTodoListProxy`
+* `url.todo` -- default value is `https://todo-g7g.amazon.com/FionaTodoListProxy`
 
 The change involves replacing `https://todo-g7g.amazon.com/` with the url of your KSP server, the one you've configured
 in `etc/config.py`. More exactly, you will add 1 line, like this:
@@ -95,12 +95,12 @@ one).
 One more important thing: if your server's SSL certificate is not signed by a known CA authority, the Kindle will refuse
 to talk to the new `url.todo` url pointing to the KSP daemon. You will have to:
 
-* Import it into the Java VM's certificate store, `/usr/java/lib/security/cacerts`. You need to use the `keytool`
-    utility from a Java deployment on your machine -- the utility is *not* present on the device. Or, you can use the
-    script `tools/ksp-config/keytool.sh` which provides a limited (but sufficient) sub-set of `keytool`'s functions.
-* Append your CA's certificate to `/etc/ssl/certs/ca-certificates.crt` -- this file is used by the daemon that does book
-downloads.
-* Restart the device.
+ * Import it into the Java VM's certificate store, `/usr/java/lib/security/cacerts`. You need to use the `keytool`
+   utility from a Java deployment on your machine -- the utility is *not* present on the device. Or, you can use the
+   script `tools/ksp-config/keytool.sh` which provides a limited (but sufficient) sub-set of `keytool`'s functions.
+ * Append your CA's certificate to `/etc/ssl/certs/ca-certificates.crt` -- this file is used by the daemon that does
+   book downloads.
+ * Restart the device.
 
 
 Reverting the cofiguration
