@@ -2,7 +2,7 @@ import os.path, logging
 from re import compile as re_compile
 
 from handlers.upstream import Upstream
-from handlers.dummy import DummyResponse
+from handlers.dummy import DummyResponse, ExceptionResponse
 from handlers import is_uuid, CDE, CDE_PATH
 from content import copy_streams
 import annotations
@@ -51,7 +51,7 @@ class _BookResponse (DummyResponse):
 		return bytes_count
 
 	def __str__(self):
-		return "200 OK %s\n%s %d-%d/%d" % ( self.headers, self.book, self.range_begin, self.range_end, self.length )
+		return "%d OK %s\n%s %d-%d/%d" % ( self.status, self.headers, self.book, self.range_begin, self.range_end, self.length )
 
 
 _RANGE_FORMAT = re_compile('^bytes=([0-9]*)-([0-9]*)$')
@@ -82,8 +82,12 @@ def _range(range_header, max_size):
 		count = 1 + end - begin
 
 	# the kindle should not be doing this kind of crap, but who knows?
-	if begin < 0 or end > max_size - 1 or begin > end:
+	if begin < 0 or begin > end:
+		logging.warn("invalid range %s (%d %d) with max_size %d" % (range_header, begin, end, max_size))
 		raise ExceptionResponse(416) # 'Requested Range Not Satisfiable'
+	if end > max_size - 1:
+		end = max_size - 1
+		count = 1 + end - begin
 	if count == 0:
 		raise ExceptionResponse(204) # No content
 
