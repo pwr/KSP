@@ -95,13 +95,14 @@ HTTP server you should look into its documentation for an equivalent):
 ```
 RewriteEngine on
 RewriteCond %{HTTP_HOST} ecx.images-amazon.com
-RewriteRule ^/(images/P/[-a-f0-9]{36}\.01\._SX250_SY250_SCLZZZZZZZ_\.jpg)$ _your_KSP_server_url_/$0 [R=302,NC]
+RewriteRule ^/images/P/[-a-f0-9]{36}\.01\._SX..._SY..._SCLZZZZZZZ_\.jpg$ _your_KSP_server_url_$0 [R=302,NC]
 RewriteCond %{HTTP_HOST} ecx.images-amazon.com
-RewriteRule ^/(.*)$ http://z-ecx.images-amazon.com/$0 [R=302]
+RewriteRule ^/.*$ http://z-ecx.images-amazon.com$0 [R=302]
 ```
 
 The first rule matches requests for book covers, for books provided by KSP (identified by having their ID in the form of
-a UUID), and redirects them to KSP's image handler, which will return the book cover from Calibre.
+a UUID), and redirects them to KSP's image handler, which will return the book cover from Calibre. Make sure to replace
+`_your_KSP_server_url_` with KSP's `server_url`, without any trailing slashes.
 
 The second rule matches all other requests to `ecx.images-amazon.com`, and redirects them to `z-ecx.images-amazon.com`,
 which appears to be an equivalent to `ecx`.
