@@ -26,8 +26,8 @@ def _args():
 	import argparse
 	p = argparse.ArgumentParser(description = "Kindle Store proxy, v%s" % __version__ , prog = 'ksp')
 	p.add_argument('--config', dest = 'etc_path', default = 'etc', help = "Path to the configration folder")
-	p.add_argument('--loglevel', dest = 'log_level', choices = ('debug', 'info', 'warn'), default = 'info',
-								help = "Set the minimum logging level in the server")
+	p.add_argument('--loglevel', dest = 'log_level', choices = ('debug', 'info', 'warn'), default = None,
+								help = "Set the minimum logging level in the server, overrides the value given in config.py")
 	p.add_argument('--console', dest = 'console', action = 'store_const', const = True, default = False,
 								help = "Log to the console instead of a log file")
 	p.add_argument('--control-pipe', dest = 'control_pipe', help = "Use the given pipe to read server control commands")
@@ -38,6 +38,7 @@ import logging
 
 
 def _make_root_logger(stream, log_level = 'NOTSET'):
+	print(log_level)
 	handler = logging.StreamHandler(stream)
 	fmt = logging.Formatter('[%(asctime)-12s.%(msecs)03d] %(levelname)-8s {%(threadName)-10s %(filename)s:%(lineno)d %(funcName)s} %(message)s', '%Y-%m-%d %H:%M:%S')
 	handler.setFormatter(fmt)
@@ -64,13 +65,19 @@ def _stdstream(path = None):
 
 def main():
 	args = _args()
-	sys.path.append(abspath(args.etc_path))
+	etc_path = abspath(args.etc_path)
+	sys.path.append(etc_path)
 
 	import config
 	config.logs_path = None if args.console else abspath(config.logs_path, True)
-	if not hasattr(config, 'log_level'):
+	if args.log_level:
 		config.log_level = args.log_level
+	elif not hasattr(config, 'log_level'):
+		config.log_level = 'info'
 	_make_root_logger(_stdstream(config.logs_path), config.log_level)
+
+	logging.info("%s start-up", '*' * 20)
+	logging.info("read configuration from %s", etc_path)
 
 	config.database_path = abspath(config.database_path, True)
 	if hasattr(config, 'server_certificate'):
@@ -87,7 +94,6 @@ def main():
 	pipe_file = open(args.control_pipe, 'rb') if args.control_pipe else None
 
 	try:
-		logging.info("%s start-up", '*' * 20)
 
 		# import calibre and devices here because the config has to be fully processed for them to work
 		import devices

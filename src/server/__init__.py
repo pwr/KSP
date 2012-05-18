@@ -13,12 +13,12 @@ if config.server_url[-1] != '/':
 from urllib.parse import urlparse
 __protocol, __host_and_port, __path, _, _, _ = urlparse(config.server_url)
 config.server_path_prefix = __path
-logging.debug("server url [%s://%s%s]", __protocol, __host_and_port, __path )
+logging.info("server url [%s://%s%s]", __protocol, __host_and_port, __path )
 
 config.server_hostname, _, _ = __host_and_port.partition(':')
 
 __rewrite_rules = { "https://([-a-z7]*).amazon.com/" : config.server_url }
-logging.debug("rewrite rules: %s", __rewrite_rules)
+logging.info("rewrite rules: %s", __rewrite_rules)
 config.rewrite_rules = { re.compile(k) : v for k, v in __rewrite_rules.items()  }
 
 if config.server_certificate:
