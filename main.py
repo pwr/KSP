@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-__version__ = '0.7'
+__version__ = '0.8'
 
 import sys, os, os.path
 
@@ -24,15 +24,13 @@ def abspath(p, mkdir = False):
 
 def _args():
 	import argparse
-	p = argparse.ArgumentParser(description = "Kindle Store proxy", prog = 'ksp')
-	p.add_argument('--config', dest = 'etc_path', default = 'etc',
-								help = "Path to the configration folder")
+	p = argparse.ArgumentParser(description = "Kindle Store proxy, v%s" % __version__ , prog = 'ksp')
+	p.add_argument('--config', dest = 'etc_path', default = 'etc', help = "Path to the configration folder")
 	p.add_argument('--loglevel', dest = 'log_level', choices = ('debug', 'info', 'warn'), default = 'info',
 								help = "Set the minimum logging level in the server")
 	p.add_argument('--console', dest = 'console', action = 'store_const', const = True, default = False,
 								help = "Log to the console instead of a log file")
-	p.add_argument('--control-pipe', dest = 'control_pipe',
-								help = "Use the given pipe to read server control commands")
+	p.add_argument('--control-pipe', dest = 'control_pipe', help = "Use the given pipe to read server control commands")
 	return p.parse_args()
 
 

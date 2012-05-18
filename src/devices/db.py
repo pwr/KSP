@@ -31,6 +31,9 @@ def update(device):
 	params = ( device.alias, device.fiona_id, device.lto, device.last_ip, device.last_cookie, device.p12, books, device.serial )
 	_execute('UPDATE devices SET alias = ?, fiona_id = ?, lto = ?, last_ip = ?, last_cookie = ?, p12 = ?, books = ? WHERE serial = ?', params)
 
+def delete(device):
+	_execute('DELETE FROM devices WHERE serial = ?', (device.serial, ))
+
 def load_all():
 	with sqlite3(_db_path) as db:
 		db.row_factory = sqlite3_Row
