@@ -15,7 +15,8 @@ class ECX_Images (Dummy):
 
 	def call(self, request, device):
 		if request.path.startswith('/images/P/'):
-			asin = asin[10:asin.find('.', 11)]
+			asin = request.path[10:]
+			asin = asin[:asin.find('.', 11)]
 			if is_uuid(asin):
 				book = calibre.book(asin)
 				# logging.debug("looking for cover of %s %s", asin, book)
