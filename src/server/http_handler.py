@@ -54,6 +54,8 @@ class Handler (BaseHTTPRequestHandler):
 
 		# strip possible path prefix
 		self.path = self.path[self._prefix_len:]
+		if self.path.startswith('//'):
+			self.path = self.path[1:]
 
 		# and finally got to the part where we handle the request
 		handler = self.server.find_handler(self)
@@ -87,11 +89,21 @@ class Handler (BaseHTTPRequestHandler):
 			return True
 		if config.server_path_prefix:
 			if not self.path.startswith(config.server_path_prefix):
+				logging.warn("expected path prefix %s", config.server_path_prefix)
 				return True
 		return False
 
 	def _do_any(self):
 		self.started_at = time.time() # almost
+
+		if self.path.startswith('//'):
+			self.path = self.path[1:]
+
+		if self.path.lower() == 'poll':
+			self.wfile.write(bytes(self.request_version, 'ascii'))
+			self.wfile.write(b' 204 No Content\r\nConnection: close\r\n\r\n')
+			self.close_connection = 1
+			return
 
 		if self.ignore_request():
 			logging.warn("ignoring request %s", self.requestline)
