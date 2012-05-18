@@ -52,7 +52,7 @@ def set_last_read(device, asin, timestamp, begin, position, state):
 
 def get_annotation_updates(device):
 	au = _db.get_annotation_updates(device.serial)
-	return set([a.asin for a in au if device.books.get(a.asin) > 0 ])
+	return set([a.asin for a in au if device.books.get(a.asin, 0) > 0 ])
 
 def annotations_updated(device, asin):
 	_db.annotations_updated(device.serial, asin)

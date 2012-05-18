@@ -1,5 +1,6 @@
 import logging
 import xml.dom.minidom as minidom
+import hashlib, binascii
 
 from content import read_chunked, query_params, compress, decompress
 import qxml
@@ -80,9 +81,13 @@ def get_device_serial(req):
 		return xdsn
 	xadp = req.headers['X-ADP-Authentication-Token']
 	if xadp:
-		for k in xadp.split('{'):
-			if k.startswith('name:'):
-				return k[5:-1]
+		# crap, there's no real way to identify the device besides the IP
+		ua = req.headers.get('User-Agent', 'no-user-agent')
+		client_address = req.headers['X-Forwarded-For'] or req.client_address[0]
+		md5 = hashlib.md5()
+		md5.update(bytes(ua, 'ascii'))
+		md5.update(bytes(client_address, 'ascii'))
+		return str(binascii.hexlify(md5.digest()), 'ascii')
 	# if req.command == 'GET':
 	# 	q = get_query_params(req)
 	# 	if 'serialNumber' in q:
@@ -95,6 +100,9 @@ def get_device_serial(req):
 _DEVICE_FAMILIES = {
 		'A2XIMM7ACS4GUS' : 'desktop-pc',
 		'A3BHV8OQ3W90PJ' : 'desktop-mac',
+		'A2DRYVRL4HBK7V' : 'android', # beaver ?
+		'A3VNNDO1I14V03' : 'android', # redding
+		'A2Y8LFC259B97P' : 'android', # tablet (whiskeytown)
 		'ATVPDKIKX0DER'  : 'kindle-1',			# 0x01
 		'A3UN6WX5RRO2AG' : 'kindle-2us',		# 0x02
 		'A1F83G8C2ARO7P' : 'kindle-2intl',		# 0x03
@@ -124,6 +132,11 @@ def guess_client(req):
 	if ua == 'Java/phoneme_advanced-Core-1.3-b03 A2Z-SOW2-CR2-20100225-b01':
 		# this could be kindle-4 or kindle-3, I think
 		return 'kindle'
+	if 'Android' in ua:
+		for a in ua.lower().split(';'):
+			if a.strip().startswith('Android '):
+				return 'android-' + a[8:]
+		return 'android'
 	xadptoken = req.headers['X-ADP-Authentication-Token']
 	if xadptoken and xadptoken.startswith('{enc:') and ua == 'Mozilla/5.0':
 		return 'desktop-pc' # or 'desktop-mac'?

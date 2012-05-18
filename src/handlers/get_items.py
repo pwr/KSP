@@ -158,6 +158,8 @@ class TODO_GetItems (Upstream):
 		Upstream.__init__(self, TODO, TODO_PATH + 'getItems')
 
 	def call(self, request, device):
+		if request.headers.get('X-ADP-Reason') == 'Poll':
+			return DummyResponse(data = _POLL_RESPONSE)
 		q = request.get_query_params()
 		if q.get('reason') == 'Poll':
 			return DummyResponse(data = _POLL_RESPONSE)
