@@ -96,9 +96,9 @@ def _consume_action_queue(device, x_items):
 		elif action == 'UPLOAD_SNAP':
 			_add_item(x_items, 'UPLOAD', 'SNAP', key = 'KSP.upload.snap', priority = 1000, url = config.server_url + 'FionaCDEServiceEngine/UploadSnapshot')
 			was_updated = True
-		elif action == 'GET_NAMS':
-			_add_item(x_items, 'GET', 'NAMS', key = 'NameChange' if device.is_kindle() else 'AliasChange')
-			was_updated = True
+		# elif action == 'GET_NAMS':
+		# 	_add_item(x_items, 'GET', 'NAMS', key = 'NameChange' if device.is_kindle() else 'AliasChange')
+		# 	was_updated = True
 		elif action == 'UPLOAD_SCFG':
 			_add_item(x_items, 'UPLOAD', 'SCFG', key = 'KSP.upload.scfg', priority = 50, url = config.server_url + 'ksp/scfg')
 			was_updated = True

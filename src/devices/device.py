@@ -35,8 +35,8 @@ class Device:
 		self.actions_queue = [ 'SET_SCFG', 'UPLOAD_SNAP' ]
 		if self.is_kindle(): # for debugging purposes
 			self.actions_queue.append('UPLOAD_SCFG')
-		if self.alias is None:
-			self.actions_queue.append('GET_NAMS')
+		# if self.alias is None:
+		# 	self.actions_queue.append('GET_NAMS')
 
 		logging.warn("new device %s", self)
 

@@ -18,6 +18,8 @@ def _execute(query, parameters = ()):
 			db.commit()
 	except:
 		logging.exception("%s %s", query, parameters)
+	global _last_changed
+	_last_changed = os.path.getmtime(_db_path)
 
 def insert(device):
 	if device.is_provisional():
@@ -33,6 +35,8 @@ def update(device):
 
 def delete(device):
 	_execute('DELETE FROM devices WHERE serial = ?', (device.serial, ))
+	global _last_changed
+	_last_changed = os.path.getmtime(_db_path)
 
 def load_all():
 	with sqlite3(_db_path) as db:
@@ -47,8 +51,13 @@ def update_all(devices):
 	_execute('UPDATE devices SET alias = ?, fiona_id = ?, kind = ?, lto = ?, last_ip = ?, last_cookie = ?, p12 = ?, books = ? WHERE serial = ?', params)
 	logging.info("saved %d device(s) to %s", len(params), _db_path)
 
+def needs_reload():
+	changed = os.path.getmtime(_db_path)
+	global _last_changed
+	return changed != _last_changed
 
 _db_path = os.path.join(config.database_path, 'devices.sqlite')
+_last_changed = 0
 
 # we try to create the database schema every time the proxy starts, just in case
 # hopefully won't have to do any stupid schema migration in the future... :P

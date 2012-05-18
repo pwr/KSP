@@ -5,6 +5,12 @@ import devices.db as _db
 import devices.certificate as _certificate
 
 
+def _check_for_changes():
+	if _db.needs_reload():
+		logging.warn("Devices database changed on-disk, reloading")
+		global _devices
+		_devices = { d.serial: d for d in _db.load_all() }
+
 def _update(device, ip = None, cookie = None, kind = None):
 	cookie_matches = cookie == device.last_cookie
 	if not cookie_matches and cookie and device.last_cookie:
@@ -26,6 +32,7 @@ def _update(device, ip = None, cookie = None, kind = None):
 	return device
 
 def get(serial):
+	_check_for_changes()
 	"""gets a device by serial"""
 	return _devices.get(serial)
 
@@ -53,6 +60,7 @@ def detect(ip, cookie = None, kind = None, serial = None):
 	guess the device that made a request
 	if no matching device exists in our database, one may be created on the spot
 	"""
+	_check_for_changes()
 	found = _devices.get(serial) if serial else None
 	if not found:
 		for d in _devices.values():
