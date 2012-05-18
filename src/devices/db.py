@@ -44,6 +44,8 @@ def load_all():
 		for row in db.execute('SELECT * FROM devices'):
 			row = dict(row)
 			yield _Device(**row)
+	global _last_changed
+	_last_changed = os.path.getmtime(_db_path)
 
 def update_all(devices):
 	params = [ ( d.alias, d.fiona_id, d.kind, d.lto, d.last_ip, d.last_cookie, d.p12, pickle.dumps(d.books) if d.books else None, d.serial )
