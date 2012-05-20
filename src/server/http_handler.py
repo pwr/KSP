@@ -45,6 +45,7 @@ class Handler (BaseHTTPRequestHandler):
 			# 	logging.debug("identified device %s", device)
 			if not device.is_provisional():
 				self.last_device = device
+				logging.debug("guessed device %s", device)
 		if device.context_failed(): # failed to create a proper SSL context
 			logging.warn("denying access to unregistered device %s", device)
 			return 401

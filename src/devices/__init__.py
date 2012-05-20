@@ -25,7 +25,7 @@ def _update(device, ip = None, cookie = None, kind = None):
 	device.last_ip = ip
 	if cookie:
 		device.last_cookie = cookie[:64]
-	if not kind_matches:
+	if kind and not kind_matches:
 		# only update the device kind when it's more specific than the one we knew
 		device.kind = kind
 	_db.update(device)

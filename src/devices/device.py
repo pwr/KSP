@@ -38,7 +38,7 @@ class Device:
 		# if self.alias is None:
 		# 	self.actions_queue.append('GET_NAMS')
 
-		logging.warn("new device %s", self)
+		logging.debug("new device %s", self)
 
 	def load_context(self, new_serial = None):
 		if new_serial is None and self.context_failed():
@@ -86,11 +86,11 @@ class Device:
 
 	def __str__(self):
 		if self.is_provisional():
-			return "{%s/provisional %s %s cookie=%s}" % (
+			return "{%s/provisional %s ip=%s cookie=%s}" % (
 						self.serial, self.kind, self.last_ip, None if not self.last_cookie else self.last_cookie[:12]
 					)
 
-		return "{%s/%s %s %s cookie=%s%s, sync=%s with %d books}" % (
+		return "{%s/%s %s ip=%s cookie=%s%s, sync=%s with %d books}" % (
 					self.serial, self.alias, self.kind, self.last_ip,
 					None if not self.last_cookie else self.last_cookie[:12],
 					' no PKCS12' if self.context_failed() else '',

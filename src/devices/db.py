@@ -30,8 +30,8 @@ def insert(device):
 
 def update(device):
 	books = None if not device.books else pickle.dumps(device.books)
-	params = ( device.alias, device.fiona_id, device.lto, device.last_ip, device.last_cookie, device.p12, books, device.serial )
-	_execute('UPDATE devices SET alias = ?, fiona_id = ?, lto = ?, last_ip = ?, last_cookie = ?, p12 = ?, books = ? WHERE serial = ?', params)
+	params = ( device.alias, device.fiona_id, device.kind, device.lto, device.last_ip, device.last_cookie, device.p12, books, device.serial )
+	_execute('UPDATE devices SET alias = ?, fiona_id = ?, kind = ?, lto = ?, last_ip = ?, last_cookie = ?, p12 = ?, books = ? WHERE serial = ?', params)
 
 def delete(device):
 	_execute('DELETE FROM devices WHERE serial = ?', (device.serial, ))
