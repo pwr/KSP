@@ -42,7 +42,7 @@ def set_last_read(device_serial, asin, timestamp, begin, position, state):
 	# only replace this device's last_read, so the other ones may know if they need updates
 	_execute('DELETE FROM last_read2 WHERE asin = ? AND device = ?', (asin, device_serial))
 	_execute('INSERT INTO last_read2 (id, asin, device, timestamp, begin, pos, state) VALUES (*)',
-			(None, asin, device_serial, timestamp, begin, position, state))
+			(None, asin, device_serial, timestamp, begin, position, state or b''))
 
 def delete_last_read(device_serial, asin):
 	_execute('DELETE FROM last_read2 WHERE asin = ? AND device = ?', (asin, device_serial))

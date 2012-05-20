@@ -29,7 +29,7 @@ def _process_sidecar_upload(device, book_ids, book_nodes):
 				timestamp = x_item.getAttribute('timestamp') or None
 				begin = x_item.getAttribute('begin') or None
 				end = x_item.getAttribute('end') or begin
-				pos = x_item.getAttribute('pos') or None
+				pos = x_item.getAttribute('pos') or x_item.getAttribute('location') or None
 				state = x_item.getAttribute('state') or None
 				text = qxml.get_text(x_item) if kind == 'note' else None
 

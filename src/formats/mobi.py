@@ -21,10 +21,14 @@ def read_cde_type(path, asin):
 		pdb_records, = struct.unpack('!H', mobi.read(2))
 		# logging.debug("%s: %d PDB records", path, pdb_records)
 		mobi.seek(pdb_records * 8 + 2 + 0x10, 1)
-		if mobi.read(8) != b'MOBI\x00\x00\x00\xE8':
+		if mobi.read(7) != b'MOBI\x00\x00\x00':
 			logging.debug("%s: MOBI header not found", path)
 			return None
-		mobi.seek(0xE0, 1)
+		header_length = mobi.read(1)[0]
+		if header_length not in (0xE8, 0xF8): # MOBI6 (regular mobi), MOBI8 (aka KF8)
+			logging.debug("%s: MOBI content type %d not supported", path, hex(mobi_type))
+			return None
+		mobi.seek(header_length - 8, 1)
 		if mobi.read(4) != b'EXTH':
 			logging.debug("%s: EXTH header not found", path)
 			return None
