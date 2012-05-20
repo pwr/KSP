@@ -20,9 +20,7 @@ def query_params(text):
 	return params
 
 def date_header(timestamp = None):
-	if timestamp is None:
-		timestamp = time.time()
-	return time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime(timestamp))
+	return time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime(time.time() if timestamp is None else timestamp))
 
 def date_iso(timestamp = None):
 	if timestamp is None:
@@ -35,15 +33,15 @@ def read_chunked(stream):
 	does not support chunk extensions (;token=value)
 	does not support trailer headers
 	"""
-	size = stream.readline(100) # the chunk size is on a single line
-	size = 0 if size == b'0\r\n' else int(size, 16)
-	if size == 0:
-		stream.read(2) # a CRLF MUST follow the chunk
-		return None
-	chunk = stream.read(size)
-	stream.read(2) # a CRLF MUST follow the chunk
-	next_chunk = read_chunked(stream)
-	return chunk if next_chunk == None else chunk + next_chunk
+	def _read_chunked(stream):
+		while True:
+			size = stream.readline(100) # the chunk size is on a single line
+			size = 0 if size == b'0\r\n' else int(size, 16)
+			if size > 0:
+				yield stream.read(size)
+			stream.read(2) # a CRLF MUST follow the chunk
+
+	return b''.join(_read_chunked(stream))
 
 def decompress(data, encoding = None):
 	"""check for content gzip encoding"""

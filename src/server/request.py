@@ -132,7 +132,7 @@ def guess_client(req):
 	if ua == 'Java/phoneme_advanced-Core-1.3-b03 A2Z-SOW2-CR2-20100225-b01':
 		# this could be kindle-4 or kindle-3, I think
 		return 'kindle'
-	if 'Android' in ua:
+	if ua and 'Android' in ua:
 		for a in ua.lower().split(';'):
 			if a.strip().startswith('Android '):
 				return 'android-' + a[8:]

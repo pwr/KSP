@@ -30,13 +30,13 @@ FIRS_TA = 'firs-ta-g7g'
 #STORE_PATH = '/gp/g7g/xyml1/'
 
 
-_handlers = []
-def register(h):
-	_handlers.append(h)
-def match(r):
-	for h in _handlers:
-		if h.accept(r):
-			return r
+# _handlers = []
+# def register(h):
+# 	_handlers.append(h)
+# def match(r):
+# 	for h in _handlers:
+# 		if h.accept(r):
+# 			return r
 
 
 # the order here is the order in which handlers are matched when processing a request
