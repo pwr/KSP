@@ -126,16 +126,16 @@ def guess_client(req):
 	if xdfv and xdfv.startswith('Kindle '):
 		return 'kindle-' + xdfv[7]
 	xdevtype = req.headers['X-DeviceType']
-	if xdevtype in _DEVICE_FAMILIES:
+	if xdevtype and xdevtype in _DEVICE_FAMILIES:
 		return _DEVICE_FAMILIES[xdevtype]
 	ua = req.headers['User-Agent']
 	if ua == 'Java/phoneme_advanced-Core-1.3-b03 A2Z-SOW2-CR2-20100225-b01':
 		# this could be kindle-4 or kindle-3, I think
 		return 'kindle'
-	if ua and 'Android' in ua:
-		for a in ua.lower().split(';'):
+	if ua and ' Android ' in ua:
+		for a in ua.split(';'):
 			if a.strip().startswith('Android '):
-				return 'android-' + a[8:]
+				return 'android-' + a[9:]
 		return 'android'
 	xadptoken = req.headers['X-ADP-Authentication-Token']
 	if xadptoken and xadptoken.startswith('{enc:') and ua == 'Mozilla/5.0':

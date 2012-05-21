@@ -25,7 +25,7 @@ def read_cde_type(path, asin):
 			logging.debug("%s: MOBI header not found", path)
 			return None
 		header_length = mobi.read(1)[0]
-		if header_length not in (0xE8, 0xF8): # MOBI6 (regular mobi), MOBI8 (aka KF8)
+		if header_length not in (0xE8, 0xF8): # MOBI7 (regular mobi), MOBI7 + MOBI8 (aka KF8) composite
 			logging.debug("%s: MOBI content type %d not supported", path, hex(mobi_type))
 			return None
 		mobi.seek(header_length - 8, 1)

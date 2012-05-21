@@ -35,16 +35,23 @@ def _clean_snapshot(request, device):
 
 	lines = []
 	for line in request.body_text().splitlines(True):
-		if line.startswith(b'Type=EBOK,Key=') and len(line) == 50 + (line[-1] == ord('\n')):
-			asin = str(line[14:50], 'ascii') # SHOULD be uuid
+		if line.startswith(b'Type=EBOK,Key='):
+			asin = str(line[14:].strip(), 'ascii')
 			if is_uuid(asin, 'EBOK'):
 				books_on_device.add(asin)
 				if features.scrub_uploads:
 					was_updated = True
 					continue
-		elif line.startswith(b'Type=PDOC,Key=') and len(line) == 46 + (line[-1] == ord('\n')):
-			asin = str(line[14:46], 'ascii')
+		elif line.startswith(b'Type=PDOC,Key='):
+			asin = str(line[14:].strip(), 'ascii')
 			if is_uuid(asin, 'PDOC'):
+				books_on_device.add(asin)
+				if features.scrub_uploads:
+					was_updated = True
+					continue
+		elif line.startswith(b'ASIN='): # Android
+			asin = str(line[5:].strip(), 'ascii')
+			if is_uuid(asin):
 				books_on_device.add(asin)
 				if features.scrub_uploads:
 					was_updated = True
