@@ -27,36 +27,11 @@ class Handler (BaseHTTPRequestHandler):
 
 	_prefix_len = len(config.server_path_prefix or b'x') - 1 # without the final /
 
-	def handle_call(self):
+	def handle_call(self, device):
 		# logging.debug("## %s", self.requestline)
-
-		# all requests handled by the same Handler instance come from the same device, always
-		device = self.last_device if hasattr(self, 'last_device') else None
-		if device:
-			logging.debug("%s last_device = %s", id(self), device)
-		if not device:
-			# look for a device record, will be automatically created if the features is enabled
-			device = devices.detect(request.client_ip(self), cookie = request.xfsn(self),
-									kind = request.guess_client(self), serial = request.get_device_serial(self))
-			if not device:
-				logging.error("failed to identify device for %s", self.requestline)
-				return 403
-			# if hasattr(self, 'last_device') and self.last_device != device:
-			# 	logging.debug("identified device %s", device)
-			if not device.is_provisional():
-				self.last_device = device
-				logging.debug("guessed device %s", device)
-		if device.context_failed(): # failed to create a proper SSL context
-			logging.warn("denying access to unregistered device %s", device)
-			return 401
 
 		request.read_body_and_length(self)
 		http_debug("%s", self)
-
-		# strip possible path prefix
-		self.path = self.path[self._prefix_len:]
-		if self.path.startswith('//'):
-			self.path = self.path[1:]
 
 		# and finally got to the part where we handle the request
 		handler = self.server.find_handler(self)
@@ -84,6 +59,10 @@ class Handler (BaseHTTPRequestHandler):
 		byte_count = response.write_to(self.wfile) # writes the body
 		self.log_request(response.status, byte_count)
 
+	def setup(self):
+		BaseHTTPRequestHandler.setup(self)
+		self.last_device = None
+
 	def ignore_request(self):
 		# we ignore requests not targeted to our service
 		if self.request_version != self.protocol_version: # all kindle requests SHOULD be HTTP/1.1
@@ -94,17 +73,33 @@ class Handler (BaseHTTPRequestHandler):
 				return True
 		return False
 
+	def _detect_device(self):
+		# all requests handled by the same Handler instance come from the same device, always
+		device = self.last_device
+		# if device:
+		# 	logging.debug("%s last_device = %s", id(self), device)
+		if not device:
+			# look for a device record, will be automatically created if the features is enabled
+			device = devices.detect(request.client_ip(self), cookie = request.xfsn(self),
+									kind = request.guess_client(self), serial = request.get_device_serial(self))
+			if not device:
+				logging.error("failed to identify device for %s", self.requestline)
+				return None, 403
+			# if self.last_device != device:
+			# 	logging.debug("identified device %s", device)
+			if not device.is_provisional():
+				self.last_device = device
+				# logging.debug("guessed device %s", device)
+		if device.context_failed(): # failed to create a proper SSL context
+			logging.warn("denying access to unregistered device %s", device)
+			return None, 401
+		return device, None
+
 	def _do_any(self):
 		self.started_at = time.time() # almost
 
 		if self.path.startswith('//'):
 			self.path = self.path[1:]
-
-		if self.path.lower() == 'poll':
-			self.wfile.write(bytes(self.request_version, 'ascii'))
-			self.wfile.write(b' 204 No Content\r\nConnection: close\r\n\r\n')
-			self.close_connection = 1
-			return
 
 		if self.ignore_request():
 			logging.warn("ignoring request %s", self.requestline)
@@ -115,21 +110,34 @@ class Handler (BaseHTTPRequestHandler):
 			self.close_connection = 1
 			return
 
-		try:
-			status = self.handle_call()
-			if status:
+		self.path = self.path[self._prefix_len:]
+		if self.path.startswith('//'):
+			self.path = self.path[1:]
+
+		if self.path.lower() == '/poll':
+			self.wfile.write(b'HTTP/1.1 418 I\'m a teapot\r\nConnection: close\r\nServer: Amazon Web Server\r\nContent-Length: 0\r\n\r\n')
+			self.close_connection = 1
+			return
+
+		device, status = self._detect_device()
+		if status is None:
+			try:
+				status = self.handle_call(device)
+			except:
+				logging.exception("handling %s", self.requestline)
+				status = 500
+
+		if status is not None:
+			try:
 				self.send_response_only(status)
+				if status >= 400:
+					self.close_connection = 1
+					self.wfile.write(b'Connection: close\r\n')
 				if status != 100:
 					self.wfile.write(b'Server: Amazon Web Server\r\nContent-Length: 0\r\n\r\n')
 				self.log_request(status)
-				if status >= 400:
-					self.close_connection = 1
-		except:
-			logging.exception("handling %s", self.requestline)
-			self.send_response_only(500)
-			self.wfile.write(b'Server: Amazon Web Server\r\nContent-Length: 0\r\n\r\n')
-			self.log_request(500)
-			self.close_connection = 1
+			except: pass # whatever
+
 
 	do_GET = _do_any
 	do_POST = _do_any
@@ -143,7 +151,7 @@ class Handler (BaseHTTPRequestHandler):
 
 	def __str__(self):
 		headers = ( k + ': ' + str(v) for k, v in self.headers.items() )
-		txt = "%s %s %s\n\t{%s}" % (self.command, self.path, self.request_version, ', '.join(headers))
+		txt = "%s\n\t{%s}" % (self.requestline, ', '.join(headers))
 		if self.body:
 			plain = decompress(self.body, self.content_encoding)
 			txt += "\n" + str_(plain)
