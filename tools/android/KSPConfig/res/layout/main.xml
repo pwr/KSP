@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+        >
+    <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:padding="10sp"
+            android:text="Configuration utility for Amazon's Kindle for Android application."
+            />
+
+    <Button android:id="@+id/reload_config"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:paddingLeft="15pt"
+            android:paddingRight="15pt"
+            android:text="Reload configuration"/>
+
+    <TextView android:id="@+id/current_config"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:padding="10sp"
+            />
+
+    <TableLayout android:layout_width="fill_parent"
+                 android:layout_height="wrap_content"
+                 android:stretchColumns="*"
+            >
+
+        <TableRow android:layout_width="fill_parent">
+            <Button android:id="@+id/change_base_url"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Change base URL"/>
+
+            <Button android:id="@+id/clear_config"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Clear configuration"/>
+
+        </TableRow>
+
+    </TableLayout>
+
+    <TextView android:id="@+id/new_config"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:padding="10sp"
+            />
+
+    <Button android:id="@+id/apply_config"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="15pt"
+            android:paddingRight="15pt"
+            android:layout_gravity="center"
+            android:text="Apply configuration"/>
+
+</LinearLayout>
+
