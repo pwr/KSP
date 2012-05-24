@@ -83,7 +83,7 @@ public class Configuration {
 				map.remove(k);
 			}
 		}
-		if (_url != null && !_url.isEmpty()) {
+		if (_url != null && _url.length() > 0) {
 			map.put("url.todo", _url);
 		}
 	}

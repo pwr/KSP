@@ -64,7 +64,7 @@ public final class RootExec {
 			try {
 				su.waitFor();
 				String stderr = read(su.getErrorStream());
-				if (stderr.isEmpty() && su.exitValue() == 0) {
+				if (stderr.length() == 0 && su.exitValue() == 0) {
 					Log.i("ROOT", "su success: " + _commands);
 					return true;
 				} else {

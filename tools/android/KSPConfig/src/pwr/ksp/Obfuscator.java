@@ -65,7 +65,7 @@ public class Obfuscator {
 	}
 
 	public static String deobfuscate(String _value)  {
-		if (_value == null || _value.isEmpty()) {
+		if (_value == null || _value.length() == 0) {
 			return "";
 		}
 		try {
@@ -81,7 +81,7 @@ public class Obfuscator {
 	}
 
 	public static String obfuscate(String _value) {
-		if (_value == null || _value.isEmpty()) {
+		if (_value == null || _value.length() == 0) {
 			return "";
 		}
 		try {

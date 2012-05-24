@@ -26,7 +26,7 @@ public class Ping extends AsyncTask<String, String, String> {
 		}
 
 		String url = strings[0];
-		onProgressUpdate(url);
+		publishProgress(url);
 
 		AndroidHttpClient hc = AndroidHttpClient.newInstance("KSPConfig");
 		try {
