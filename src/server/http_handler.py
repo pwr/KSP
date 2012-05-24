@@ -18,7 +18,7 @@ class Handler (BaseHTTPRequestHandler):
 	"""
 	Main request handler
 	"""
-	# this needs to be as light as possible, because one instance gets created for each request (actually, this _is_ the request)
+	# this needs to be as light as possible, because one instance gets created for each client connection (and is the actual HTTP request object)
 	# of course, this is the part that grew quite a lot during development...
 	protocol_version = 'HTTP/1.1'
 	error_message_format = ''
@@ -63,6 +63,7 @@ class Handler (BaseHTTPRequestHandler):
 		BaseHTTPRequestHandler.setup(self)
 		self.last_device = None
 
+
 	def ignore_request(self):
 		# we ignore requests not targeted to our service
 		if self.request_version != self.protocol_version: # all kindle requests SHOULD be HTTP/1.1
@@ -97,6 +98,8 @@ class Handler (BaseHTTPRequestHandler):
 
 	def _do_any(self):
 		self.started_at = time.time() # almost
+		logging.debug("rfile %s", self.rfile)
+		logging.debug("wfile %s", self.wfile)
 
 		if self.path.startswith('//'):
 			self.path = self.path[1:]
@@ -161,12 +164,8 @@ class Handler (BaseHTTPRequestHandler):
 		return 'Amazon Web Server'
 
 	def log_request(self, code = '-', size = '-'):
-		# if hasattr(self, 'started_at'):
-		duration = time.time() - self.started_at
-		# else:
-		# 	duration = 0
+		duration = (time.time() - self.started_at) if hasattr(self, 'started_at') else 0
 		access_log.info('%s - - [%s] "%s" %s %s (%.3f)', self.client_address[0], self.log_date_time_string(), self.requestline, code, size, duration)
-				# self.client_address[0], self.log_date_time_string(), self.requestline, str(code), str(size), duration)
 		if duration > 5: # call took more than 5 seconds to handle
 			logging.warn("call took %.3f seconds: %s", duration, self.requestline)
 

@@ -84,12 +84,12 @@ class Server (ThreadingMixIn, HTTPServer):
 		logging.info("shutdown")
 		self.server_close()
 
-	# def verify_request(self, request, client_address):
-	# 	logging.debug("verify %s %s", request, client_address)
-	# 	if type(request) == ssl.SSLSocket:
-	# 		logging.debug("peer certificate %s", request.getpeercert(binary_form = True))
-	# 		logging.debug("peer certificate %s", request.getpeercert(binary_form = False))
-	#	return True
+	def verify_request(self, request, client_address):
+		logging.debug("verify %s %s", request, client_address)
+		if type(request) == ssl.SSLSocket:
+			logging.debug("peer certificate %s", request.getpeercert(binary_form = True))
+			logging.debug("peer certificate %s", request.getpeercert(binary_form = False))
+		return True
 
 	def handle_error(self, request, client_address):
 		etype, evalue = sys.exc_info()[:2]
