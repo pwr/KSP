@@ -62,7 +62,7 @@ public class Configuration {
 					Log.w("CONF", "failed to load value for key " + key);
 				} else {
 					map.put(key, value);
-					Log.i("CONF", key + " = " + value);
+//					Log.i("CONF", key + " = " + value);
 				}
 			}
 		}

@@ -1,20 +1,20 @@
 package pwr.ksp;
 
 import android.app.ActivityManager;
-import android.os.*;
 import android.util.Log;
 
 import java.io.*;
-import java.lang.Process;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public final class RootExec {
-	private static final String KINDLE_PATH = "/data/data/com.amazon.kindle/shared_prefs/";
-	private static final String KINDLE_CONFIGURATION = new File(KINDLE_PATH, Configuration.CONFIG_FILE_NAME).getAbsolutePath();
+	private static final String KINDLE_PATH = "/data/data/com.amazon.kindle";
+	private static final File KINDLE_CONFIGURATION = new File(new File(KINDLE_PATH, "shared_prefs"), Configuration.CONFIG_FILE_NAME);
+	private static final File KINDLE_METADATA_CACHE = new File(new File(KINDLE_PATH, "files"), "KindleSyncMetadataCache.xml");
+	private static final File KINDLE_DATABASE = new File(new File(KINDLE_PATH, "databases"), "kindle_content.db");
 
 	static boolean getConfig() {
-		return copy(KINDLE_CONFIGURATION, Configuration.getConfigurationFile().getAbsolutePath());
+		return copy(KINDLE_CONFIGURATION, Configuration.getConfigurationFile());
 	}
 
 	static boolean setConfig() {
@@ -23,11 +23,18 @@ public final class RootExec {
 		String kc_backup = KINDLE_CONFIGURATION + "_" + now;
 		Log.i("ROOT", "will backup to " + kc_backup);
 
-		if (copy(KINDLE_CONFIGURATION, kc_backup)) {
-			return copy(Configuration.getConfigurationFile().getAbsolutePath(), KINDLE_CONFIGURATION);
+		if (!copy(KINDLE_CONFIGURATION, new File(kc_backup))) {
+			Log.w("ROOT", "configuration backup failed");
+			return false;
 		}
-		Log.w("ROOT", "configuration backup failed");
-		return false;
+
+		String clearCaches = "rm " + KINDLE_METADATA_CACHE.getAbsolutePath() + "\n" +
+				"sqlite3 " + KINDLE_DATABASE.getAbsolutePath() + " 'DELETE FROM KindleContent WHERE downloadState = \"REMOTE\"'";
+		if (!suExec(clearCaches)) {
+			Log.w("ROOT", "failed to clear Kindle caches");
+		}
+
+		return copy(Configuration.getConfigurationFile(), KINDLE_CONFIGURATION);
 	}
 
 	static boolean stopKindle(ActivityManager _am) {
@@ -39,18 +46,18 @@ public final class RootExec {
 				break;
 			}
 		}
-
 		return true;
 	}
 
-	private static boolean copy(String _source, String _destination) {
+	private static boolean copy(File _source, File _destination) {
+		return suExec("cat " + _source.getAbsolutePath() + " > " + _destination.getAbsolutePath());
+	}
+
+	private static boolean suExec(String _commands) {
 		try {
-			Process su = Runtime.getRuntime().exec("/system/bin/su");
+			Process su = Runtime.getRuntime().exec("su");
 			Writer w = new OutputStreamWriter(su.getOutputStream());
-			w.write("cat ");
-			w.write(_source);
-			w.write(" > ");
-			w.write(_destination);
+			w.write(_commands);
 			w.write("\nexit\n");
 			w.flush();
 
@@ -58,17 +65,17 @@ public final class RootExec {
 				su.waitFor();
 				String stderr = read(su.getErrorStream());
 				if (stderr.isEmpty() && su.exitValue() == 0) {
-					Log.i("ROOT", "copy success: " + _source + " -> " + _destination);
+					Log.i("ROOT", "su success: " + _commands);
 					return true;
 				} else {
-					Log.i("ROOT", "copy fail: " + _source + " -> " + _destination);
+					Log.i("ROOT", "copy fail: " + _commands);
 					Log.i("ROOT", "stderr: [" + stderr + "]");
 				}
 			} catch (InterruptedException iex) {
-				Log.e("ROOT", _source, iex);
+				Log.e("ROOT", _commands, iex);
 			}
 		} catch (IOException ex) {
-			Log.e("ROOT", _source, ex);
+			Log.e("ROOT", _commands, ex);
 		}
 
 		return false;
