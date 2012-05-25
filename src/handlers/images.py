@@ -11,7 +11,7 @@ _HEADERS = { 'Content-Type': 'image/jpeg', 'Cache-Control': 'max-age=300,public'
 
 class ECX_Images (Dummy):
 	def __init__(self):
-		Dummy.__init__(self, _ECX, '/images')
+		Dummy.__init__(self, _ECX, '/images/P')
 
 	def call(self, request, device):
 		if request.path.startswith('/images/P/'):

@@ -69,8 +69,8 @@ class Server (ThreadingMixIn, HTTPServer):
 		self.server_bind()
 		protocol = 'HTTP'
 		if config.server_certificate:
-			self.socket = ssl.SSLSocket(self.socket, certfile = config.server_certificate, server_side = True)
-			protocol = 'HTTPS'
+		# 	self.socket = ssl.SSLSocket(self.socket, certfile = config.server_certificate, server_side = True)
+			protocol = 'HTTP+HTTPS'
 		self.server_activate()
 		logging.info("started on %s:%s (%s)", self.server_name, self.server_port, protocol)
 		import select
@@ -84,12 +84,22 @@ class Server (ThreadingMixIn, HTTPServer):
 		logging.info("shutdown")
 		self.server_close()
 
-	def verify_request(self, request, client_address):
-		logging.debug("verify %s %s", request, client_address)
-		if type(request) == ssl.SSLSocket:
-			logging.debug("peer certificate %s", request.getpeercert(binary_form = True))
-			logging.debug("peer certificate %s", request.getpeercert(binary_form = False))
-		return True
+
+	def get_request(self):
+		sock, client_address = HTTPServer.get_request(self)
+		if sock and config.server_certificate:
+			# this is this kind of smart shit that gets you in really deep trouble later
+			peek = sock.recv(3, socket.MSG_PEEK)
+			if peek and len(peek) == 3 and peek[0] == 0x16:
+				logging.debug("socket %s appears to start with an SSL handshake, version %d.%d", sock, peek[1], peek[2])
+				sock = ssl.SSLSocket(sock=sock, certfile=config.server_certificate, server_side=True)
+		return sock, client_address
+
+	# def verify_request(self, request, client_address):
+	# 	logging.debug("verify %s %s", request, client_address)
+	# 	if type(request) == ssl.SSLSocket:
+	# 		logging.debug("peer certificate %s", request.getpeercert(binary_form = False))
+	# 	return True
 
 	def handle_error(self, request, client_address):
 		etype, evalue = sys.exc_info()[:2]

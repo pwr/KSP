@@ -98,8 +98,6 @@ class Handler (BaseHTTPRequestHandler):
 
 	def _do_any(self):
 		self.started_at = time.time() # almost
-		logging.debug("rfile %s", self.rfile)
-		logging.debug("wfile %s", self.wfile)
 
 		if self.path.startswith('//'):
 			self.path = self.path[1:]
