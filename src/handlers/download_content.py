@@ -111,12 +111,15 @@ class CDE_DownloadContent (Upstream):
 		if device.is_provisional():
 			return None
 
-		if request.is_signed():
-			redirect_header = { 'Location': 'https://cde-ta-g7g.amazon.com' + request.path }
-		else:
-			redirect_header = { 'Location': 'https://cde-g7g.amazon.com' + request.path }
-		return DummyResponse(302, redirect_header)
-		# return self.call_upstream(request, device)
+		if request.is_secure():
+			if request.is_signed():
+				redirect_header = { 'Location': 'https://cde-ta-g7g.amazon.com' + request.path }
+			else:
+				redirect_header = { 'Location': 'https://cde-g7g.amazon.com' + request.path }
+			return DummyResponse(302, redirect_header)
+
+		# the request was made over http, we'll have to download the file ourselves
+		return self.call_upstream(request, device)
 
 	def book_response(self, asin, device, range_header):
 		"""
