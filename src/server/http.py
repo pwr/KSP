@@ -89,13 +89,20 @@ class Server (ThreadingMixIn, HTTPServer):
 		sock, client_address = HTTPServer.get_request(self)
 		if sock and config.server_certificate:
 			# this is this kind of smart shit that gets you in really deep trouble later
-			peek = sock.recv(3, socket.MSG_PEEK)
-			if peek and len(peek) == 3 and peek[0] == 0x16:
-				logging.debug("socket %s from %s appears to start with an SSL handshake, version %d.%d", sock, client_address, peek[1], peek[2])
-				try:
-					sock = ssl.SSLSocket(sock=sock, certfile=config.server_certificate, server_side=True)
-				except:
-					logging.exception("failed to SSL wrap socket %s from %s", sock, client_address)
+			peek = sock.recv(5, socket.MSG_PEEK)
+			if peek and len(peek) == 5:
+				if peek[0] == 0x16:
+					logging.debug("socket %s from %s appears to start with a TSL handshake, version %d.%d", sock, client_address, peek[1], peek[2])
+					try:
+						sock = ssl.SSLSocket(sock=sock, certfile=config.server_certificate, server_side=True)
+					except:
+						logging.exception("failed to SSL wrap socket %s from %s", sock, client_address)
+				elif peek[0] == 0x80 and peek[2] == 0x01:
+					logging.debug("socket %s from %s appears to start with a SSLv2 handshake, supported version %d.%d", sock, client_address, peek[3], peek[4])
+					try:
+						sock = ssl.SSLSocket(sock=sock, certfile=config.server_certificate, server_side=True)
+					except:
+						logging.exception("failed to SSL wrap socket %s from %s", sock, client_address)
 		return sock, client_address
 
 	# def verify_request(self, request, client_address):
