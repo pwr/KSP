@@ -63,6 +63,8 @@ class Handler (BaseHTTPRequestHandler):
 		BaseHTTPRequestHandler.setup(self)
 		self.last_device = None
 
+	def is_secure(self):
+		return type(self.request).__name__ == 'SSLSocket'
 
 	def ignore_request(self):
 		# we ignore requests not targeted to our service

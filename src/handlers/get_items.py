@@ -11,13 +11,13 @@ import annotations
 from annotations.lto import device_lto
 
 
-def _rewrite_url(url):
+def _rewrite_url(request, url):
 	"""
 	certain responses from the server contain urls pointing to amazon services
 	we rewrite them to point to our proxy
 	"""
 	if url and config.rewrite_rules:
-		for pattern, replacement in config.rewrite_rules.items():
+		for pattern, replacement in config.rewrite_rules(request).items():
 			m = pattern.search(url)
 			if m:
 				url = url[:m.start()] + m.expand(replacement) + url[m.end():]
@@ -40,7 +40,7 @@ def _add_item(x_items, action, item_type, key = 'NONE', text = None, priority = 
 			qxml.add_child(item, k, str(v))
 	return item
 
-def _filter_item(x_items, x_item):
+def _filter_item(request, x_items, x_item):
 	action = x_item.getAttribute('action')
 	item_type = x_item.getAttribute('type')
 
@@ -49,7 +49,7 @@ def _filter_item(x_items, x_item):
 			x_items.removeChild(x_item)
 			return True
 		item_url = x_item.getAttribute('url')
-		new_url = _rewrite_url(item_url)
+		new_url = _rewrite_url(request, item_url)
 		if new_url != item_url:
 			logging.warn("rewrote url %s => %s", item_url, new_url)
 			x_item.setAttribute('url', new_url)
@@ -60,7 +60,7 @@ def _filter_item(x_items, x_item):
 		item_key = x_item.getAttribute('key')
 		item_url = x_item.getAttribute('url')
 		if item_url and (item_type == 'CRED' or is_uuid(item_key)):
-			new_url = _rewrite_url(item_url)
+			new_url = _rewrite_url(request, item_url)
 			if new_url != item_url:
 				logging.warn("rewrote url for %s: %s => %s", item_key, item_url, new_url)
 				x_item.setAttribute('url', new_url)
@@ -82,7 +82,7 @@ def _filter_item(x_items, x_item):
 
 	return False
 
-def _consume_action_queue(device, x_items):
+def _consume_action_queue(request, device, x_items):
 	was_updated = False
 	while device.actions_queue:
 		action = device.actions_queue.pop()
@@ -91,16 +91,16 @@ def _consume_action_queue(device, x_items):
 			# logging.debug("action %s already found in %s, skipping", action, x_items)
 			continue
 		if action == 'SET_SCFG':
-			_add_item(x_items, 'SET', 'SCFG', key = 'KSP.set.scfg', priority = 100, body = _servers_config(device))
+			_add_item(x_items, 'SET', 'SCFG', key = 'KSP.set.scfg', priority = 100, body = _servers_config(request, device))
 			was_updated = True
 		elif action == 'UPLOAD_SNAP':
-			_add_item(x_items, 'UPLOAD', 'SNAP', key = 'KSP.upload.snap', priority = 1000, url = config.server_url + 'FionaCDEServiceEngine/UploadSnapshot')
+			_add_item(x_items, 'UPLOAD', 'SNAP', key = 'KSP.upload.snap', priority = 1000, url = config.server_url(request) + 'FionaCDEServiceEngine/UploadSnapshot')
 			was_updated = True
 		# elif action == 'GET_NAMS':
 		# 	_add_item(x_items, 'GET', 'NAMS', key = 'NameChange' if device.is_kindle() else 'AliasChange')
 		# 	was_updated = True
 		elif action == 'UPLOAD_SCFG':
-			_add_item(x_items, 'UPLOAD', 'SCFG', key = 'KSP.upload.scfg', priority = 50, url = config.server_url + 'ksp/scfg')
+			_add_item(x_items, 'UPLOAD', 'SCFG', key = 'KSP.upload.scfg', priority = 50, url = config.server_url(request) + 'ksp/scfg')
 			was_updated = True
 		else:
 			logging.warn("unknown action %s", action)
@@ -122,7 +122,7 @@ def _update_annotations(device, x_items):
 
 	return was_updated
 
-def _process_xml(doc, device, reason):
+def _process_xml(request, doc, device, reason):
 	x_response = qxml.get_child(doc, 'response')
 	x_items = qxml.get_child(x_response, 'items')
 	if not x_items:
@@ -132,9 +132,9 @@ def _process_xml(doc, device, reason):
 
 	# rewrite urls
 	for x_item in qxml.list_children(x_items, 'item'):
-		was_updated |= _filter_item(x_items, x_item)
+		was_updated |= _filter_item(request, x_items, x_item)
 
-	was_updated |= _consume_action_queue(device, x_items)
+	was_updated |= _consume_action_queue(request, device, x_items)
 	was_updated |= _update_annotations(device, x_items)
 
 	if features.download_updated_books:
@@ -166,7 +166,7 @@ class TODO_GetItems (Upstream):
 
 		if device.is_provisional():
 			# tell the device to do a full snapshot upload, so that we can get the device serial and identify it
-			return DummyResponse(headers = { 'Content-Type': 'text/xml;charset=UTF-8' }, data = _first_contact(device))
+			return DummyResponse(headers = { 'Content-Type': 'text/xml;charset=UTF-8' }, data = _first_contact(request, device))
 
 		lto = q.get('device_lto', -1)
 		if lto != -1:
@@ -177,7 +177,7 @@ class TODO_GetItems (Upstream):
 		if response.status == 200:
 			# use default UTF-8 encoding
 			with minidom.parseString(response.body_text()) as doc:
-				if _process_xml(doc, device, q.get('reason')):
+				if _process_xml(request, doc, device, q.get('reason')):
 					xml = doc.toxml('UTF-8')
 					response.update_body(xml)
 

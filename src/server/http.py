@@ -91,8 +91,11 @@ class Server (ThreadingMixIn, HTTPServer):
 			# this is this kind of smart shit that gets you in really deep trouble later
 			peek = sock.recv(3, socket.MSG_PEEK)
 			if peek and len(peek) == 3 and peek[0] == 0x16:
-				logging.debug("socket %s appears to start with an SSL handshake, version %d.%d", sock, peek[1], peek[2])
-				sock = ssl.SSLSocket(sock=sock, certfile=config.server_certificate, server_side=True)
+				logging.debug("socket %s from %s appears to start with an SSL handshake, version %d.%d", sock, client_address, peek[1], peek[2])
+				try:
+					sock = ssl.SSLSocket(sock=sock, certfile=config.server_certificate, server_side=True)
+				except:
+					logging.exception("failed to SSL wrap socket %s from %s", sock, client_address)
 		return sock, client_address
 
 	# def verify_request(self, request, client_address):

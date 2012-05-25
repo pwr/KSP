@@ -33,7 +33,7 @@ def _response__str__(self):
 		is_text = self.content_type.startswith('text/')
 		if not is_text:
 			if self.content_type.startswith('application/'):
-				ct = self.content_type.split('/;')[1]
+				ct = self.content_type[12:].split(';')[0]
 				if 'xml' in ct or 'html' in ct or 'json' in ct or 'www-form' in ct:
 					is_text = True
 		if is_text:

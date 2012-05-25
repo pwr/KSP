@@ -18,23 +18,25 @@ _FIRST_CONTACT = '''
 				 url="$_SERVER_URL_$FionaCDEServiceEngine/UploadSnapshot"/>
 		</items>
 	</response>
-'''.replace('\t', '').replace('\n', '').replace('$_SERVER_URL_$', config.server_url)
+'''.replace('\t', '').replace('\n', '')
 
-def _first_contact(device):
+def _first_contact(request, device):
 	# triggered actions:
 	# - upload config, for debugging purposes (we can check the API urls config in the logs)
 	# - update client API urls, customized for the particular client type
 	# - upload snapshot -- it will include device serial and model for the kindles
-	text = _FIRST_CONTACT.replace('$_SERVERS_CONFIG_$', _servers_config(device))
+	text = _FIRST_CONTACT \
+				.replace('$_SERVER_URL_$', config.server_url(request)) \
+				.replace('$_SERVERS_CONFIG_$', _servers_config(request, device))
 	return bytes(text, 'UTF-8')
 
-def _servers_config(device):
+def _servers_config(request, device):
 	is_kindle = device.is_kindle()
 	def _url(x):
 		# always drop the last / from the url
 		# the kindle devices urls also need to include the service paths (FionaTodoListProxy, FionaCDEServiceEngine, etc)
 		# the other clients seem to require urls without those paths
-		return (config.server_url + x.strip('/')) if is_kindle else config.server_url[:-1]
+		return (config.server_url(request) + x.strip('/')) if is_kindle else config.server_url(request)[:-1]
 
 	# we always need the todo and cde urls
 	urls = [ '', 'url.todo=' + _url(TODO_PATH), 'url.cde=' + _url(CDE_PATH) ]
@@ -54,7 +56,7 @@ def _servers_config(device):
 		urls.append('url.cde.nossl=' + _url(CDE_PATH))
 
 	if not features.allow_logs_upload:
-		ignore = config.server_url + 'ksp/ignore'
+		ignore = config.server_url(request) + 'ksp/ignore'
 		urls.extend((
 			'url.messaging.post=' + ignore,
 			'url.det=' + ignore,
