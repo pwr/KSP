@@ -5,9 +5,9 @@ Configuring the devices to use KSP
 WARNING
 -------
 
-KSP has only been tested on a **Kindle 4 (Non-Touch)**, software version **4.0.1**. Sorry, it's the only device I have
-to test it with. The scripts have been tested only on a Kindle4NT; on other devices they will, in a best-case scenario,
-not work.
+KSP has only been tested on a **Kindle 4** (aka Non-Touch), software version **4.0.1**. Sorry, it's the only device I
+have to test it with. The scripts have been tested only on a Kindle 4; on other devices they will, in a best-case
+scenario, not work.
 
 KSP _may_ work with Kindle 3 (aka Kindle Keyboard). The configuration steps detailed here are most likely wrong, so **do
 not** follow them. They also may be close enough, so if you know what you're doing the sections below might give you an
@@ -26,12 +26,12 @@ instructions.
 Kindle devices
 --------------
 
-KSP is being developed and has been extensively tested to work with the Kindle 4 device. See `docs/device-kindle-4.md`
-for details on configuring a Kindle 4 to talk to KSP.
+KSP is being developed and has been extensively tested to work with the Kindle 4. See `docs/device-kindle-4.md` for
+details on configuring a Kindle 4 to talk to KSP.
 
 
-Desktop clients
+Other clients
 ---------------
 
-KSP also supports the Kindle for PC client, and has been tested with version 1.9+. See `docs/device-kindle-pc.md` for
-details on configuring it to talk to KSP.
+KSP also supports the Kindle for PC desktop client, and the Kindle for Android app. For details, read
+`docs/device-kindle-pc.md` and `docs/devices-android.md` respectively.

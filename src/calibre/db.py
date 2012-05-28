@@ -33,7 +33,7 @@ def _parse_timestamp(text):
 
 	try:
 		return time.mktime(t)
-	except OverflowError:
+	except:
 		logging.exception('timestamp %s', t)
 		# some funny dates like 1969-??-?? will throw this...
 		return 0

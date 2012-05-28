@@ -2,6 +2,9 @@ Kindle for PC
 =============
 
 
+KSP has been tested with Kindle for PC versions 1.9+, though the configuration steps detailed below *may* work with
+other versions as well.
+
 The Kindle for PC configuration resides in the file `%LOCALAPPDATA%\Amazon\Kindle\storage\.kinf2011`. Unfortunately it
 is heavily crypted and obfuscated, so you can't mess with it directly.
 
