@@ -138,9 +138,10 @@ class Handler (BaseHTTPRequestHandler):
 					self.wfile.write(b'Connection: close\r\n')
 				if status != 100:
 					self.wfile.write(b'Server: Amazon Web Server\r\nContent-Length: 0\r\n\r\n')
+			except:
+				logging.exception("failed to reply with status %d", status)
+			finally:
 				self.log_request(status)
-			except: pass # whatever
-
 
 	do_GET = _do_any
 	do_POST = _do_any
@@ -155,7 +156,7 @@ class Handler (BaseHTTPRequestHandler):
 	def __str__(self):
 		headers = ( k + ': ' + str(v) for k, v in self.headers.items() )
 		txt = "%s\n\t{%s}" % (self.requestline, ', '.join(headers))
-		if self.body:
+		if hasattr(self, 'body') and self.body:
 			plain = decompress(self.body, self.content_encoding)
 			txt += "\n" + str_(plain)
 		return txt

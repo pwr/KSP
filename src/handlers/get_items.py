@@ -73,12 +73,12 @@ def _filter_item(request, x_items, x_item):
 			x_items.removeChild(x_items)
 			return True
 
-	if action == 'SND' and item_type == 'CMND':
-		item_key = x_item.getAttribute('key')
-		if item_key and item_key.endswith(':SYSLOG:UPLOAD') and not features.allow_logs_upload:
-			# not sure if this is smart, ignoring these items appears to queue them up at amazon
-			x_items.removeChild(x_item)
-			return True
+	# if action == 'SND' and item_type == 'CMND':
+	# 	item_key = x_item.getAttribute('key')
+	# 	if item_key and item_key.endswith(':SYSLOG:UPLOAD') and not features.allow_logs_upload:
+	# 		# not sure if this is smart, ignoring these items appears to queue them up at amazon
+	# 		x_items.removeChild(x_item)
+	# 		return True
 
 	return False
 

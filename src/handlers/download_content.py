@@ -44,10 +44,13 @@ class _BookResponse (DummyResponse):
 
 	def write_to(self, stream_out):
 		bytes_count = 0
-		with open(self.book.file_path, 'rb', self._BUFFER_SIZE) as file_stream:
-			if self.range_begin > 0:
-				file_stream.seek(self.range_begin)
-			bytes_count = copy_streams(file_stream, stream_out, self.range_length, self._BUFFER_SIZE)
+		try:
+			with open(self.book.file_path, 'rb', self._BUFFER_SIZE) as file_stream:
+				if self.range_begin > 0:
+					file_stream.seek(self.range_begin)
+				bytes_count = copy_streams(file_stream, stream_out, self.range_length, self._BUFFER_SIZE)
+		except:
+			logging.exception("replying with book contents: %s", self)
 		return bytes_count
 
 	def __str__(self):

@@ -4,10 +4,13 @@ import os, threading, logging
 def _wait_conmand(pipe_file, server):
 	with pipe_file:
 		while True:
-			b = pipe_file.read(1)
-			if b == b'C':
-				logging.info("read close command from the control pipe")
-				break
+			try:
+				b = pipe_file.read(1)
+				if b == b'C':
+					logging.info("read close command from the control pipe")
+					break
+			except:
+				logging.exception("reading pipe command")
 	server.shutdown()
 
 def start_server_controller(server, pipe_file, pipe_path):

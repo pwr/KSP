@@ -32,11 +32,12 @@ def _first_contact(request, device):
 
 def _servers_config(request, device):
 	is_kindle = device.is_kindle()
+	server_url = config.server_url(request)
 	def _url(x):
 		# always drop the last / from the url
 		# the kindle devices urls also need to include the service paths (FionaTodoListProxy, FionaCDEServiceEngine, etc)
 		# the other clients seem to require urls without those paths
-		return (config.server_url(request) + x.strip('/')) if is_kindle else config.server_url(request)[:-1]
+		return (server_url + x.strip('/')) if is_kindle else server_url[:-1]
 
 	# we always need the todo and cde urls
 	urls = [ '', 'url.todo=' + _url(TODO_PATH), 'url.cde=' + _url(CDE_PATH) ]
@@ -55,13 +56,21 @@ def _servers_config(request, device):
 		# not sure what this is for, but all non-kindle clients seem to have it
 		urls.append('url.cde.nossl=' + _url(CDE_PATH))
 
+	# all other clients queue up the logs upload commands
 	if not features.allow_logs_upload:
-		ignore = config.server_url(request) + 'ksp/ignore'
-		urls.extend((
-			'url.messaging.post=' + ignore,
-			'url.det=' + ignore,
-			'url.det.unauth=' + ignore,
-		))
+		if is_kindle:
+			ignore = config.server_url(request) + 'ksp/ignore'
+			urls.extend((
+				'url.messaging.post=' + ignore,
+				'url.det=' + ignore,
+				'url.det.unauth=' + ignore,
+			))
+		else:
+			urls.extend((
+				'url.messaging.post=',
+				'url.det=',
+				'url.det.unauth=',
+			))
 
 	urls.append('')
 	return '\n'.join(urls)
