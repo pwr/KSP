@@ -122,7 +122,7 @@ def _update_annotations(device, x_items):
 
 	return was_updated
 
-def _process_xml(request, doc, device, reason):
+def _process_xml(request, doc, device):
 	x_response = qxml.get_child(doc, 'response')
 	x_items = qxml.get_child(x_response, 'items')
 	if not x_items:
@@ -161,12 +161,16 @@ class TODO_GetItems (Upstream):
 		if request.headers['X-ADP-Reason'] == 'Poll':
 			return DummyResponse(data = _POLL_RESPONSE)
 		q = request.get_query_params()
-		if q.get('reason') == 'Poll':
+		reason = q.get('reason')
+		if reason == 'Poll':
 			return DummyResponse(data = _POLL_RESPONSE)
 
 		if device.is_provisional():
 			# tell the device to do a full snapshot upload, so that we can get the device serial and identify it
 			return DummyResponse(headers = { 'Content-Type': 'text/xml;charset=UTF-8' }, data = _first_contact(request, device))
+
+		if reason == 'ServiceRefresh':
+			device.actions_queue.extend(('SET_SCFG', 'UPLOAD_SNAP', 'UPLOAD_SCFG'))
 
 		lto = q.get('device_lto', -1)
 		if lto != -1:
@@ -177,7 +181,7 @@ class TODO_GetItems (Upstream):
 		if response.status == 200:
 			# use default UTF-8 encoding
 			with minidom.parseString(response.body_text()) as doc:
-				if _process_xml(request, doc, device, q.get('reason')):
+				if _process_xml(request, doc, device):
 					xml = doc.toxml('UTF-8')
 					response.update_body(xml)
 
