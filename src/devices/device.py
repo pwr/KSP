@@ -45,7 +45,7 @@ class Device:
 			logging.warn("no SSL context available for %s, PKCS12 failed", self)
 			return False
 		serial = new_serial or self.serial
-		self.p12 = self.p12 or cert.load_p12bytes(serial)
+		self.p12 = cert.load_p12bytes(serial) or self.p12
 		self.context = cert.make_context(serial, self.p12) or _PKCS12_FAILED
 		if self.context_failed():
 			# so we don't try this more than once

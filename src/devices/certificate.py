@@ -64,7 +64,10 @@ def load_p12bytes(name):
 	except:
 		logging.exception("failed to read %s", path)
 		return None
-	os.remove(path)
+	try:
+		os.remove(path)
+	except:
+		logging.warn("failed to clean-up loaded certificate file %s", path)
 	return bytes
 
 def make_context(name, pkcs12_bytes):
