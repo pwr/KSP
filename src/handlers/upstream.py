@@ -38,6 +38,7 @@ class Upstream (Dummy):
 	def call_upstream(self, request, device):
 		"""proxy a request to the originally intended server, returns a http response"""
 		if device.is_provisional(): # not yet allowed access upstream
+			logging.warn("device %s may not connect to upstream (provisional)")
 			return None
 
 		upstream_host = self._upstream_host(request, device)

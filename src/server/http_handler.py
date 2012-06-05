@@ -79,8 +79,8 @@ class Handler (BaseHTTPRequestHandler):
 	def _detect_device(self):
 		# all requests handled by the same Handler instance come from the same device, always
 		device = self.last_device
-		# if device:
-		# 	logging.debug("%s last_device = %s", id(self), device)
+		if device:
+			logging.debug("%s last_device = %s", id(self), device)
 		if not device:
 			# look for a device record, will be automatically created if the features is enabled
 			device = devices.detect(request.client_ip(self), cookie = request.xfsn(self),
@@ -88,11 +88,11 @@ class Handler (BaseHTTPRequestHandler):
 			if not device:
 				logging.error("failed to identify device for %s", self.requestline)
 				return None, 403
-			# if self.last_device != device:
-			# 	logging.debug("identified device %s", device)
+			if self.last_device != device:
+				logging.debug("identified device %s", device)
 			if not device.is_provisional():
 				self.last_device = device
-				# logging.debug("guessed device %s", device)
+				logging.debug("guessed device %s", device)
 		if device.context_failed(): # failed to create a proper SSL context
 			logging.warn("denying access to unregistered device %s", device)
 			return None, 401

@@ -19,7 +19,7 @@ def _execute(query, parameters = ()):
 			db.execute(query, parameters)
 			if not query.startswith('SELECT '):
 				db.commit()
-			logging.debug("%s %s", query, parameters)
+			# logging.debug("%s %s", query, parameters)
 	except:
 		logging.exception("%s %s", query, parameters)
 
