@@ -42,6 +42,7 @@ FIRS_TA = 'firs-ta-g7g'
 # the order here is the order in which handlers are matched when processing a request
 from .ksp import *
 from .sync_metadata import *
+#from .get_metadata import *
 from .get_items import *
 from .remove_items import *
 from .download_content import *
