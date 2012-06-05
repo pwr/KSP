@@ -65,12 +65,12 @@ def _servers_config(request, device):
 				'url.det=' + ignore,
 				'url.det.unauth=' + ignore,
 			))
-		else:
-			urls.extend((
-				'url.messaging.post=',
-				'url.det=',
-				'url.det.unauth=',
-			))
+		# else:
+		# 	urls.extend((
+		# 		'url.messaging.post=',
+		# 		'url.det=',
+		# 		'url.det.unauth=',
+		# 	))
 
 	urls.append('')
 	return '\n'.join(urls)

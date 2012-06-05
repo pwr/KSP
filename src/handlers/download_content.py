@@ -9,14 +9,15 @@ import annotations
 import config, calibre
 
 
+_BUFFER_SIZE = 64 * 1024 # 64k
+_HEADERS = { 'Accept-Ranges': 'bytes' }
+
 class _BookResponse (DummyResponse):
 	"""an HTTP response for downloading book files"""
-	_BUFFER_SIZE = 64 * 1024 # 64k
-	_HEADERS = { 'Accept-Ranges': 'bytes' }
 
 	def __init__(self, book, bytes_range = None):
 		status = 200 if bytes_range is None else 206 # 'OK' or 'Partial Content'
-		DummyResponse.__init__(self, status, self._HEADERS)
+		DummyResponse.__init__(self, status, _HEADERS)
 		self.book = book
 		self.length = book.file_size
 
@@ -36,7 +37,7 @@ class _BookResponse (DummyResponse):
 		self.headers['Content-Type'] = book.content_type
 
 		if book.cde_content_type == 'EBOK':
-			# Kindles do not support annotations for PDOCs
+			# annotations are only supported for MOBI books
 			if annotations.has(book.asin):
 				self.headers['Hint-Sidecar-Download'] = 1
 			if annotations.apnx_path(book):
@@ -45,10 +46,10 @@ class _BookResponse (DummyResponse):
 	def write_to(self, stream_out):
 		bytes_count = 0
 		try:
-			with open(self.book.file_path, 'rb', self._BUFFER_SIZE) as file_stream:
+			with open(self.book.file_path, 'rb', _BUFFER_SIZE) as file_stream:
 				if self.range_begin > 0:
 					file_stream.seek(self.range_begin)
-				bytes_count = copy_streams(file_stream, stream_out, self.range_length, self._BUFFER_SIZE)
+				bytes_count = copy_streams(file_stream, stream_out, self.range_length, _BUFFER_SIZE)
 		except:
 			logging.exception("replying with book contents: %s", self)
 		return bytes_count

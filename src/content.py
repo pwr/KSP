@@ -23,9 +23,7 @@ def date_header(timestamp = None):
 	return time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime(time.time() if timestamp is None else timestamp))
 
 def date_iso(timestamp = None):
-	if timestamp is None:
-		timestamp = time.time()
-	return time.strftime('%Y-%m-%dT%H:%M:%S+0000', time.gmtime(timestamp))
+	return time.strftime('%Y-%m-%dT%H:%M:%S+0000', time.gmtime(time.time() if timestamp is None else timestamp))
 
 def read_chunked(stream):
 	"""
@@ -34,7 +32,8 @@ def read_chunked(stream):
 	does not support trailer headers
 	"""
 	def _read_chunked(stream):
-		while True:
+		size = 1
+		while size > 0:
 			size = stream.readline(100) # the chunk size is on a single line
 			size = 0 if size == b'0\r\n' else int(size, 16)
 			if size > 0:
