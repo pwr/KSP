@@ -150,8 +150,16 @@ def _process_xml(request, doc, device):
 
 	return was_updated
 
+def _service_refresh(request, device):
+	body = '<?xml version="1.0" encoding="UTF-8"?><response><total_count>0</total_count><next_pull_time>0</next_pull_time>' + \
+				'<items><item action="SET" is_incremental="false" key="KSP.set.scfg" priority="100" sequence="0" type="SCFG">\n'
+	body += _servers_config(request, device)
+	body += '\n</item></items></response>'
+	return bytes(body, 'UTF-8')
 
-_POLL_RESPONSE = b'<?xml version="1.0" encoding="UTF-8"?><response><total_count>0</total_count><next_pull_time>0</next_pull_time></response>'
+
+_POLL_BODY = b'<?xml version="1.0" encoding="UTF-8"?><response><total_count>0</total_count><next_pull_time>0</next_pull_time></response>'
+_POLL_HEADERS = { 'Content-Type': 'text/xml;charset=UTF-8' }
 
 class TODO_GetItems (Upstream):
 	def __init__(self):
@@ -159,18 +167,18 @@ class TODO_GetItems (Upstream):
 
 	def call(self, request, device):
 		if request.headers['X-ADP-Reason'] == 'Poll':
-			return DummyResponse(data = _POLL_RESPONSE)
+			return DummyResponse(headers = _POLL_HEADERS, data = _POLL_BODY)
 		q = request.get_query_params()
 		reason = q.get('reason')
 		if reason == 'Poll':
-			return DummyResponse(data = _POLL_RESPONSE)
+			return DummyResponse(headers = _POLL_HEADERS, data = _POLL_BODY)
 
 		if device.is_provisional():
 			# tell the device to do a full snapshot upload, so that we can get the device serial and identify it
-			return DummyResponse(headers = { 'Content-Type': 'text/xml;charset=UTF-8' }, data = _first_contact(request, device))
+			return DummyResponse(headers = _POLL_HEADERS, data = _first_contact(request, device))
 
 		if reason == 'ServiceRefresh':
-			device.actions_queue.extend(('SET_SCFG', 'UPLOAD_SNAP', 'UPLOAD_SCFG'))
+			return DummyResponse(headers = _POLL_HEADERS, data = _service_refresh(request, device))
 
 		lto = q.get('device_lto', -1)
 		if lto != -1:
