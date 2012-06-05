@@ -3,35 +3,38 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical"
               android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
-        >
-
-    <EditText android:id="@+id/edit_url"
-              android:layout_height="wrap_content"
-              android:layout_width="fill_parent"
-              android:maxLines="1"
-              android:inputType="textUri"
-            />
-
-    <TableLayout android:layout_width="fill_parent"
-                 android:layout_height="wrap_content"
-                 android:stretchColumns="*"
-            >
-
-        <TableRow android:layout_width="fill_parent"
-                >
-            <Button android:id="@+id/test_new_url"
-                    android:layout_height="wrap_content"
-                    android:layout_width="fill_parent"
-                    android:text="Test"
-                    />
-
-            <Button android:id="@+id/cancel_edit_url"
-                    android:layout_height="wrap_content"
-                    android:layout_width="fill_parent"
-                    android:text="Cancel"
-                    />
-        </TableRow>
-    </TableLayout>
-
+              android:layout_height="fill_parent">
+	<EditText android:id="@+id/edit_url"
+	          android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:maxLines="1"
+	          android:inputType="textUri"
+	          android:nextFocusDown="@+id/test_new_url"
+	          android:nextFocusLeft="@+id/test_new_url"/>
+	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	              android:orientation="horizontal"
+	              android:layout_width="fill_parent"
+	              android:layout_height="wrap_content"
+	              android:background="@android:color/darker_gray">
+		<Button android:id="@+id/test_new_url"
+		        android:layout_width="wrap_content"
+		        android:layout_height="fill_parent"
+		        android:layout_gravity="center"
+		        android:layout_weight="1"
+		        android:layout_marginTop="3dp"
+		        android:layout_marginBottom="1dp"
+		        android:layout_marginLeft="5dp"
+		        android:layout_marginRight="5dp"
+		        android:text="@string/check_url_button"/>
+		<Button android:id="@+id/cancel_edit_url"
+		        android:layout_width="wrap_content"
+		        android:layout_height="fill_parent"
+		        android:layout_gravity="center"
+		        android:layout_weight="1"
+		        android:layout_marginTop="3dp"
+		        android:layout_marginBottom="1dp"
+		        android:layout_marginLeft="5dp"
+		        android:layout_marginRight="5dp"
+		        android:text="@android:string/cancel"/>
+	</LinearLayout>
 </LinearLayout>

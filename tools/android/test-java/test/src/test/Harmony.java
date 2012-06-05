@@ -7,13 +7,6 @@ import java.security.Provider;
 import java.security.SecureRandom;
 import java.security.SecureRandomSpi;
 
-/**
- * Created with IntelliJ IDEA.
- * User: pwr
- * Date: 18.05.2012
- * Time: 02:59
- * To change this template use File | Settings | File Templates.
- */
 public class Harmony extends Provider {
 	static final String NAME = "Harmony_Dalvik";
 	static final String SHA1PRNG_NAME = "SHA1PRNG_Harmony";

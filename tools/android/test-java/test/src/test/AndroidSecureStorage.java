@@ -4,13 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: pwr
- * Date: 18.05.2012
- * Time: 01:38
- * To change this template use File | Settings | File Templates.
- */
 public class AndroidSecureStorage {
 	Map<String, String> map;
 
@@ -21,8 +14,9 @@ public class AndroidSecureStorage {
 	public String get(String key) throws Exception {
 		String okey = AndroidObfuscation.obfuscate(key);
 		String value = map.get(okey);
-		if (value != null)
+		if (value != null) {
 			value = AndroidObfuscation.deobfuscate(value);
+		}
 		return value;
 	}
 

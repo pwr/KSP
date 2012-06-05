@@ -1,4 +1,4 @@
-package pwr.ksp;
+package pwr.ksp.kindle;
 
 import android.util.Log;
 
@@ -9,7 +9,7 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 
 public class Obfuscator {
-	static SecretKeySpec spec = getSpec(getSeed());
+	private final static SecretKeySpec spec = getSpec(getSeed());
 
 	private static byte[] hexToBytes(String s) {
 		int len = s.length();
@@ -34,7 +34,7 @@ public class Obfuscator {
 		return sb.toString();
 	}
 
-	static byte[] getMessageDigest(String _kind, byte[] _bytes) {
+	private static byte[] getMessageDigest(String _kind, byte[] _bytes) {
 		try {
 			MessageDigest digest = MessageDigest.getInstance(_kind);
 			digest.update(_bytes);
@@ -45,12 +45,12 @@ public class Obfuscator {
 		return new byte[]{};
 	}
 
-	static byte[] getSeed() {
+	private static byte[] getSeed() {
 		String base = "Brian was here."; // hi Brian
 		return getMessageDigest("SHA-256", getMessageDigest("MD5", base.getBytes()));
 	}
 
-	static SecretKeySpec getSpec(byte[] _seed) {
+	private static SecretKeySpec getSpec(byte[] _seed) {
 		try {
 			KeyGenerator keyGen = KeyGenerator.getInstance("AES");
 			SecureRandom random = SecureRandom.getInstance("SHA1PRNG");

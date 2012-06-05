@@ -3,61 +3,86 @@
               android:orientation="vertical"
               android:layout_width="fill_parent"
               android:layout_height="fill_parent"
-        >
-    <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:padding="10sp"
-            android:text="Configuration utility for Amazon's Kindle for Android application."
-            />
+		>
 
-    <Button android:id="@+id/reload_config"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:paddingLeft="15pt"
-            android:paddingRight="15pt"
-            android:text="Reload configuration"/>
+	<TextView
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:padding="10dp"
+			android:text="@string/app_description"
 
-    <TextView android:id="@+id/current_config"
-              android:layout_width="fill_parent"
-              android:layout_height="wrap_content"
-              android:padding="10sp"
-            />
+			/>
 
-    <TableLayout android:layout_width="fill_parent"
-                 android:layout_height="wrap_content"
-                 android:stretchColumns="*"
-            >
+	<LinearLayout
+			android:background="@android:drawable/dialog_frame"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical"
+			android:layout_gravity="center"
+			>
+		<TextView android:id="@+id/current_config"
+		          android:layout_width="fill_parent"
+		          android:layout_height="wrap_content"
+		          android:padding="5dp"
+				/>
 
-        <TableRow android:layout_width="fill_parent">
-            <Button android:id="@+id/change_base_url"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Change base URL"/>
+		<TextView android:id="@+id/current_url"
+		          android:layout_width="fill_parent"
+		          android:layout_height="wrap_content"
+		          android:padding="5dp"
+		          android:gravity="center"
+		          android:visibility="gone"
+				/>
+	</LinearLayout>
 
-            <Button android:id="@+id/clear_config"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Clear configuration"/>
+	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	              android:orientation="horizontal"
+	              android:layout_width="fill_parent"
+	              android:layout_height="wrap_content"
+	              android:gravity="center">
+		<Button android:id="@+id/change_service_url"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_weight="1"
+		        android:layout_marginLeft="6dp"
+		        android:text="@string/change_url_button"/>
+		<Button android:id="@+id/clear_config"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:text="@string/use_defaults_button"
+		        android:layout_marginRight="6dp"
+		        android:layout_weight="1"/>
+	</LinearLayout>
 
-        </TableRow>
+	<LinearLayout
+			android:background="@android:drawable/dialog_frame"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical"
+			android:layout_gravity="center"
+			>
+		<TextView android:id="@+id/new_config"
+		          android:layout_width="fill_parent"
+		          android:layout_height="wrap_content"
+		          android:padding="5dp"
+				/>
 
-    </TableLayout>
+		<TextView android:id="@+id/new_url"
+		          android:layout_width="fill_parent"
+		          android:layout_height="wrap_content"
+		          android:padding="5dp"
+		          android:gravity="center"
+		          android:visibility="gone"
+				/>
+	</LinearLayout>
 
-    <TextView android:id="@+id/new_config"
-              android:layout_width="fill_parent"
-              android:layout_height="wrap_content"
-              android:padding="10sp"
-            />
-
-    <Button android:id="@+id/apply_config"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingLeft="15pt"
-            android:paddingRight="15pt"
-            android:layout_gravity="center"
-            android:text="Apply configuration"/>
+	<Button android:id="@+id/apply_config"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:paddingLeft="15pt"
+	        android:paddingRight="15pt"
+	        android:layout_gravity="center"
+	        android:text="@string/apply_configuration_button"/>
 
 </LinearLayout>
 

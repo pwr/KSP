@@ -1,25 +1,13 @@
 package test;
 
-import org.w3c.dom.*;
-import org.xml.sax.XMLReader;
-import sun.security.jca.GetInstance;
-import sun.security.jca.ProviderList;
-import sun.security.jca.Providers;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.security.Provider;
 import java.util.HashMap;
 
-/**
- * Created with IntelliJ IDEA.
- * User: pwr
- * Date: 18.05.2012
- * Time: 00:43
- * To change this template use File | Settings | File Templates.
- */
 public class Main {
 	public static void main(String[] args) throws Exception {
 		Harmony.init();
@@ -52,7 +40,7 @@ public class Main {
 		}
 
 		System.out.println();
-		String[] strings = { "url.todo" };
+		String[] strings = {"url.todo"};
 		for (String s : strings) {
 			System.out.println(s + " -> " + AndroidObfuscation.obfuscate(s));
 		}

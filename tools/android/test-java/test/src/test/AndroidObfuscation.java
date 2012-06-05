@@ -1,20 +1,17 @@
 package test;
 
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
-import java.security.MessageDigest;
-import java.security.SecureRandom;
 
 public class AndroidObfuscation {
 	static SecretKeySpec spec = new SecretKeySpec(hexToBytes("0176e04c9408b1702d90be333fd53523"), "AES");
 
-//	static SecretKeySpec spec = getSpec(getSeed());
-//	static {
-//		System.out.println("seed = " + toHex(getSeed()));
-//		System.out.println("spec " + spec.getAlgorithm() + " / " + spec.getFormat());
-//		System.out.println("encoded spec = " + toHex(spec.getEncoded()));
-//	}
+	//	static SecretKeySpec spec = getSpec(getSeed());
+	//	static {
+	//		System.out.println("seed = " + toHex(getSeed()));
+	//		System.out.println("spec " + spec.getAlgorithm() + " / " + spec.getFormat());
+	//		System.out.println("encoded spec = " + toHex(spec.getEncoded()));
+	//	}
 
 	public static byte[] hexToBytes(String s) {
 		int len = s.length();
@@ -39,39 +36,41 @@ public class AndroidObfuscation {
 		return sb.toString();
 	}
 
-//	static byte[] getMessageDigest(String paramString, byte[] paramArrayOfByte) {
-//		try {
-//			MessageDigest localMessageDigest = MessageDigest.getInstance(paramString);
-//			localMessageDigest.update(paramArrayOfByte);
-//			return localMessageDigest.digest();
-//		} catch (Exception ex) {
-//			return null;
-//		}
-//	}
-//
-//	static byte[] getSeed() {
-//		return getMessageDigest("SHA-256", getMessageDigest("MD5", "Brian was here.".getBytes()));
-//	}
-//
-//	static SecretKeySpec getSpec(byte[] paramArrayOfByte) {
-//		try {
-//			KeyGenerator localKeyGenerator = KeyGenerator.getInstance("AES");
-//			SecureRandom localSecureRandom = SecureRandom.getInstance(Harmony.SHA1PRNG_NAME);
-//			localSecureRandom.setSeed(paramArrayOfByte);
-//			localKeyGenerator.init(128, localSecureRandom);
-//			SecretKeySpec localSecretKeySpec = new SecretKeySpec(localKeyGenerator.generateKey().getEncoded(), "AES");
-//			return localSecretKeySpec;
-//		} catch (Exception ex) {
-//			ex.printStackTrace();
-//			return null;
-//		}
-//	}
+	//	static byte[] getMessageDigest(String paramString, byte[] paramArrayOfByte) {
+	//		try {
+	//			MessageDigest localMessageDigest = MessageDigest.getInstance(paramString);
+	//			localMessageDigest.update(paramArrayOfByte);
+	//			return localMessageDigest.digest();
+	//		} catch (Exception ex) {
+	//			return null;
+	//		}
+	//	}
+	//
+	//	static byte[] getSeed() {
+	//		return getMessageDigest("SHA-256", getMessageDigest("MD5", "Brian was here.".getBytes()));
+	//	}
+	//
+	//	static SecretKeySpec getSpec(byte[] paramArrayOfByte) {
+	//		try {
+	//			KeyGenerator localKeyGenerator = KeyGenerator.getInstance("AES");
+	//			SecureRandom localSecureRandom = SecureRandom.getInstance(Harmony.SHA1PRNG_NAME);
+	//			localSecureRandom.setSeed(paramArrayOfByte);
+	//			localKeyGenerator.init(128, localSecureRandom);
+	//			SecretKeySpec localSecretKeySpec = new SecretKeySpec(localKeyGenerator.generateKey().getEncoded(), "AES");
+	//			return localSecretKeySpec;
+	//		} catch (Exception ex) {
+	//			ex.printStackTrace();
+	//			return null;
+	//		}
+	//	}
 
 	public static String obfuscate(String paramString) throws Exception {
-		if (paramString == null)
+		if (paramString == null) {
 			throw new IllegalArgumentException("text must have value!");
-		if (paramString.length() == 0)
+		}
+		if (paramString.length() == 0) {
 			return "";
+		}
 
 		Cipher localCipher = Cipher.getInstance("AES");
 		localCipher.init(1, spec);
@@ -81,10 +80,12 @@ public class AndroidObfuscation {
 	}
 
 	public static String deobfuscate(String paramString) throws Exception {
-		if (paramString == null)
+		if (paramString == null) {
 			throw new IllegalArgumentException("String must have value!");
-		if (paramString.length() == 0)
+		}
+		if (paramString.length() == 0) {
 			return "";
+		}
 
 		byte[] arrayOfByte = hexToBytes(paramString);
 		Cipher localCipher = Cipher.getInstance("AES");

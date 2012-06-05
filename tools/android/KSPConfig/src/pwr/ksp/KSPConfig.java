@@ -3,19 +3,22 @@ package pwr.ksp;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Dialog;
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import pwr.ksp.net.Cert;
+import pwr.ksp.net.Ping;
+import pwr.ksp.net.PingResultHandler;
+import pwr.ksp.ui.Dialogs;
 
 public class KSPConfig extends Activity {
-	Button reloadButton;
-	Button editURLButton;
-	Button clearButton;
-	Button applyConfigButton;
-
-	TextView currentConfigStatus;
-	TextView newConfigStatus;
+	public KSPUI ui;
+	private Configuration config;
+	private boolean doReloadConfiguration = true;
+	public String installing_certificate_for;
 
 	/**
 	 * Called when the activity is first created.
@@ -23,135 +26,108 @@ public class KSPConfig extends Activity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
 		setContentView(R.layout.main);
+		ui = new KSPUI(this);
 	}
 
 	@Override
-	protected void onStart() {
-		super.onStart();
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater mi = getMenuInflater();
+		mi.inflate(R.menu.main_menu, menu);
+		return true;
+	}
 
-		reloadButton = (Button) findViewById(R.id.reload_config);
-		reloadButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				reloadConfig();
-			}
-		});
-
-		editURLButton = (Button) findViewById(R.id.change_base_url);
-		editURLButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				showDialog(Dialogs.EDIT_URL);
-			}
-		});
-
-		clearButton = (Button) findViewById(R.id.clear_config);
-		clearButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				showDialog(Dialogs.CLEAR_CONFIG);
-			}
-		});
-
-		applyConfigButton = (Button) findViewById(R.id.apply_config);
-		applyConfigButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				showDialog(Dialogs.APPLY_CONFIG);
-			}
-		});
-
-		currentConfigStatus = (TextView) findViewById(R.id.current_config);
-		newConfigStatus = (TextView) findViewById(R.id.new_config);
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		if (item.getItemId() == R.id.reload_configuration) {
+			reloadConfig();
+			return true;
+		}
+		return false;
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-
-		ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-		if (!RootExec.stopKindle(am)) {
-			showDialog(Dialogs.ROOT_FAILED);
-			return;
+		if (doReloadConfiguration) {
+			reloadConfig();
 		}
-
-		Configuration.KSP_DATA = getDir("temp", MODE_PRIVATE).getAbsolutePath();
-		Configuration.getConfigurationFile().delete();
-		Configuration.clear();
-		reloadConfig();
+		doReloadConfiguration = true;
 	}
 
 	public Dialog onCreateDialog(int _key) {
 		return Dialogs.create(_key, this);
 	}
 
-	public void reloadConfig() {
-		if (Configuration.get() != null) {
-			showDialog(Dialogs.RELOAD_CONFIG);
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		doReloadConfiguration = false;
+		super.onActivityResult(requestCode, resultCode, data);
+		Log.d("KSP", "req " + requestCode + " res " + resultCode + " url " + installing_certificate_for);
+		if (requestCode == Cert.INSTALL_REQUEST) {
+			if (resultCode == RESULT_OK) {
+				String url = installing_certificate_for;
+				installing_certificate_for = null;
+				ping(url);
+			} else {
+				Dialogs.error(this, getString(R.string.install_certificate_failed));
+			}
 			return;
 		}
 
-		editURLButton.setEnabled(false);
-		clearButton.setEnabled(false);
-		applyConfigButton.setEnabled(false);
+		Log.w("KSP", "Don't know how to handle activity result");
+	}
 
-		currentConfigStatus.setText("");
-		newConfigStatus.setText("");
+	public void ping(String _url) {
+		Ping p = new Ping(this, new PingResultHandler(this));
+		p.execute(_url);
+	}
 
-		if (RootExec.getConfig()) {
-			Configuration config = Configuration.get(true);
-			if (config == null) {
+	public Configuration getConfig() {
+		return config;
+	}
+
+	void reloadConfig() {
+		ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+		RootExec.stopKindle(am);
+
+		config = new Configuration(this);
+		ui.reset();
+
+		switch (RootExec.getKindleConfig(config.localConfiguration)) {
+			case RootExec.OK:
+				if (!config.load()) {
+					showDialog(Dialogs.LOAD_FAILED);
+				} else {
+					ui.configurationLoaded(config.getServiceURL());
+				}
+				break;
+			case RootExec.NO_CONFIG:
 				showDialog(Dialogs.LOAD_FAILED);
-			} else {
-				configurationLoaded(config);
-			}
-		} else {
-			showDialog(Dialogs.ROOT_FAILED);
+				break;
+			default:
+				showDialog(Dialogs.ROOT_FAILED);
 		}
-	}
-
-	private void configurationLoaded(Configuration _c) {
-		showDialog(Dialogs.SHOW_CONFIG);
-		editURLButton.setEnabled(true);
-		clearButton.setEnabled(_c.hasBaseURL());
-		applyConfigButton.setEnabled(false);
-
-		if (_c.hasBaseURL()) {
-			currentConfigStatus.setText("Current base URL:\n" + _c.getBaseURL());
-		} else {
-			currentConfigStatus.setText("The Kindle for Android application is using the default URLs.");
-		}
-	}
-
-	public void updateNewConfigurationStatus(Configuration _c) {
-		if (_c.hasBaseURL()) {
-			newConfigStatus.setText("New base URL:\n" + _c.getBaseURL());
-			clearButton.setEnabled(true);
-		} else {
-			newConfigStatus.setText("The Kindle for Android application will revert to its default URLs.");
-			clearButton.setEnabled(false);
-		}
-
-		applyConfigButton.setEnabled(true);
 	}
 
 	public void clearConfiguration() {
-		Configuration c = Configuration.get();
-		assert c != null : "null configuration";
-		c.setBaseURL(null);
-		updateNewConfigurationStatus(c);
+		config.setServiceURL(null);
+		ui.configurationChanged(null);
 	}
 
-	public void applyConfiguration(Configuration _c) {
-		if (!_c.save()) {
-			showDialog(Dialogs.SAVE_FAILED);
-		} else {
-			if (RootExec.setConfig()) {
+	public void applyConfiguration() {
+		if (!config.save()) {
+			Dialogs.error(this, "Failed to save the new configuration.");
+			return;
+		}
+
+		switch (RootExec.setKindleConfig(config.localConfiguration)) {
+			case RootExec.OK:
 				finish();
-			} else {
+				break;
+			default:
 				showDialog(Dialogs.ROOT_FAILED);
-			}
 		}
 	}
 }

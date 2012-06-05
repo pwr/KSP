@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">KSPConfig</string>
+	<string name="app_name">KSPConfig</string>
+	<string name="edit_url_title">Enter your KSP deployment\'s server_url:</string>
+	<string name="apply_configuration_button">Apply changes</string>
+	<string name="app_description">Kindle for Android configuration utility.</string>
+	<string name="check_url_button">Check</string>
+	<string name="change_url_button">Change service URL</string>
+	<string name="use_defaults_button">Use default service</string>
+	<string name="root_command_failed">Root command failed</string>
+	<string name="root_command_failed_message">Failed to execute root command. Your Android device must be root-enabled for KSPConfig to work.</string>
+	<string name="quit_button">Quit</string>
+	<string name="install_certificate_failed">Failed to install the server ceritificate. You will have to use a http:// URL.</string>
 </resources>
