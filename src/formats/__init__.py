@@ -1,16 +1,17 @@
 import logging
 
 
-CONTENT_TYPE_MOBIPOCKET = 'application/x-mobipocket-ebook'
-CONTENT_TYPE_PDF = 'application/pdf'
+_CONTENT_TYPE_MOBI8 = 'application/x-mobi8-ebook'
+_CONTENT_TYPE_MOBI = 'application/x-mobipocket-ebook'
+_CONTENT_TYPE_PDF = 'application/pdf'
 CONTENT_TYPES = {
 	'EPUB'	: 'application/epub+zip',
-	'MOBI'	: CONTENT_TYPE_MOBIPOCKET,
-	'AZW'	: CONTENT_TYPE_MOBIPOCKET,
-	'PRC'	: CONTENT_TYPE_MOBIPOCKET,
-	'PDF'	: CONTENT_TYPE_PDF,
+	'MOBI'	: _CONTENT_TYPE_MOBI,
+	'AZW'	: _CONTENT_TYPE_MOBI,
+	'PRC'	: _CONTENT_TYPE_MOBI,
+	'PDF'	: _CONTENT_TYPE_PDF,
 	# 'AZW1'	: 'application/x-topaz-ebook',
-	# 'AZW3'	: 'application/x-mobi8-ebook',
+	'AZW3'	: _CONTENT_TYPE_MOBI8,
 	# 'HTML'	: 'text/html',
 	# 'TXT'	: 'text/plain',
 	# 'CBZ'	: 'application/zip',
@@ -22,7 +23,7 @@ CDE_TYPES = {
 	'PRC'	: 'EBOK',
 	'PDF'	: 'PDOC',
 	# 'AZW1'	: 'EBOK',
-	# 'AZW3'	: 'EBOK',
+	'AZW3'	: 'EBOK',
 	# 'HTML'	: 'PDOC',
 	# 'TXT'	: 'PDOC',
 	# 'CBZ'	: 'PDOC',
@@ -51,7 +52,7 @@ if hasattr(features, 'supported_formats'):
 	features.supported_formats = [ k.upper() for k in features.supported_formats if k.upper() in CONTENT_TYPES ]
 else:
 	# default supported formats
-	_SUPPORTED = [ 'MOBI', 'AZW', 'PRC', 'PDF' ]
+	_SUPPORTED = [ 'AZW3', 'MOBI', 'AZW', 'PRC', 'PDF' ]
 	features.supported_formats = [ k for k in _SUPPORTED if k in CONTENT_TYPES ]
 	del _SUPPORTED
 logging.debug("supported formats: %s", features.supported_formats)
@@ -62,19 +63,19 @@ import formats.mbp as mbp
 
 
 def handles(content_type):
-	return content_type in ( CONTENT_TYPE_MOBIPOCKET, CONTENT_TYPE_PDF )
+	return content_type in ( _CONTENT_TYPE_MOBI8, _CONTENT_TYPE_MOBI, _CONTENT_TYPE_PDF )
 
 def read_cde_type(path, content_type, asin):
-	if content_type == CONTENT_TYPE_MOBIPOCKET:
+	if content_type in ( _CONTENT_TYPE_MOBI, _CONTENT_TYPE_MOBI8 ):
 		return mobi.read_cde_type(path, asin)
-	if content_type == CONTENT_TYPE_PDF:
+	if content_type == _CONTENT_TYPE_PDF:
 		return 'PDOC'
 
 
 import annotations
 
 def sidecar(book, annotations_list = None):
-	if book.content_type == CONTENT_TYPE_MOBIPOCKET:
+	if book.content_type in ( _CONTENT_TYPE_MOBI, _CONTENT_TYPE_MOBI8 ):
 		if not annotations_list:
 			annotations_list = annotations.get_all(book.asin)
 		return mbp.assemble_sidecar(book, annotations_list)
