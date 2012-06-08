@@ -6,3 +6,5 @@ __pycache__/
 out/
 gen/
 local.properties
+
+*.keystore
