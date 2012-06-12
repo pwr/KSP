@@ -102,6 +102,8 @@ def _consume_action_queue(request, device, x_items):
 		elif action == 'UPLOAD_SCFG':
 			_add_item(x_items, 'UPLOAD', 'SCFG', key = 'KSP.upload.scfg', priority = 50, url = config.server_url(request) + 'ksp/scfg')
 			was_updated = True
+		elif type(action) == tuple and action[0] == 'ADD_COLLECTION':
+			pass
 		else:
 			logging.warn("unknown action %s", action)
 	return was_updated

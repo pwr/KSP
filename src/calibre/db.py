@@ -157,13 +157,14 @@ def load_series_collections():
 def load_tag_collections():
 	tags = {}
 
-	with _db_connect() as db:
-		for row in db.execute("select books.uuid, tags.name from books, books_tags_link, tags"
-				" where books.id = books_tags_link.book and books_tags_link.tag = tags.id"):
-			tag_name = row[1]
-			if tag_name in features.collection_tags:
-				tags.setdefault(tag_name, [])
-				tags[tag_name].append(row[0])
+	if features.collection_tags:
+		with _db_connect() as db:
+			for row in db.execute("select books.uuid, tags.name from books, books_tags_link, tags"
+					" where books.id = books_tags_link.book and books_tags_link.tag = tags.id"):
+				tag_name = row[1]
+				if tag_name in features.collection_tags:
+					tags.setdefault(tag_name, [])
+					tags[tag_name].append(row[0])
 
 	return tags
 

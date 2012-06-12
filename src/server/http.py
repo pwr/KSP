@@ -15,7 +15,7 @@ class Server (ThreadingMixIn, HTTPServer):
 	"""
 
 	def __init__(self):
-		if hasattr(config, 'disconnected') and config.disconnected:
+		if config.disconnected:
 			self._handlers = []
 		else:
 			self._handlers = self._setup_handlers()

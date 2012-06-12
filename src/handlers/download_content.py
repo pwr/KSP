@@ -6,7 +6,8 @@ from handlers.dummy import DummyResponse, ExceptionResponse
 from handlers import is_uuid, CDE, CDE_PATH
 from content import copy_streams
 import annotations
-import config, calibre
+import config, features
+import calibre
 
 
 _BUFFER_SIZE = 64 * 1024 # 64k

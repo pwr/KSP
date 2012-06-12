@@ -30,5 +30,8 @@ allow_logs_upload = False
 # Most likely you want to leave this to False, because firmware updates will undo your device customizations.
 allow_firmware_updates = False
 
+# Automatically create collections for book series and configured tags.
+automatic_collections = True
+
 # Create collections based on certain book tags.  See docs/collections.md for details.
 collection_tags = [ 'first tag', 'second tag', 'third tag' ]

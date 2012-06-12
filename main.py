@@ -63,27 +63,39 @@ def _stdstream(path = None):
 
 	return sys.stdout
 
+def _processConfiguration():
+	def _check_field(obj, name, defaultValue):
+		if not hasattr(obj, name):
+			setattr(obj, name, defaultValue)
+
+	import config
+	_check_field(config, 'log_level', 'info')
+	_check_field(config, 'server_certificate', None)
+	_check_field(config, 'disconnected', False)
+
+	import features
+	_check_field(features, 'automatic_collections', False)
+	_check_field(features, 'collection_tags', [])
+
+
 def main():
 	args = _args()
 	etc_path = abspath(args.etc_path)
 	sys.path.append(etc_path)
 
+	_processConfiguration()
+
 	import config
 	config.logs_path = None if args.console else abspath(config.logs_path, True)
 	if args.log_level:
 		config.log_level = args.log_level
-	elif not hasattr(config, 'log_level'):
-		config.log_level = 'info'
 	_make_root_logger(_stdstream(config.logs_path), config.log_level)
 
 	logging.info("%s start-up", '*' * 20)
 	logging.info("read configuration from %s", etc_path)
 
 	config.database_path = abspath(config.database_path, True)
-	if hasattr(config, 'server_certificate'):
-		config.server_certificate = abspath(config.server_certificate)
-	else:
-		config.server_certificate = None
+	config.server_certificate = abspath(config.server_certificate)
 
 	# add the src/ folder to the import path
 	sys.path.append(abspath('src'))
