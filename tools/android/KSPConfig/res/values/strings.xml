@@ -1,14 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<string name="app_name">KSPConfig</string>
+	<string name="app_name">Kindle for Android Configuration</string>
 	<string name="edit_url_title">Enter your KSP deployment\'s server_url:</string>
-	<string name="apply_configuration_button">Apply changes</string>
+	<string name="apply_configuration_button">Apply changes &amp; open Kindle</string>
 	<string name="app_description">Kindle for Android configuration utility.</string>
 	<string name="check_url_button">Check</string>
 	<string name="change_url_button">Change service URL</string>
 	<string name="use_defaults_button">Use default service</string>
-	<string name="root_command_failed">Root command failed</string>
-	<string name="root_command_failed_message">Failed to execute root command. Your Android device must be root-enabled for KSPConfig to work.</string>
+	<string name="root_command_failed">Failed to execute root command. Your Android device must be root-enabled for KSPConfig to work.</string>
 	<string name="quit_button">Quit</string>
 	<string name="install_certificate_failed">Failed to install the server ceritificate. You will have to use a http:// URL.</string>
+	<string name="new_configuration_default">Kindle for Android will use the default (Amazon) service.</string>
+	<string name="new_configuration_url">Kindle for Android will use this service URL:</string>
+	<string name="current_configuration_default">Kindle for Android is using the default (Amazon) service.</string>
+	<string name="current_configuration_url">Kindle for Android is using this service URL:</string>
+	<string name="load_configuration_failed">Failed to load configuration from the Kindle application. Do you have the Kindle for Android application
+		installed?
+	</string>
+	<string name="save_failed">Failed to save the new configuration.</string>
+	<string name="kill_failed">Failed to stop the running Kindle for Android process.</string>
+	<string name="unknown_error">Unexpected error.</string>
 </resources>

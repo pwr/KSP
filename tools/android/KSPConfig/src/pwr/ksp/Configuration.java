@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Configuration {
-	public static final String CONFIG_FILE_NAME = "AmazonSecureStorage.xml";
+	public static final String FILE_NAME = "AmazonSecureStorage.xml";
 	private static final String URL_TODO = "url.todo";
 	private static final String URL_CDE = "url.cde";
 
@@ -26,7 +26,7 @@ public class Configuration {
 
 	public Configuration(Activity _act) {
 		File localTemp = _act.getDir("temp", Activity.MODE_PRIVATE);
-		localConfiguration = new File(localTemp, CONFIG_FILE_NAME);
+		localConfiguration = new File(localTemp, FILE_NAME);
 	}
 
 	public String getServiceURL() {

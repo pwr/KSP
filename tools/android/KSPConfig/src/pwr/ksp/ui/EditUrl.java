@@ -14,7 +14,7 @@ import pwr.ksp.R;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-class EditUrl extends Dialog implements DialogInterface.OnShowListener, View.OnClickListener, TextWatcher {
+public class EditUrl extends Dialog implements DialogInterface.OnShowListener, View.OnClickListener, TextWatcher {
 	private final KSPConfig ksp;
 	private final EditText editUrl;
 	private final Button testButton;

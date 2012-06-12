@@ -1,7 +1,6 @@
 package pwr.ksp;
 
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -56,10 +55,6 @@ public class KSPConfig extends Activity {
 		doReloadConfiguration = true;
 	}
 
-	public Dialog onCreateDialog(int _key) {
-		return Dialogs.create(_key, this);
-	}
-
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		doReloadConfiguration = false;
@@ -89,25 +84,25 @@ public class KSPConfig extends Activity {
 	}
 
 	void reloadConfig() {
-		ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-		RootExec.stopKindle(am);
-
-		config = new Configuration(this);
 		ui.reset();
+		config = new Configuration(this);
 
-		switch (RootExec.getKindleConfig(config.localConfiguration)) {
+		switch (K4A.getConfig(config.localConfiguration)) {
 			case RootExec.OK:
 				if (!config.load()) {
-					showDialog(Dialogs.LOAD_FAILED);
+					ui.fatal(R.string.load_configuration_failed, true);
 				} else {
 					ui.configurationLoaded(config.getServiceURL());
 				}
 				break;
 			case RootExec.NO_CONFIG:
-				showDialog(Dialogs.LOAD_FAILED);
+				ui.fatal(R.string.load_configuration_failed, true);
+				break;
+			case RootExec.NO_ROOT:
+				ui.fatal(R.string.root_command_failed, true);
 				break;
 			default:
-				showDialog(Dialogs.ROOT_FAILED);
+				ui.fatal(R.string.unknown_error, true);
 		}
 	}
 
@@ -117,17 +112,22 @@ public class KSPConfig extends Activity {
 	}
 
 	public void applyConfiguration() {
-		if (!config.save()) {
-			Dialogs.error(this, "Failed to save the new configuration.");
+		if (!K4A.stop(this)) {
+			ui.fatal(R.string.kill_failed, false);
 			return;
 		}
 
-		switch (RootExec.setKindleConfig(config.localConfiguration)) {
-			case RootExec.OK:
-				finish();
-				break;
-			default:
-				showDialog(Dialogs.ROOT_FAILED);
+		if (config.save()) {
+			switch (K4A.setConfig(config.localConfiguration)) {
+				case RootExec.OK:
+					K4A.start(this);
+					break;
+				default:
+					ui.fatal(R.string.root_command_failed, false);
+					break;
+			}
+		} else {
+			ui.fatal(R.string.save_failed, false);
 		}
 	}
 }

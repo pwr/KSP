@@ -5,20 +5,21 @@
               android:layout_height="fill_parent"
 		>
 
-	<TextView
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-			android:padding="10dp"
-			android:text="@string/app_description"
-
+	<TextView android:id="@+id/load_error"
+	          android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:padding="5dp"
+	          android:visibility="gone"
+	          android:textColor="#ff6000"
 			/>
 
-	<LinearLayout
+	<LinearLayout android:id="@+id/current_config_box"
 			android:background="@android:drawable/dialog_frame"
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"
 			android:orientation="vertical"
 			android:layout_gravity="center"
+			android:visibility="gone"
 			>
 		<TextView android:id="@+id/current_config"
 		          android:layout_width="fill_parent"
@@ -35,11 +36,13 @@
 				/>
 	</LinearLayout>
 
-	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	<LinearLayout android:id="@+id/buttons_box"
 	              android:orientation="horizontal"
 	              android:layout_width="fill_parent"
 	              android:layout_height="wrap_content"
-	              android:gravity="center">
+	              android:gravity="center"
+	              android:visibility="gone"
+			>
 		<Button android:id="@+id/change_service_url"
 		        android:layout_width="wrap_content"
 		        android:layout_height="wrap_content"
@@ -54,12 +57,13 @@
 		        android:layout_weight="1"/>
 	</LinearLayout>
 
-	<LinearLayout
-			android:background="@android:drawable/dialog_frame"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-			android:orientation="vertical"
-			android:layout_gravity="center"
+	<LinearLayout android:id="@+id/new_config_box"
+	              android:background="@android:drawable/dialog_frame"
+	              android:layout_width="fill_parent"
+	              android:layout_height="wrap_content"
+	              android:orientation="vertical"
+	              android:layout_gravity="center"
+	              android:visibility="gone"
 			>
 		<TextView android:id="@+id/new_config"
 		          android:layout_width="fill_parent"
@@ -82,7 +86,24 @@
 	        android:paddingLeft="15pt"
 	        android:paddingRight="15pt"
 	        android:layout_gravity="center"
-	        android:text="@string/apply_configuration_button"/>
+	        android:text="@string/apply_configuration_button"
+	        android:visibility="gone"
+			/>
 
+	<TextView android:id="@+id/apply_error"
+	          android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:padding="5dp"
+	          android:visibility="gone"
+	          android:textColor="#ff6000"
+			/>
+
+	<TextView android:id="@+id/kindle_running"
+	          android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:layout_margin="12dp"
+	          android:text="Kindle for Android is running in background. To ensure the new configuration is properly saved, the application will be killed and re-started."
+	          android:visibility="gone"
+			/>
 </LinearLayout>
 
