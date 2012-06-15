@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Description: Configure your Kindle's service URLs.
+Main-Class: ksp.KSPKindlet
+Implementation-Title: Kindle Service Configuration
+Implementation-Version: 0.3
+Implementation-Vendor: https://github.com/pwr/KSP
