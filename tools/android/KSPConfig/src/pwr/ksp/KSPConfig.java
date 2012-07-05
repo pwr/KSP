@@ -1,7 +1,6 @@
 package pwr.ksp;
 
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -86,24 +85,7 @@ public class KSPConfig extends Activity {
 	void reloadConfig() {
 		ui.reset();
 		config = new Configuration(this);
-
-		switch (K4A.getConfig(config.localConfiguration)) {
-			case RootExec.OK:
-				if (!config.load()) {
-					ui.fatal(R.string.load_configuration_failed, true);
-				} else {
-					ui.configurationLoaded(config.getServiceURL());
-				}
-				break;
-			case RootExec.NO_CONFIG:
-				ui.fatal(R.string.load_configuration_failed, true);
-				break;
-			case RootExec.NO_ROOT:
-				ui.fatal(R.string.root_command_failed, true);
-				break;
-			default:
-				ui.fatal(R.string.unknown_error, true);
-		}
+		K4A.getConfig(config, ui);
 	}
 
 	public void clearConfiguration() {
@@ -112,23 +94,10 @@ public class KSPConfig extends Activity {
 	}
 
 	public void applyConfiguration() {
-		if (!K4A.stop(this)) {
-			ui.fatal(R.string.kill_failed, false);
-			return;
-		}
-
-		if (config.save()) {
-			switch (K4A.setConfig(config.localConfiguration)) {
-				case RootExec.OK:
-					ui.reset();
-					K4A.start(this);
-					break;
-				default:
-					ui.fatal(R.string.root_command_failed, false);
-					break;
-			}
+		if (K4A.stop(this)) {
+			K4A.setConfig(config, ui, this);
 		} else {
-			ui.fatal(R.string.save_failed, false);
+			ui.fatal(R.string.kill_failed, false);
 		}
 	}
 }

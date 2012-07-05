@@ -8,6 +8,8 @@ final class RootExec {
 	static final int OK = 0;
 	static final int NO_ROOT = -10;
 	static final int NO_CONFIG = -20;
+	static final int SAVE_FAILED = -5;
+	static final int BACKUP_FAILED = -6;
 
 	static int copy(File _source, File _destination) {
 		return suExec("cat " + _source.getAbsolutePath() + " > " + _destination.getAbsolutePath());

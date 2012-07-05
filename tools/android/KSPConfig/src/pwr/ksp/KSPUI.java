@@ -1,14 +1,18 @@
 package pwr.ksp;
 
+import android.app.ProgressDialog;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import pwr.ksp.ui.EditUrl;
 
 public class KSPUI {
 	private final KSPConfig ksp;
+
+	private ProgressDialog hourglass = null;
 
 	private final TextView loadError;
 
@@ -77,9 +81,9 @@ public class KSPUI {
 		kindleRunning = (TextView) ksp.findViewById(R.id.kindle_running);
 
 		fade_in = AnimationUtils.loadAnimation(ksp, android.R.anim.fade_in);
-		fade_in.setDuration(300);
+		fade_in.setDuration(500);
 		fade_out = AnimationUtils.loadAnimation(ksp, android.R.anim.fade_out);
-		fade_out.setDuration(200);
+		fade_out.setDuration(250);
 	}
 
 	private void fade(View _v, boolean _visible) {
@@ -94,6 +98,22 @@ public class KSPUI {
 				_v.startAnimation(fade_out);
 				_v.setVisibility(View.GONE);
 			}
+		}
+	}
+
+	void disable(String _reason) {
+		if (hourglass == null) {
+			hourglass = new ProgressDialog(ksp);
+			hourglass.setIndeterminate(true);
+		}
+
+		hourglass.setMessage(_reason);
+		hourglass.show();
+	}
+
+	void enable() {
+		if (hourglass != null) {
+			hourglass.dismiss();
 		}
 	}
 

@@ -81,10 +81,10 @@ public class EditUrl extends Dialog implements DialogInterface.OnShowListener, V
 
 	@Override
 	public void onClick(View view) {
-		dismiss();
 		String url = editUrl.getText().toString();
 		if (url.length() > 0) {
 			ksp.ping(url);
 		}
+		dismiss();
 	}
 }

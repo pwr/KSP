@@ -2,7 +2,8 @@ package pwr.ksp;
 
 import android.app.Activity;
 import android.app.ActivityManager;
-import android.content.Intent;
+import android.app.ProgressDialog;
+import android.os.AsyncTask;
 import android.util.Log;
 
 import java.io.File;
@@ -44,27 +45,94 @@ class K4A {
 		return !isRunning(_activity);
 	}
 
-	static void start(Activity _activity) {
-		Intent k4a = _activity.getPackageManager().getLaunchIntentForPackage("com.amazon.kindle");
-		_activity.startActivity(k4a);
-		_activity.finish();
-	}
+	//static void start(Activity _activity) {
+	//	Intent k4a = _activity.getPackageManager().getLaunchIntentForPackage("com.amazon.kindle");
+	//	_activity.startActivity(k4a);
+	//	_activity.finish();
+	//}
 
-	static int getConfig(File _target) {
-		if (!_target.exists()) {
-			try {
-				if (!_target.createNewFile()) {
-					Log.w("CONF", "failed to touch target file");
+	static void getConfig(final Configuration _config, final KSPUI _ui) {
+		_ui.disable("Loading configuration...");
+
+		new AsyncTask<Void, Void, Integer>() {
+			@Override
+			protected Integer doInBackground(Void... _void) {
+				File target = _config.localConfiguration;
+				if (!target.exists()) {
+					try {
+						if (!target.createNewFile()) {
+							Log.w("CONF", "failed to touch target file");
+						}
+					} catch (IOException ioex) {
+						Log.e("CONF", "creating target file " + target, ioex);
+						return RootExec.NO_CONFIG;
+					}
 				}
-			} catch (IOException ioex) {
-				Log.e("CONF", "creating target file " + _target, ioex);
-				return RootExec.NO_CONFIG;
+				int result = RootExec.copy(CONFIGURATION_FILE, target);
+				if (result == RootExec.OK) {
+					if (!_config.load()) {
+						result = RootExec.NO_CONFIG;
+					}
+				}
+				return Integer.valueOf(result);
 			}
-		}
-		return RootExec.copy(CONFIGURATION_FILE, _target);
+
+			@Override
+			protected void onPostExecute(Integer _result) {
+				_ui.enable();
+
+				switch (_result) {
+					case RootExec.OK:
+						_ui.configurationLoaded(_config.getServiceURL());
+						break;
+					case RootExec.NO_ROOT:
+						_ui.fatal(R.string.root_command_failed, true);
+						break;
+					case RootExec.NO_CONFIG:
+						_ui.fatal(R.string.load_configuration_failed, true);
+						break;
+					default:
+						_ui.fatal(R.string.unknown_error, true);
+				}
+			}
+		}.execute();
 	}
 
-	static int setConfig(File _source) {
+	static void setConfig(final Configuration _config, final KSPUI _ui, final KSPConfig _ksp) {
+		_ui.disable("Applying configuration...");
+
+		new AsyncTask<Void, Void, Integer>() {
+			@Override
+			protected Integer doInBackground(Void... _void) {
+				if (!_config.save()) {
+					return RootExec.SAVE_FAILED;
+				}
+
+				return applyConfig(_config.localConfiguration);
+			}
+
+			@Override
+			protected void onPostExecute(Integer _result) {
+				switch (_result) {
+					case RootExec.OK:
+						_ksp.finish();
+						break;
+					case RootExec.NO_ROOT:
+						_ui.fatal(R.string.root_command_failed, false);
+						break;
+					case RootExec.SAVE_FAILED:
+						_ui.fatal(R.string.save_failed, false);
+						break;
+					default:
+						_ui.fatal(R.string.unknown_error, true);
+				}
+
+				_ui.enable();
+			}
+		}.execute();
+	}
+
+	private static int applyConfig(File _source) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss");
 		String now = sdf.format(new Date());
 		String kc_backup = CONFIGURATION_FILE + "_" + now;
@@ -72,22 +140,17 @@ class K4A {
 
 		if (RootExec.copy(CONFIGURATION_FILE, new File(kc_backup)) < 0) {
 			Log.w("ROOT", "configuration backup failed");
-			return -1;
+			return RootExec.BACKUP_FAILED;
 		}
 
-		String removeMetadataCache = "rm " + METADATA_CACHE.getAbsolutePath();
-		if (RootExec.suExec(removeMetadataCache) < 0) {
-			Log.w("ROOT", "failed to clear metadata cache " + METADATA_CACHE);
-		}
-
-		String clearBookDB = "sqlite3 " + KINDLE_CONTENT.getAbsolutePath() + " 'DELETE FROM KindleContent WHERE downloadState = \"REMOTE\"'";
-		if (RootExec.suExec(clearBookDB) < 0) {
-			Log.w("ROOT", "failed to clear content db " + KINDLE_CONTENT);
-		}
-
-		String clearLocalBookDB = "sqlite3 " + KINDLE_LIBRARY.getAbsolutePath() + " 'DELETE FROM KindleContent WHERE STATE = \"REMOTE\"'";
-		if (RootExec.suExec(clearLocalBookDB) < 0) {
-			Log.w("ROOT", "failed to clear library db " + KINDLE_LIBRARY);
+		String clearCache =
+				"ls " + METADATA_CACHE + " >/dev/null 2>/dev/null && rm " + METADATA_CACHE + "\n" +
+				"ls " + KINDLE_CONTENT + " >/dev/null 2>/dev/null && " +
+				"sqlite3 " + KINDLE_CONTENT + " 'DELETE FROM KindleContent WHERE downloadState = \"REMOTE\"'\n" +
+				"ls " + KINDLE_LIBRARY + " >/dev/null 2>/dev/null && " +
+				"sqlite3 " + KINDLE_LIBRARY + " 'DELETE FROM KindleContent WHERE STATE = \"REMOTE\"'\n";
+		if (RootExec.suExec(clearCache) < 0) {
+			Log.w("ROOT", "failed to clear Kindle caches");
 		}
 
 		return RootExec.copy(_source, CONFIGURATION_FILE);

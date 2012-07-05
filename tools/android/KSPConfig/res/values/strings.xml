@@ -1,24 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<string name="app_name">Kindle Configuration</string>
+	<string name="app_name">Kindle Configurator</string>
 	<string name="edit_url_title">Enter your KSP deployment\'s server_url:</string>
-	<string name="apply_configuration_button">Apply changes &amp; open Kindle</string>
-	<string name="app_description">Amazon Kindle configuration utility.</string>
+	<string name="apply_configuration_button">Apply changes &amp; exit</string>
+	<string name="app_description">Kindle configuration utility</string>
 	<string name="check_url_button">Check</string>
 	<string name="change_url_button">Change service URL</string>
 	<string name="use_defaults_button">Use default service</string>
-	<string name="root_command_failed">Failed to execute root command. Your Android device must be root-enabled for KSPConfig to work.</string>
+	<string name="root_command_failed">Failed to execute root command. Your Android device must be root-enabled for Kindle Configurator to work.</string>
 	<string name="quit_button">Quit</string>
 	<string name="install_certificate_failed">Failed to install the server ceritificate. You will have to use a http:// URL.</string>
-	<string name="new_configuration_default">Amazon Kindle will use the default (Amazon) service.</string>
-	<string name="new_configuration_url">Amazon Kindle will use this service URL:</string>
-	<string name="current_configuration_default">Amazon Kindle is using the default (Amazon) service.</string>
-	<string name="current_configuration_url">Amazon Kindle is using this service URL:</string>
-	<string name="load_configuration_failed">Failed to load configuration from the Kindle application. Do you have the Kindle for Android application
-		installed?
-	</string>
-	<string name="kindle_is_running">Amazon Kindle is running in background. To ensure the new configuration is properly saved, the application will be killed and re-started.</string>
+	<string name="new_configuration_default">Kindle will use the default (Amazon) service.</string>
+	<string name="new_configuration_url">Kindle will use this service URL:</string>
+	<string name="current_configuration_default">Kindle is using the default (Amazon) service.</string>
+	<string name="current_configuration_url">Kindle is using this service URL:</string>
+	<string name="load_configuration_failed">Failed to load configuration from the Kindle application — is it installed?</string>
+	<string name="kindle_is_running">Kindle is running in background. To ensure the new configuration applies properly, the application will be killed.</string>
 	<string name="save_failed">Failed to save the new configuration.</string>
-	<string name="kill_failed">Failed to stop the running Amazon Kindle process.</string>
+	<string name="kill_failed">Failed to stop the running Kindle process.</string>
 	<string name="unknown_error">Unexpected error.</string>
 </resources>
