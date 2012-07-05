@@ -74,8 +74,10 @@ def read_cde_type(path, content_type, asin):
 
 import annotations
 
-def sidecar(book, annotations_list = None):
+def sidecar(book, guid, annotations_list = None):
 	if book.content_type in ( _CONTENT_TYPE_MOBI, _CONTENT_TYPE_MOBI8 ):
 		if not annotations_list:
 			annotations_list = annotations.get_all(book.asin)
-		return mbp.assemble_sidecar(book, annotations_list)
+		if ':' in guid:
+			_, _, guid = guid.partition(':')
+		return mbp.assemble_sidecar(book, guid, annotations_list)

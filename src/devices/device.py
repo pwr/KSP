@@ -90,7 +90,7 @@ class Device:
 						self.serial, self.kind, self.last_ip, None if not self.last_cookie else self.last_cookie[:12]
 					)
 
-		return "{%s/%s %s ip=%s cookie=%s%s, sync=%s with %d books}" % (
+		return "{%s [%s] %s ip=%s cookie=%s%s, sync=%s with %d books}" % (
 					self.serial, self.alias, self.kind, self.last_ip,
 					None if not self.last_cookie else self.last_cookie[:12],
 					' no PKCS12' if self.context_failed() else '',

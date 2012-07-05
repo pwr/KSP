@@ -20,7 +20,7 @@ book = namedtuple('_Book', 'file_path added_to_library')(os.path.join(config.dat
 
 print()
 
-content_type, b = mbp.assemble_sidecar(book, sidecar_list)
+content_type, b = mbp.assemble_sidecar(book, None, sidecar_list)
 l = 0
 print("Offset(h) 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F\n")
 while l < len(b):

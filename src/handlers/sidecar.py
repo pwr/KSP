@@ -97,7 +97,7 @@ class CDE_Sidecar (Upstream):
 				if not book:
 					logging.warn("tried to download sidecar for unknown book %s", asin)
 					return None
-				sidecar_data = formats.sidecar(book)
+				sidecar_data = formats.sidecar(book, q.get('guid'))
 				if sidecar_data:
 					content_type, data = sidecar_data
 					return DummyResponse(headers = { 'Content-Type': content_type }, data = data)

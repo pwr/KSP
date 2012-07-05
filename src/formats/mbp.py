@@ -35,7 +35,7 @@ _BKMK_NOTE = b'\0\0\0\0', b'\0\0\0\x20\0\0\0\2' # ?, 32, 2
 def build_sidecar(book, guid, last_read, annotations_list):
 	# compute the size of the index block beforehand
 	indexes_count = 3 * len(annotations_list) + len([ s for s in annotations_list if s.kind == 'note' ])
-	if last_read.state:
+	if last_read:
 		indexes_count += 1
 
 	# address of BPAR block
@@ -54,7 +54,8 @@ def build_sidecar(book, guid, last_read, annotations_list):
 	data = []
 	bkmk = []
 
-	if last_read.state:
+	if last_read:
+		logging.debug("last_read %s", last_read)
 		last_read_ptr_index = 1
 		indexes = [ data_ptr, 1 ]
 		next_id = 2
@@ -68,6 +69,7 @@ def build_sidecar(book, guid, last_read, annotations_list):
 			continue
 
 		# the first data block is the state the Kindle sent with the annotation
+		logging.debug("annotation %s", s)
 		first_id = next_id
 		next_id += 1
 		indexes += data_ptr, first_id
@@ -75,7 +77,7 @@ def build_sidecar(book, guid, last_read, annotations_list):
 		data_ptr += len(s.state)
 
 		# on the Kindle, this block is empty
-		# on the Kindle for PC, this block has a block of text (from the book) somewhat containing the bookmark/highlight/note
+		# on the Kindle for PC, this block has a piece of text (from the book) somewhat containing the bookmark/highlight/note
 		# (I'm guessing its contents are optional)
 		second_id = next_id
 		next_id += 1
@@ -122,7 +124,7 @@ def build_sidecar(book, guid, last_read, annotations_list):
 	title += b'_PAR'
 
 	mbp_created = int(book.added_to_library) # eh
-	mbp_updated = last_read.timestamp
+	mbp_updated = last_read.timestamp if last_read else mbp_created
 	if annotations_list and annotations_list[-1].timestamp > mbp_updated:
 		mbp_updated = annotations_list[-1].timestamp
 	# either we have a dummy last_read and _some_ annotations
@@ -132,7 +134,7 @@ def build_sidecar(book, guid, last_read, annotations_list):
 	header = struct.pack('! 32s 4x LL 16x 8s L 2x LL 4x', title, mbp_created, mbp_updated, b'BPARMOBI', next_id, 1 + indexes_count, bpar_ptr)
 	# assert len(header) == _HEADER_LEN, "header length is %s" % len(header)
 
-	last_read_page = 0 # TODO this should be the page number of the last_read position?
+	last_read_page = 0 # TODO this should be the APNX page number of the last_read position?
 	time_mark = mbp_updated // 60 + 0xDE177425 # ... I don't know
 	bpar = ( b'BPAR', _BPAR_LEN - 8, _FILL_FF, last_read.begin, last_read_page, last_read_ptr_index,
 				_FILL_FF, b'\0\0\0\x7f', guid, time_mark, _FILL_FFx4, _FILL_00, _FILL_00 )
@@ -140,25 +142,38 @@ def build_sidecar(book, guid, last_read, annotations_list):
 	items = _flatten(header, indexes, b'\0\0', bpar, data, bkmk)
 	return b''.join(items)
 
-# re: the TODOs in the method above
-# as far as I could tell they are page numbers?/locations?, different from the pos
-# so far the Kindle accepts 0 in those places, perhaps it re-computes them on the fly when the book is loaded
-
-from collections import namedtuple
-_DUMMY_LAST_READ = namedtuple('Row', 'asin timestamp begin pos state')(None, '', 0, 0, b'')
-
-def assemble_sidecar(book, annotations_list):
+def assemble_sidecar(book, full_guid, annotations_list):
 	if not annotations_list:
 		return None
+
 	# the annotations_list's first item is an optional last_read block
 	# the rest of the entries are sorted by timestamp
 	if hasattr(annotations_list[0], 'kind'):
-		logging.warn("first item in sidecar list is not last_read!", annotations_list[0])
-		last_read = _DUMMY_LAST_READ
-		guid = annotations_list[0].state[28:32]
+		logging.warn("first item in sidecar list is not last_read: %s", annotations_list[0])
+		last_read = None
+		guid = None
 	else:
 		last_read = annotations_list[0]
+		# not a great idea, but usually the last_read entry is the latest updated
 		guid = last_read.state[28:32]
 		annotations_list = annotations_list[1:]
+
+	if full_guid:
+		try:
+			guid = binascii.unhexlify(bytes(full_guid, 'ascii'))
+		except:
+			logging.warn("failed to parse guid from %s", full_guid)
+
+	if guid is None:
+		logging.warn("no GUID available")
+		guid = b'\0\0\0\0' # will definetly not work
+	else:
+		logging.debug("filtering annotations for guid %s", guid)
+		# filter out entries whose guid does not match -- the clients will ignore them anyway
+		annotations_list = [ a for a in annotations_list if a.state[28:32] == guid ]
+
+	if not last_read and not annotations_list:
+		return None
+
 	sidecar_bytes = build_sidecar(book, guid, last_read, annotations_list)
 	return ('application/x-mobipocket-sidecar', sidecar_bytes)
