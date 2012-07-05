@@ -102,7 +102,7 @@
 	          android:layout_width="fill_parent"
 	          android:layout_height="wrap_content"
 	          android:layout_margin="12dp"
-	          android:text="Kindle for Android is running in background. To ensure the new configuration is properly saved, the application will be killed and re-started."
+	          android:text="@string/kindle_is_running"
 	          android:visibility="gone"
 			/>
 </LinearLayout>

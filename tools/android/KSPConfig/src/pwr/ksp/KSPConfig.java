@@ -120,6 +120,7 @@ public class KSPConfig extends Activity {
 		if (config.save()) {
 			switch (K4A.setConfig(config.localConfiguration)) {
 				case RootExec.OK:
+					ui.reset();
 					K4A.start(this);
 					break;
 				default:

@@ -6,15 +6,17 @@ import android.content.Intent;
 import android.util.Log;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-public class K4A {
+class K4A {
 	private static final String DATA_PATH = "/data/data/com.amazon.kindle";
 	private static final File CONFIGURATION_FILE = new File(new File(DATA_PATH, "shared_prefs"), Configuration.FILE_NAME);
 	private static final File METADATA_CACHE = new File(new File(DATA_PATH, "files"), "KindleSyncMetadataCache.xml");
-	private static final File BOOK_DATABASE = new File(new File(DATA_PATH, "databases"), "kindle_content.db");
+	private static final File KINDLE_CONTENT = new File(new File(DATA_PATH, "databases"), "kindle_content.db");
+	private static final File KINDLE_LIBRARY = new File(new File(DATA_PATH, "databases"), "kindle_library.db");
 
 	static boolean isRunning(Activity _activity) {
 		ActivityManager am = (ActivityManager) _activity.getSystemService(Activity.ACTIVITY_SERVICE);
@@ -49,6 +51,16 @@ public class K4A {
 	}
 
 	static int getConfig(File _target) {
+		if (!_target.exists()) {
+			try {
+				if (!_target.createNewFile()) {
+					Log.w("CONF", "failed to touch target file");
+				}
+			} catch (IOException ioex) {
+				Log.e("CONF", "creating target file " + _target, ioex);
+				return RootExec.NO_CONFIG;
+			}
+		}
 		return RootExec.copy(CONFIGURATION_FILE, _target);
 	}
 
@@ -63,12 +75,19 @@ public class K4A {
 			return -1;
 		}
 
-		String clearCaches = "ls " + METADATA_CACHE.getAbsolutePath() + " >/dev/null 2>/dev/null &&" +
-							 	"rm -f " + METADATA_CACHE.getAbsolutePath() + "\n" +
-							 "ls " + BOOK_DATABASE.getAbsolutePath() + " >/dev/null 2>/dev/null &&" +
-							 	"sqlite3 " + BOOK_DATABASE.getAbsolutePath() + " 'DELETE FROM KindleContent WHERE downloadState = \"REMOTE\"'";
-		if (RootExec.suExec(clearCaches) < 0) {
-			Log.w("ROOT", "failed to clear Kindle caches");
+		String removeMetadataCache = "rm " + METADATA_CACHE.getAbsolutePath();
+		if (RootExec.suExec(removeMetadataCache) < 0) {
+			Log.w("ROOT", "failed to clear metadata cache " + METADATA_CACHE);
+		}
+
+		String clearBookDB = "sqlite3 " + KINDLE_CONTENT.getAbsolutePath() + " 'DELETE FROM KindleContent WHERE downloadState = \"REMOTE\"'";
+		if (RootExec.suExec(clearBookDB) < 0) {
+			Log.w("ROOT", "failed to clear content db " + KINDLE_CONTENT);
+		}
+
+		String clearLocalBookDB = "sqlite3 " + KINDLE_LIBRARY.getAbsolutePath() + " 'DELETE FROM KindleContent WHERE STATE = \"REMOTE\"'";
+		if (RootExec.suExec(clearLocalBookDB) < 0) {
+			Log.w("ROOT", "failed to clear library db " + KINDLE_LIBRARY);
 		}
 
 		return RootExec.copy(_source, CONFIGURATION_FILE);

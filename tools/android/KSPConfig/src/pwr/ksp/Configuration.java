@@ -7,6 +7,8 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import pwr.ksp.kindle.Obfuscator;
+import pwr.ksp.kindle.ObfuscatorV1;
+import pwr.ksp.kindle.ObfuscatorV2;
 
 import java.io.File;
 import java.io.FileReader;
@@ -18,11 +20,13 @@ import java.util.Map;
 
 public class Configuration {
 	public static final String FILE_NAME = "AmazonSecureStorage.xml";
+	private static final String SALT_KEY = "AmazonSaltKey";
 	private static final String URL_TODO = "url.todo";
 	private static final String URL_CDE = "url.cde";
 
 	final File localConfiguration;
 	private final HashMap<String, String> map = new HashMap<String, String>();
+	private Obfuscator obfuscator = null;
 
 	public Configuration(Activity _act) {
 		File localTemp = _act.getDir("temp", Activity.MODE_PRIVATE);
@@ -66,7 +70,6 @@ public class Configuration {
 		HashMap<String, String> obfuscated = null;
 		try {
 			reader = new FileReader(localConfiguration);
-
 			obfuscated = new HashMap<String, String>();
 			Xml.parse(reader, new XmlHandler(obfuscated));
 			reader.close();
@@ -83,11 +86,28 @@ public class Configuration {
 			}
 		}
 
+		String salt = obfuscated.get(SALT_KEY);
+		if (salt == null) {
+			obfuscator = new ObfuscatorV1();
+		} else {
+			try {
+				obfuscator = new ObfuscatorV2(salt);
+			} catch (Exception ex) {
+				Log.e("CONF", "failed to initialize ObfuscatorV2 with " + salt, ex);
+				return false;
+			}
+		}
+
 		map.clear();
 		for (Map.Entry<String, String> entry : obfuscated.entrySet()) {
-			String key = Obfuscator.deobfuscate(entry.getKey());
+			if (SALT_KEY.equals(entry.getKey())) {
+				map.put(SALT_KEY, entry.getValue());
+				continue;
+			}
+
+			String key = obfuscator.deobfuscate(entry.getKey());
 			if (key != null) {
-				String value = Obfuscator.deobfuscate(entry.getValue());
+				String value = obfuscator.deobfuscate(entry.getValue());
 				if (value == null) {
 					Log.w("CONF", "failed to load value for key " + key);
 				} else {
@@ -104,14 +124,26 @@ public class Configuration {
 	}
 
 	boolean save() {
+		if (obfuscator == null) {
+			Log.e("CONF", "no obfuscator set before saving configuration");
+			return false;
+		}
+
 		try {
 			FileWriter writer = new FileWriter(localConfiguration);
 
 			writer.write("<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n");
 			writer.write("<map>\n");
 			for (Map.Entry<String, String> entry : map.entrySet()) {
-				String k = Obfuscator.obfuscate(entry.getKey());
-				String v = Obfuscator.obfuscate(entry.getValue());
+				String k, v;
+
+				if (SALT_KEY.equals(entry.getKey())) {
+					k = SALT_KEY;
+					v = entry.getValue();
+				} else {
+					k = obfuscator.obfuscate(entry.getKey());
+					v = obfuscator.obfuscate(entry.getValue());
+				}
 				writer.write("<string name=\"");
 				writer.write(k);
 				writer.write("\">");
