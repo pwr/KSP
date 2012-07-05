@@ -37,9 +37,9 @@ def _response__str__(self):
 				if 'xml' in ct or 'html' in ct or 'json' in ct or 'www-form' in ct:
 					is_text = True
 		if is_text:
-			txt += '\n' + str_(decompress(self.body, self.content_encoding))
-		# else:
-		# 	txt += '\nbytes hex: ' + str(binascii.hexlify(self.body), 'ascii')
+			txt += "\n" + str_(decompress(self.body, self.content_encoding))
+		elif len(self.body) < 2048:
+			txt += "\n[HEX] " + str(binascii.hexlify(self.body), 'ascii')
 	return txt
 
 def wrap(r):

@@ -1,4 +1,5 @@
 import logging
+import binascii
 from http.client import responses as HTTP_MESSAGES
 
 from content import date_header, str_
@@ -28,8 +29,11 @@ class DummyResponse (object):
 
 	def __str__(self):
 		t = "[DUMMY] %d %s (%d) %s" % (self.status, self.reason, self.length, self.headers)
-		if self.body and (self.content_type is None or self.content_type.startswith('text/') or self.content_type.startswith('application/xml-')):
-			t += "\n" + str_(self.body)
+		if self.body:
+			if self.content_type is None or self.content_type.startswith('text/') or self.content_type.startswith('application/xml-'):
+				t += "\n" + str_(self.body)
+			elif len(self.body) < 2048:
+				t += "\n[HEX] " + str(binascii.hexlify(self.body), 'ascii')
 		return t
 
 
