@@ -30,7 +30,10 @@ class DummyResponse (object):
 	def __str__(self):
 		t = "[DUMMY] %d %s (%d) %s" % (self.status, self.reason, self.length, self.headers)
 		if self.body:
-			if self.content_type is None or self.content_type.startswith('text/') or self.content_type.startswith('application/xml-'):
+			if self.content_type is None \
+					or self.content_type.startswith('text/') \
+					or self.content_type.startswith('application/xml-') \
+					or self.content_type == 'application/json':
 				t += "\n" + str_(self.body)
 			elif len(self.body) < 2048:
 				t += "\n[HEX] " + str(binascii.hexlify(self.body), 'ascii')

@@ -81,7 +81,12 @@ def annotations_updated(device_serial, asin):
 		db.row_factory = _namedtuple_row_factory
 
 		for a in db.execute('SELECT * from annotations2 WHERE asin = ? AND device != ?', (asin, device_serial)):
-			synced_devices = device_serial if a.synced_devices is None else a.synced_devices + "," + device_serial
+			if a.synced_devices is None:
+				synced_devices = device_serial
+			else:
+				synced_devices = set(a.synced_devices.split(','))
+				synced_devices.add(device_serial)
+				synced_devices = ','.join(synced_devices)
 			db.execute('UPDATE annotations2 SET synced_devices = ? WHERE id = ?', (synced_devices, a.id))
 
 def create(device_serial, asin, kind, timestamp, begin, end, position, state, text):

@@ -59,8 +59,6 @@ logging.debug("supported formats: %s", features.supported_formats)
 
 
 import formats.mobi as mobi
-import formats.mbp as mbp
-
 
 def handles(content_type):
 	return content_type in ( _CONTENT_TYPE_MOBI8, _CONTENT_TYPE_MOBI, _CONTENT_TYPE_PDF )
@@ -73,11 +71,13 @@ def read_cde_type(path, content_type, asin):
 
 
 import annotations
+import formats.mbp as mbp
+import formats.han as han
 
-def sidecar(book, guid, annotations_list = None):
-	if book.content_type in ( _CONTENT_TYPE_MOBI, _CONTENT_TYPE_MOBI8 ):
-		if not annotations_list:
-			annotations_list = annotations.get_all(book.asin)
-		if ':' in guid:
-			_, _, guid = guid.partition(':')
-		return mbp.assemble_sidecar(book, guid, annotations_list)
+def sidecar(book, requested_guid = None, annotations_list = None):
+	if not annotations_list:
+		annotations_list = annotations.get_all(book.asin)
+	if book.content_type == _CONTENT_TYPE_MOBI:
+		return mbp.assemble_sidecar(book, requested_guid, annotations_list)
+	if book.content_type == _CONTENT_TYPE_MOBI8:
+		return han.assemble_sidecar(book, requested_guid, annotations_list)

@@ -106,7 +106,6 @@ def main():
 	pipe_file = open(args.control_pipe, 'rb') if args.control_pipe else None
 
 	try:
-
 		# import calibre and devices here because the config has to be fully processed for them to work
 		import devices
 		import calibre

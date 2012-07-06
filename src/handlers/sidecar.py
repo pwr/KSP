@@ -10,7 +10,7 @@ import annotations
 import calibre, qxml
 
 
-def _process_sidecar_upload(device, book_ids, book_nodes):
+def _process_sidecar_upload(device, book_ids, book_nodes, default_timestamp):
 	# book_ids is NOT a complete list of books on device
 	for asin in book_ids:
 		book = calibre.book(asin)
@@ -26,7 +26,7 @@ def _process_sidecar_upload(device, book_ids, book_nodes):
 
 		for kind in ('last_read', 'bookmark', 'highlight', 'note'):
 			for x_item in qxml.iter_children(x_book, kind):
-				timestamp = x_item.getAttribute('timestamp') or None
+				timestamp = x_item.getAttribute('timestamp') or default_timestamp
 				begin = x_item.getAttribute('begin') or None
 				end = x_item.getAttribute('end') or begin
 				pos = x_item.getAttribute('pos') or x_item.getAttribute('location') or None
@@ -52,6 +52,7 @@ def _process_xml(request, doc, device):
 	was_modified = False
 
 	x_annotations = qxml.get_child(doc, 'annotations')
+	default_timestamp = x_annotations.getAttribute('timestamp') or None
 
 	for x_book in qxml.list_children(x_annotations, 'book'):
 		asin = x_book.getAttribute('key')
@@ -68,7 +69,7 @@ def _process_xml(request, doc, device):
 				books_on_device.add(asin)
 
 	if books_on_device or book_nodes:
-		postprocess.enqueue(_process_sidecar_upload, device, books_on_device, book_nodes)
+		postprocess.enqueue(_process_sidecar_upload, device, books_on_device, book_nodes, default_timestamp)
 
 	if was_modified:
 		qxml.remove_whitespace(x_annotations)

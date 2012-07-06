@@ -3,7 +3,7 @@ import struct
 
 
 def read_cde_type(path, asin):
-	"""reads the CDE_TYPE record from the MOBI file"""
+	"""reads the CDE_TYPE record from the MOBI file, and checks the MOBI has an expected asin"""
 	if not os.path.isfile(path):
 		return None
 
@@ -67,3 +67,30 @@ def read_cde_type(path, asin):
 		return None
 	# logging.debug("%s: confirmed ASIN %s with CDE TYPE %s", path, asin, cde_type)
 	return cde_type
+
+def read_guid(path):
+	"""reads the book GUID from a MOBI file"""
+	if not os.path.isfile(path):
+		return None
+
+	try:
+		with open(path, 'rb', 4 * 1024) as mobi:
+			mobi.seek(0x3C)
+			if mobi.read(8) != b'BOOKMOBI':
+				logging.warn("%s: not a MOBI PDB?", path)
+				return None
+			mobi.seek(0x4C)
+			pdb_records, = struct.unpack('!H', mobi.read(2))
+			# logging.debug("%s: %d PDB records", path, pdb_records)
+			mobi.seek(pdb_records * 8 + 2 + 0x10, 1)
+			if mobi.read(7) != b'MOBI\x00\x00\x00':
+				logging.debug("%s: MOBI header not found", path)
+				return None
+			header_length = mobi.read(1)[0]
+			if header_length not in (0xE8, 0xF8): # MOBI7 (regular mobi), MOBI8 (aka KF8)
+				logging.debug("%s: MOBI content type %d not supported", path, hex(mobi_type))
+				return None
+			mobi.seek(8, 1)
+			return mobi.read(4)
+	except:
+		logging.warn("failed to read GUID from %s", path)

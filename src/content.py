@@ -25,6 +25,9 @@ def date_header(timestamp = None):
 def date_iso(timestamp = None):
 	return time.strftime('%Y-%m-%dT%H:%M:%S+0000', time.gmtime(time.time() if timestamp is None else timestamp))
 
+def date_izo(timestamp = None):
+	return time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time() if timestamp is None else timestamp))
+
 def read_chunked(stream):
 	"""
 	reads a chunked body from the stream

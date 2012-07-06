@@ -46,7 +46,7 @@ def _bin(state):
 def set_last_read(device, asin, timestamp, begin, position, state):
 	timestamp = _parse_timestamp(timestamp, device.lto)
 	begin = int(begin)
-	position = int(position)
+	position = int(position) if position else begin
 	state = _bin(state)
 	db.set_last_read(device.serial, asin, timestamp, begin, position, state)
 
@@ -61,7 +61,7 @@ def create(device, asin, kind, timestamp, begin, end, position, state, text = No
 	timestamp = _parse_timestamp(timestamp, device.lto)
 	begin = int(begin)
 	end = int(end)
-	position = int(position)
+	position = int(position) if position else begin
 	state = _bin(state)
 	db.create(device.serial, asin, kind, timestamp, begin, end, position, state, text)
 

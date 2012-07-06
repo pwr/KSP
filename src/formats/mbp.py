@@ -1,5 +1,6 @@
 import logging, binascii, struct
 
+import formats.mobi as mobi
 
 def _flatten(*data_list):
 	for item in data_list:
@@ -8,8 +9,8 @@ def _flatten(*data_list):
 		elif type(item) == int:
 			yield struct.pack('!L', item)
 		else:
-			for item2 in _flatten(*item):
-				yield item2
+			for subitem in _flatten(*item):
+				yield subitem
 
 
 _FILL_FF = b'\xFF' * 4
@@ -24,15 +25,15 @@ _BKMK_LEN = 0x3C
 _BKMK_BOOKMARK = b'\0\0\0\1', b'\0\0\0\0\0\0\0\1' # ?, 0, 1
 
 # TODO first int is the page id?
-_BKMK_HIGHLIGHT = b'\0\0\0\0', b'\0\xff\xff\x0f\0\0\0\4' # ?, color_mark, 4
+_BKMK_HIGHLIGHT = _FILL_00, b'\0\xff\xff\x0f\0\0\0\4' # ?, color_mark, 4
 # color_mark = 0x0f | ((highlight_color << 8) in reverse byte order)
 # default highlight color in k4 is 0xFFFF00
 
 # TODO first int is the page id?
-_BKMK_NOTE = b'\0\0\0\0', b'\0\0\0\x20\0\0\0\2' # ?, 32, 2
+_BKMK_NOTE = _FILL_00, b'\0\0\0\x20\0\0\0\2' # ?, 32, 2
 
 
-def build_sidecar(book, guid, last_read, annotations_list):
+def _build_sidecar(book, guid, last_read, annotations_list):
 	# compute the size of the index block beforehand
 	indexes_count = 3 * len(annotations_list) + len([ s for s in annotations_list if s.kind == 'note' ])
 	if last_read:
@@ -121,7 +122,6 @@ def build_sidecar(book, guid, last_read, annotations_list):
 	title = ''
 	with open(book.file_path, 'rb') as mf:
 		title = mf.read(27).strip(b'\0')
-	title += b'_PAR'
 
 	mbp_created = int(book.added_to_library) # eh
 	mbp_updated = last_read.timestamp if last_read else mbp_created
@@ -131,7 +131,7 @@ def build_sidecar(book, guid, last_read, annotations_list):
 	# or a proper last_read and optional annotations
 	# either way, mbp_updated SHOULD not be 0 (the value of the dummy last_read)
 
-	header = struct.pack('! 32s 4x LL 16x 8s L 2x LL 4x', title, mbp_created, mbp_updated, b'BPARMOBI', next_id, 1 + indexes_count, bpar_ptr)
+	header = struct.pack('! 32s 4x LL 16x 8s L 2x LL 4x', title + b'_PAR', mbp_created, mbp_updated, b'BPARMOBI', next_id, 1 + indexes_count, bpar_ptr)
 	# assert len(header) == _HEADER_LEN, "header length is %s" % len(header)
 
 	last_read_page = 0 # TODO this should be the APNX page number of the last_read position?
@@ -142,38 +142,37 @@ def build_sidecar(book, guid, last_read, annotations_list):
 	items = _flatten(header, indexes, b'\0\0', bpar, data, bkmk)
 	return b''.join(items)
 
-def assemble_sidecar(book, full_guid, annotations_list):
+def assemble_sidecar(book, requested_guid, annotations_list):
 	if not annotations_list:
 		return None
 
+	guid = mobi.read_guid(book.file_path)
+	if guid is None:
+		logging.error("not a MOBI book? %s", book)
+		return None
+
+	if requested_guid:
+		rguid = requested_guid
+		if ':' in rguid:
+			_, _, rguid = rguid.partition(':')
+		try:
+			rguid = binascii.unhexlify(bytes(rguid, 'ascii'))
+		except:
+			logging.exception("failed to parse guid from %s, expected %s", requested_guid, guid)
+			return None
+		if guid != rguid:
+			logging.error("requested guid %s does not match book guid %s", requested_guid, guid)
+			return None
+
 	# the annotations_list's first item is an optional last_read block
 	# the rest of the entries are sorted by timestamp
-	if hasattr(annotations_list[0], 'kind'):
-		logging.warn("first item in sidecar list is not last_read: %s", annotations_list[0])
-		last_read = None
-		guid = None
-	else:
-		last_read = annotations_list[0]
-		# not a great idea, but usually the last_read entry is the latest updated
-		guid = last_read.state[28:32]
-		annotations_list = annotations_list[1:]
+	last_read = None if hasattr(annotations_list[0], 'kind') else annotations_list.pop(0)
 
-	if full_guid:
-		try:
-			guid = binascii.unhexlify(bytes(full_guid, 'ascii'))
-		except:
-			logging.warn("failed to parse guid from %s", full_guid)
-
-	if guid is None:
-		logging.warn("no GUID available")
-		guid = b'\0\0\0\0' # will definetly not work
-	else:
-		logging.debug("filtering annotations for guid %s", guid)
-		# filter out entries whose guid does not match -- the clients will ignore them anyway
-		annotations_list = [ a for a in annotations_list if a.state[28:32] == guid ]
-
+	logging.debug("filtering annotations for guid %s", guid)
+	# filter out entries whose guid does not match -- the clients will ignore them anyway
+	annotations_list = [ a for a in annotations_list if a.state and a.state[28:32] == guid ]
 	if not last_read and not annotations_list:
 		return None
 
-	sidecar_bytes = build_sidecar(book, guid, last_read, annotations_list)
+	sidecar_bytes = _build_sidecar(book, guid, last_read, annotations_list)
 	return ('application/x-mobipocket-sidecar', sidecar_bytes)
